@@ -1,0 +1,95 @@
+# Learning rules — current decisions
+
+Updated: 2026-10-30. Source: approved word-session design plan.
+This supersedes the yesterday-only unlock rule in Words v2 and any conflicting older mockup. Design rules only; enforcement is not implemented.
+
+## Assignment and unlock
+
+- Each new/review batch contains 10 words, with four required tasks per word: listening, one sentence task, English-to-Vietnamese meaning, Vietnamese-to-English recall. Total: 40 unique tasks.
+- ALL mandatory review must be complete before new learning: yesterday, the selected earlier day, and outstanding review. Finishing yesterday alone is insufficient.
+- Apply the gate at every entry point: Words, Today, topic details, direct links and session creation. Recheck eligibility on entry.
+- Review includes all assigned batches, not just the first ten words. An empty required-review set permits new learning; an empty yesterday set does not bypass other pending review.
+- Browsing, word details and optional videos remain available. Videos do not replace required review.
+- This flow consumes the assigned review list; it does not establish a new earlier-day selection algorithm.
+- Words Learn presents a single daily review word total and aggregate progress, without splitting the display by yesterday, earlier-day or outstanding sources. Source tracking remains internal; this presentation does not change the all-review unlock gate.
+- Learning-day boundary: 00:00 Asia/Ho_Chi_Minh, consistently across devices.
+
+## Review flow
+
+Finish the current round, including retries, before entering the next.
+
+| Round | Tasks                                  | Completion range |
+| ----- | -------------------------------------- | ---------------- |
+| 1     | 10 listen → type English               | 0–10 / 40        |
+| 2     | 5 gap fills + 5 sentence arrangements  | 10–20 / 40       |
+| 3     | 10 English → choose Vietnamese meaning | 20–30 / 40       |
+| 4     | 10 Vietnamese → type English           | 30–40 / 40       |
+
+Each word receives exactly one sentence subtype. Incorrect tasks return after 2–3 OTHER questions in the same round, retaining their original task identity.
+If too few other questions remain, show a knowledge refresher, then retry unfinished tasks. A refresher earns no progress; do not invent extra scored tasks.
+
+## New-word flow
+
+Introduce one word, then attempt its four exercise styles, then introduce the next word. Wrong tasks may return after 2–3 intervening questions while learning subsequent words. Resolve all remaining tasks after the tenth word, with a refresher where needed.
+
+Introduction includes part of speech, level, US/UK pronunciation, EN/VI meanings, common pattern and bilingual example. Viewing it earns no progress.
+Use five gap fills and five sentence arrangements across the batch, not both sentence types for every word.
+Only completing all 40 unique tasks commits the 10 newly learned words and awards a ticket. A partial batch does not add partial newly-learned counts or entries to My words.
+
+## Grading and progress
+
+- Typing, selecting an option or arranging tokens does not grade or advance automatically.
+- Check answer grades an explicit submission. Empty input, no selection or an incomplete arrangement keeps it disabled.
+- Show feedback until Continue is pressed.
+- Ignore case and leading/trailing/repeated whitespace. Actual spelling errors remain incorrect; no fuzzy typo acceptance.
+- Accepted variants and punctuation belong in the question's content specification. Ambiguous prompts must be corrected rather than penalizing valid alternatives.
+- First correct completion of a unique task: +1/40, or 2.5% of the path. Wrong: +0. No backward movement.
+- A previously wrong task earns its one step when first answered correctly. Already completed tasks and duplicate submissions earn no additional progress.
+- Position the character using completed-task count / 40 along the path length. Milestone dots are decoration.
+- At 40/40, arrive at the shop and award one ticket exactly once.
+
+## Daily tickets and the illustrated scenario
+
+The daily goal is all required review plus at least one new ten-word batch. Each completed batch awards one ticket. Required daily tickets equal required review batches plus one new batch; optional videos do not replace these.
+
+| Board/state        | Review              | New batch | Tickets               | Outcome                                    |
+| ------------------ | ------------------- | --------- | --------------------- | ------------------------------------------ |
+| 01 Words           | 1 of 2 batches done | Locked    | 1/3                   | Finish remaining review                    |
+| 11 Review complete | 2 of 2 done         | Unlocked  | 2/3                   | Ticket only; no meal                       |
+| 12 Daily complete  | 2 of 2 done         | Complete  | 3/3 earned, exchanged | Automatically feed Mochi and update growth |
+
+No Claim or Feed action. Reopening a result must not duplicate tickets, meals or growth.
+“3/3 tickets earned” is a receipt, not three still-spendable tickets.
+The illustrated +1 growth and 9/365 total are sample presentation values, not a growth formula established by this delivery. The kitten does not instantly evolve.
+This scope does not redefine growth balancing, extra-learning rewards or ticket carryover outside the illustrated day.
+
+## Leaving, lifecycle and reset
+
+| Event                                 | Current unfinished word batch                                |
+| ------------------------------------- | ------------------------------------------------------------ |
+| Open confirmation                     | Pause, no reset                                              |
+| Keep learning / dismiss confirmation  | Resume same question and progress                            |
+| Confirm Leave batch                   | Reset current batch; return to Words                         |
+| Close app or reload                   | Reset current unfinished batch                               |
+| Cross 00:00 Vietnam time              | Reset unfinished batch and re-evaluate daily assignment/gate |
+| Switch app or lock screen temporarily | Pause; resume if session is alive and learning day unchanged |
+
+System termination/reload while backgrounded follows the reset rule; merely hiding the page does not.
+Reset clears current answers, task credit and retry queue. Previously completed batches, learned words and recorded rewards are not deleted. Unfinished review remains outstanding.
+Stop audio and active-study time while paused. Do not unexpectedly autoplay audio when returning.
+These reset rules apply to word batches, not automatically to video lessons or other flows.
+
+## Future implementation acceptance checks
+
+- Yesterday complete + earlier review pending → locked.
+- Yesterday/earlier complete + outstanding review pending → locked.
+- All required review complete, or empty required set → unlocked at every entry point.
+- Correct at 6/40 → 7/40; wrong at 6/40 → 6/40; duplicate correct → still 7/40.
+- Final round-1 task wrong → remain in round 1; refresher/retry when necessary.
+- All ten introductions seen but only 39 unique tasks correct → no ticket or new-word batch commit.
+- Final mandatory review in sample → 2/3 and unlock; no meal.
+- New batch in sample → 3/3 receipt, one automatic meal and one growth update.
+- Cancel exit → same progress; confirm exit → restart at 0/40.
+- Temporary background → preserve live session; reload/Vietnam midnight → reset unfinished batch.
+
+See [mockups and interaction specification](mockups/word-sessions-v1/README.md). These checks have not been run against an app implementation.

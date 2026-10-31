@@ -1,0 +1,1396 @@
+{
+  "schemaVersion": 2,
+  "words": [
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-031",
+      "headword": "take a risk",
+      "senseKey": "accept_possible_danger",
+      "itemType": "collocation",
+      "partOfSpeech": "verb",
+      "meaningEn": "To do something while knowing that it could have a bad result.",
+      "meaningVi": "chấp nhận rủi ro",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/teɪk ə rɪsk/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/e/e4/En-au-take_a_risk.ogg/En-au-take_a_risk.ogg.mp3",
+          "audioText": "take a risk",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-take_a_risk.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take a risk with something",
+        "take a risk by doing something",
+        "take the risk of doing something"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes a risk"
+        },
+        {
+          "label": "Past",
+          "text": "took a risk"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken a risk"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking a risk"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Use a risk for one uncertain decision. Take risks describes a general habit.",
+      "usageNotesVi": "Dùng take a risk khi nói đến một quyết định có rủi ro; take risks thường nói về thói quen. Sau by hoặc of, dùng động từ dạng -ing.",
+      "commonMistakes": [
+        {
+          "incorrect": "take a risk by quit my job",
+          "correct": "take a risk by quitting my job",
+          "explanationVi": "By là giới từ nên theo sau là quitting, không phải quit."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "take a chance",
+          "relation": "synonym",
+          "noteVi": "Cũng nói về việc thử dù kết quả chưa chắc chắn; sắc thái thường nhẹ hơn.",
+          "wordId": "colloc-097"
+        },
+        {
+          "text": "play it safe",
+          "relation": "contrast",
+          "noteVi": "Chọn cách an toàn, tránh rủi ro."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take a risk"
+      ],
+      "meaningDistractorsVi": [
+        "tránh mọi rủi ro",
+        "đánh giá mức độ rủi ro",
+        "cảnh báo người khác về rủi ro"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Safety",
+          "textEn": "We cannot take a risk with their safety.",
+          "textVi": "Chúng ta không thể mạo hiểm với sự an toàn của họ.",
+          "targetText": "take a risk",
+          "audioUrl": null,
+          "gap": {
+            "template": "We cannot {{blank}} with their safety.",
+            "acceptedAnswers": [
+              "take a risk"
+            ],
+            "explanationVi": "Sau cannot dùng động từ nguyên mẫu take. Giữ mạo từ a trong cụm take a risk."
+          },
+          "sentenceTokens": [
+            "We",
+            "cannot",
+            "take",
+            "a",
+            "risk",
+            "with",
+            "their",
+            "safety."
+          ],
+          "arrangementAnswers": [
+            "We cannot take a risk with their safety."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "A career decision",
+          "textEn": "She took a risk and started her own business.",
+          "textVi": "Cô ấy chấp nhận rủi ro và mở công ty riêng.",
+          "targetText": "took a risk",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take, nghĩa là chấp nhận rủi ro. Dùng dạng nguyên mẫu, không dịch cả câu.",
+        "acceptedAnswers": [
+          "take a risk"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take a risk. Dùng take a risk khi nói đến một quyết định có rủi ro; take risks thường nói về thói quen. Sau by hoặc of, dùng động từ dạng -ing."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_a_risk",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-034",
+      "headword": "take into account",
+      "senseKey": "consider_when_deciding",
+      "itemType": "phrase",
+      "partOfSpeech": "verb",
+      "meaningEn": "To consider something when making a decision or judgement.",
+      "meaningVi": "tính đến, cân nhắc một yếu tố",
+      "cefrLevel": "B2",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/teɪk ˌɪntu əˈkaʊnt/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/4b/En-au-take_into_account.ogg/En-au-take_into_account.ogg.mp3",
+          "audioText": "take into account",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-take_into_account.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take something into account",
+        "take into account something",
+        "take into account the fact that …"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes into account"
+        },
+        {
+          "label": "Past",
+          "text": "took into account"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken into account"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking into account"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "The object can go before or after into account. Longer objects often come after it.",
+      "usageNotesVi": "Tân ngữ có thể đứng giữa take và into account hoặc sau cả cụm. Với tân ngữ dài, cách đặt sau cụm thường dễ đọc hơn.",
+      "commonMistakes": [
+        {
+          "incorrect": "take the cost in account",
+          "correct": "take the cost into account",
+          "explanationVi": "Cụm cố định dùng into account, không phải in account."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "consider",
+          "relation": "synonym",
+          "noteVi": "Từ đơn gần nghĩa, dùng được trong nhiều ngữ cảnh hơn."
+        },
+        {
+          "text": "ignore",
+          "relation": "contrast",
+          "noteVi": "Bỏ qua một yếu tố thay vì cân nhắc nó."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take into account"
+      ],
+      "meaningDistractorsVi": [
+        "bỏ qua một yếu tố",
+        "ghi chép vào tài khoản",
+        "chịu trách nhiệm về kết quả"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Planning a trip",
+          "textEn": "Please take into account the cost of transport.",
+          "textVi": "Hãy tính đến chi phí đi lại.",
+          "targetText": "take into account",
+          "audioUrl": null,
+          "gap": {
+            "template": "Please {{blank}} the cost of transport.",
+            "acceptedAnswers": [
+              "take into account"
+            ],
+            "explanationVi": "Sau please dùng take. Một cách đặt khác cũng đúng: take the cost of transport into account."
+          },
+          "sentenceTokens": [
+            "Please",
+            "take",
+            "into",
+            "account",
+            "the",
+            "cost",
+            "of",
+            "transport."
+          ],
+          "arrangementAnswers": [
+            "Please take into account the cost of transport.",
+            "Please take the cost of transport into account."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Hiring",
+          "textEn": "We took her experience into account before hiring her.",
+          "textVi": "Chúng tôi đã cân nhắc kinh nghiệm của cô ấy trước khi tuyển dụng.",
+          "targetText": "took her experience into account",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take, nghĩa là tính đến một yếu tố khi quyết định. Chưa điền tân ngữ.",
+        "acceptedAnswers": [
+          "take into account"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take into account. Tân ngữ có thể đứng giữa take và into account hoặc sau cả cụm. Với tân ngữ dài, cách đặt sau cụm thường dễ đọc hơn."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_into_account",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-040",
+      "headword": "take advantage of",
+      "senseKey": "use_an_opportunity",
+      "itemType": "idiom",
+      "partOfSpeech": "verb",
+      "meaningEn": "To use an opportunity or a useful situation to benefit yourself.",
+      "meaningVi": "tận dụng một cơ hội hoặc điều kiện thuận lợi",
+      "cefrLevel": "B2",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "us": {
+          "ipa": "/teɪk ədˈvæntɪdʒ əv/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/d/d5/LL-Q1860_%28eng%29-Flame%2C_not_lame-take_advantage_of.wav/LL-Q1860_%28eng%29-Flame%2C_not_lame-take_advantage_of.wav.mp3",
+          "audioText": "take advantage of",
+          "voiceType": "human",
+          "speaker": "Flame, not lame",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:LL-Q1860_(eng)-Flame%2C_not_lame-take_advantage_of.wav",
+          "license": "CC0 1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take advantage of an opportunity",
+        "take advantage of free services",
+        "take full advantage of something"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes advantage of"
+        },
+        {
+          "label": "Past",
+          "text": "took advantage of"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken advantage of"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking advantage of"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "This entry teaches the positive opportunity sense. With a person, the phrase can mean treating them unfairly for your own benefit.",
+      "usageNotesVi": "Mục này chỉ luyện nghĩa tích cực: tận dụng cơ hội. Khi nói take advantage of someone, cụm còn có thể mang nghĩa lợi dụng người đó; đó là nghĩa khác.",
+      "commonMistakes": [
+        {
+          "incorrect": "take advantage from the offer",
+          "correct": "take advantage of the offer",
+          "explanationVi": "Cụm này đi với of, không phải from."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "make use of",
+          "relation": "synonym",
+          "noteVi": "Nhấn mạnh việc sử dụng thứ có sẵn."
+        },
+        {
+          "text": "exploit someone",
+          "relation": "contrast",
+          "noteVi": "Nghĩa lợi dụng người khác; không phải nghĩa đang được luyện ở mục này."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take advantage of"
+      ],
+      "meaningDistractorsVi": [
+        "bỏ lỡ một cơ hội tốt",
+        "tạo cơ hội cho người khác",
+        "từ chối một lời đề nghị"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Learning opportunities",
+          "textEn": "You can take advantage of the free lessons.",
+          "textVi": "Bạn có thể tận dụng các buổi học miễn phí.",
+          "targetText": "take advantage of",
+          "audioUrl": null,
+          "gap": {
+            "template": "You can {{blank}} the free lessons.",
+            "acceptedAnswers": [
+              "take advantage of"
+            ],
+            "explanationVi": "Sau can dùng take. Of nối cụm với cơ hội được tận dụng: the free lessons."
+          },
+          "sentenceTokens": [
+            "You",
+            "can",
+            "take",
+            "advantage",
+            "of",
+            "the",
+            "free",
+            "lessons."
+          ],
+          "arrangementAnswers": [
+            "You can take advantage of the free lessons."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Everyday life",
+          "textEn": "We took advantage of the sunshine and walked home.",
+          "textVi": "Chúng tôi tận dụng lúc trời nắng đẹp để đi bộ về nhà.",
+          "targetText": "took advantage of",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take, nghĩa là tận dụng một cơ hội tốt. Trong bài này không dùng nghĩa lợi dụng người khác.",
+        "acceptedAnswers": [
+          "take advantage of"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take advantage of. Mục này chỉ luyện nghĩa tích cực: tận dụng cơ hội. Khi nói take advantage of someone, cụm còn có thể mang nghĩa lợi dụng người đó; đó là nghĩa khác."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_advantage_of",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-046",
+      "headword": "take care of",
+      "senseKey": "look_after_person_or_animal",
+      "itemType": "phrase",
+      "partOfSpeech": "verb",
+      "meaningEn": "To look after someone or an animal and provide what they need.",
+      "meaningVi": "chăm sóc người hoặc động vật",
+      "cefrLevel": "A2",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/teɪk keər əv/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/2/25/En-au-take_care_of.ogg/En-au-take_care_of.ogg.mp3",
+          "audioText": "take care of",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-take_care_of.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take care of someone",
+        "take good care of someone",
+        "take care of yourself"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes care of"
+        },
+        {
+          "label": "Past",
+          "text": "took care of"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken care of"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking care of"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "This entry focuses on caring for people and animals. Taking care of a task means dealing with it, which is a different use.",
+      "usageNotesVi": "Mục này tập trung vào chăm sóc người hoặc động vật. Take care of a task có nghĩa xử lý một công việc, không phải nghĩa chính ở đây.",
+      "commonMistakes": [
+        {
+          "incorrect": "take care for the cat",
+          "correct": "take care of the cat",
+          "explanationVi": "Dùng take care of. Care for cũng có thể đúng khi không có take, nhưng không ghép hai cấu trúc thành take care for."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "look after",
+          "relation": "synonym",
+          "noteVi": "Gần nghĩa chăm sóc trong ngữ cảnh này."
+        },
+        {
+          "text": "care about",
+          "relation": "contrast",
+          "noteVi": "Quan tâm đến ai/điều gì; không nhất thiết trực tiếp chăm sóc."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take care of"
+      ],
+      "meaningDistractorsVi": [
+        "lo lắng về một điều gì đó",
+        "tránh tiếp xúc với ai đó",
+        "phê bình hành vi của ai đó"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Looking after a pet",
+          "textEn": "I take care of my cat every day.",
+          "textVi": "Tôi chăm sóc mèo của mình mỗi ngày.",
+          "targetText": "take care of",
+          "audioUrl": null,
+          "gap": {
+            "template": "I {{blank}} my cat every day.",
+            "acceptedAnswers": [
+              "take care of"
+            ],
+            "explanationVi": "I đi với take ở hiện tại đơn. Không bỏ of trước đối tượng được chăm sóc."
+          },
+          "sentenceTokens": [
+            "I",
+            "take",
+            "care",
+            "of",
+            "my",
+            "cat",
+            "every",
+            "day."
+          ],
+          "arrangementAnswers": [
+            "I take care of my cat every day."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Family",
+          "textEn": "My brother took care of me when I was ill.",
+          "textVi": "Anh trai tôi đã chăm sóc tôi khi tôi bị ốm.",
+          "targetText": "took care of",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take, nghĩa là chăm sóc ai đó hoặc một con vật. Dùng dạng nguyên mẫu.",
+        "acceptedAnswers": [
+          "take care of"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take care of. Mục này tập trung vào chăm sóc người hoặc động vật. Take care of a task có nghĩa xử lý một công việc, không phải nghĩa chính ở đây."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_care_of",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-048",
+      "headword": "make a mistake",
+      "senseKey": "do_something_incorrectly",
+      "itemType": "collocation",
+      "partOfSpeech": "verb",
+      "meaningEn": "To do or say something that is incorrect.",
+      "meaningVi": "mắc lỗi, làm hoặc nói điều không đúng",
+      "cefrLevel": "A2",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "uk": {
+          "ipa": "/meɪk ə mɪˈsteɪk/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c0/LL-Q1860_%28eng%29-Vealhurl-make_a_mistake.wav/LL-Q1860_%28eng%29-Vealhurl-make_a_mistake.wav.mp3",
+          "audioText": "make a mistake",
+          "voiceType": "human",
+          "speaker": "Vealhurl",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:LL-Q1860_(eng)-Vealhurl-make_a_mistake.wav",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "make a mistake in something",
+        "make a mistake when doing something",
+        "make the same mistake again"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "makes a mistake"
+        },
+        {
+          "label": "Past",
+          "text": "made a mistake"
+        },
+        {
+          "label": "Past participle",
+          "text": "made a mistake"
+        },
+        {
+          "label": "-ing form",
+          "text": "making a mistake"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Mistake is countable. Use a mistake for one error and mistakes for more than one.",
+      "usageNotesVi": "Mistake là danh từ đếm được. Một lỗi là a mistake; nhiều lỗi là mistakes. Động từ thường đi cùng là make.",
+      "commonMistakes": [
+        {
+          "incorrect": "do a mistake",
+          "correct": "make a mistake",
+          "explanationVi": "Dùng make với mistake khi nói mắc lỗi. Dạng quá khứ của make là made."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "make an error",
+          "relation": "synonym",
+          "noteVi": "Cách nói thường gặp trong văn viết hoặc ngữ cảnh kỹ thuật."
+        },
+        {
+          "text": "correct a mistake",
+          "relation": "contrast",
+          "noteVi": "Sửa một lỗi đã mắc."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "make a mistake"
+      ],
+      "meaningDistractorsVi": [
+        "phát hiện một lỗi",
+        "sửa một lỗi",
+        "giải thích một quy tắc"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Checking contact details",
+          "textEn": "I made a mistake in your phone number.",
+          "textVi": "Tôi đã ghi sai số điện thoại của bạn.",
+          "targetText": "made a mistake",
+          "audioUrl": null,
+          "gap": {
+            "template": "I {{blank}} in your phone number.",
+            "acceptedAnswers": [
+              "made a mistake"
+            ],
+            "explanationVi": "Câu đang kể một việc đã xảy ra, nên dùng made a mistake. Make → made ở quá khứ; không dùng do a mistake."
+          },
+          "sentenceTokens": [
+            "I",
+            "made",
+            "a",
+            "mistake",
+            "in",
+            "your",
+            "phone",
+            "number."
+          ],
+          "arrangementAnswers": [
+            "I made a mistake in your phone number."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Learning",
+          "textEn": "Everyone can make a mistake when learning something new.",
+          "textVi": "Ai cũng có thể mắc lỗi khi học một điều mới.",
+          "targetText": "make a mistake",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng make, nghĩa là mắc một lỗi. Dùng dạng nguyên mẫu, không dùng quá khứ.",
+        "acceptedAnswers": [
+          "make a mistake"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: make a mistake. Mistake là danh từ đếm được. Một lỗi là a mistake; nhiều lỗi là mistakes. Động từ thường đi cùng là make."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/make_a_mistake",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-062",
+      "headword": "common sense",
+      "senseKey": "practical_good_judgement",
+      "itemType": "collocation",
+      "partOfSpeech": "noun",
+      "meaningEn": "Practical judgement that helps you act sensibly in everyday situations.",
+      "meaningVi": "óc phán đoán thực tế, lẽ thường",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "us": {
+          "ipa": "/ˌkɑmən ˈsɛns/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/5/5f/LL-Q1860_%28eng%29-Naomi_Persephone_Amethyst_%28NaomiAmethyst%29-common_sense.wav/LL-Q1860_%28eng%29-Naomi_Persephone_Amethyst_%28NaomiAmethyst%29-common_sense.wav.mp3",
+          "audioText": "common sense",
+          "voiceType": "human",
+          "speaker": "Naomi Persephone Amethyst (NaomiAmethyst)",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:LL-Q1860_(eng)-Naomi_Persephone_Amethyst_(NaomiAmethyst)-common_sense.wav",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "use your common sense",
+        "have common sense",
+        "a matter of common sense"
+      ],
+      "forms": [
+        {
+          "label": "Uncountable noun",
+          "text": "common sense"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Common sense is normally uncountable. It is about practical judgement, not a fact that many people know.",
+      "usageNotesVi": "Common sense thường không đếm được. Cụm nói về khả năng phán đoán thực tế, khác common knowledge là thông tin nhiều người biết.",
+      "commonMistakes": [
+        {
+          "incorrect": "She has a common sense.",
+          "correct": "She has common sense.",
+          "explanationVi": "Trong cách dùng này common sense không đếm được, nên không thêm a."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "good judgement",
+          "relation": "synonym",
+          "noteVi": "Khả năng nhận định và lựa chọn hợp lý."
+        },
+        {
+          "text": "common knowledge",
+          "relation": "contrast",
+          "noteVi": "Điều ai cũng biết; không đồng nghĩa với khả năng phán đoán."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "common sense"
+      ],
+      "meaningDistractorsVi": [
+        "kiến thức chuyên môn",
+        "thông tin nhiều người biết",
+        "một giác quan của cơ thể"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Making a practical decision",
+          "textEn": "Please use your common sense in this situation.",
+          "textVi": "Hãy dùng óc phán đoán thực tế trong tình huống này.",
+          "targetText": "common sense",
+          "audioUrl": null,
+          "gap": {
+            "template": "Please use your {{blank}} in this situation.",
+            "acceptedAnswers": [
+              "common sense"
+            ],
+            "explanationVi": "Dùng common sense như một cụm danh từ không đếm được. Your đã đứng trước cụm nên không thêm a."
+          },
+          "sentenceTokens": [
+            "Please",
+            "use",
+            "your",
+            "common",
+            "sense",
+            "in",
+            "this",
+            "situation."
+          ],
+          "arrangementAnswers": [
+            "Please use your common sense in this situation."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Everyday habits",
+          "textEn": "It is common sense to lock the door.",
+          "textVi": "Khóa cửa là việc nên làm theo lẽ thường.",
+          "targetText": "common sense",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm danh từ 2 từ bắt đầu bằng common, nghĩa là óc phán đoán thực tế hoặc lẽ thường.",
+        "acceptedAnswers": [
+          "common sense"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: common sense. Common sense thường không đếm được. Cụm nói về khả năng phán đoán thực tế, khác common knowledge là thông tin nhiều người biết."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/common_sense",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-071",
+      "headword": "catch fire",
+      "senseKey": "start_burning",
+      "itemType": "collocation",
+      "partOfSpeech": "verb",
+      "meaningEn": "To start burning.",
+      "meaningVi": "bắt lửa, bắt đầu cháy",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/kætʃ faɪə/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/cb/En-au-catch_fire.ogg/En-au-catch_fire.ogg.mp3",
+          "audioText": "catch fire",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:en-au-catch_fire.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "catch fire easily",
+        "catch fire from a spark",
+        "something catches fire"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "catches fire"
+        },
+        {
+          "label": "Past",
+          "text": "caught fire"
+        },
+        {
+          "label": "Past participle",
+          "text": "caught fire"
+        },
+        {
+          "label": "-ing form",
+          "text": "catching fire"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Catch fire describes the start of burning. Be on fire describes something that is already burning.",
+      "usageNotesVi": "Catch fire nhấn mạnh lúc bắt đầu cháy. Be on fire nói về trạng thái đang cháy. Không thêm a trong cụm catch fire.",
+      "commonMistakes": [
+        {
+          "incorrect": "The paper caught a fire.",
+          "correct": "The paper caught fire.",
+          "explanationVi": "Cụm cố định là catch fire. Dạng quá khứ của catch là caught."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "be on fire",
+          "relation": "contrast",
+          "noteVi": "Đang cháy, khác thời điểm bắt đầu bắt lửa."
+        },
+        {
+          "text": "put out a fire",
+          "relation": "contrast",
+          "noteVi": "Dập tắt một đám cháy."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "catch fire"
+      ],
+      "meaningDistractorsVi": [
+        "dập tắt một đám cháy",
+        "đốt lửa có chủ đích",
+        "phát hiện một đám cháy"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Fire safety",
+          "textEn": "Dry leaves can catch fire very easily.",
+          "textVi": "Lá khô có thể bắt lửa rất dễ dàng.",
+          "targetText": "catch fire",
+          "audioUrl": null,
+          "gap": {
+            "template": "Dry leaves can {{blank}} very easily.",
+            "acceptedAnswers": [
+              "catch fire"
+            ],
+            "explanationVi": "Sau can dùng catch, không dùng caught. Fire không có mạo từ trong cụm này."
+          },
+          "sentenceTokens": [
+            "Dry",
+            "leaves",
+            "can",
+            "catch",
+            "fire",
+            "very",
+            "easily."
+          ],
+          "arrangementAnswers": [
+            "Dry leaves can catch fire very easily."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "An incident",
+          "textEn": "The old curtains caught fire near the heater.",
+          "textVi": "Rèm cửa cũ gần máy sưởi đã bắt lửa.",
+          "targetText": "caught fire",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 2 từ bắt đầu bằng catch, nghĩa là bắt lửa hoặc bắt đầu cháy. Dùng dạng nguyên mẫu.",
+        "acceptedAnswers": [
+          "catch fire"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: catch fire. Catch fire nhấn mạnh lúc bắt đầu cháy. Be on fire nói về trạng thái đang cháy. Không thêm a trong cụm catch fire."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/catch_fire",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-074",
+      "headword": "take the lead",
+      "senseKey": "start_directing_an_activity",
+      "itemType": "idiom",
+      "partOfSpeech": "verb",
+      "meaningEn": "To be the person who starts or directs an activity.",
+      "meaningVi": "chủ động dẫn dắt một hoạt động",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/teɪk ðə liːd/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/9/9e/En-au-take_the_lead.ogg/En-au-take_the_lead.ogg.mp3",
+          "audioText": "take the lead",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-take_the_lead.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take the lead in doing something",
+        "take the lead on a project",
+        "let someone take the lead"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes the lead"
+        },
+        {
+          "label": "Past",
+          "text": "took the lead"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken the lead"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking the lead"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Here, lead is pronounced like seed. This entry is about directing an activity; in sport the phrase can also mean moving ahead of opponents.",
+      "usageNotesVi": "Lead trong cụm này đọc /liːd/, không phải /led/ như kim loại chì. Mục này luyện nghĩa dẫn dắt hoạt động; trong thể thao còn có nghĩa vươn lên dẫn trước.",
+      "commonMistakes": [
+        {
+          "incorrect": "take the lead in organize the event",
+          "correct": "take the lead in organizing the event",
+          "explanationVi": "Sau in dùng organizing. Giữ the trong cụm take the lead."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "lead a project",
+          "relation": "related",
+          "noteVi": "Trực tiếp dẫn dắt một dự án."
+        },
+        {
+          "text": "follow someone’s lead",
+          "relation": "contrast",
+          "noteVi": "Làm theo cách hoặc hướng đi của người dẫn dắt."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take the lead"
+      ],
+      "meaningDistractorsVi": [
+        "làm theo hướng dẫn của người khác",
+        "chia đều mọi nhiệm vụ",
+        "rời khỏi một dự án"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Working together",
+          "textEn": "Linh will take the lead on this project.",
+          "textVi": "Linh sẽ dẫn dắt dự án này.",
+          "targetText": "take the lead",
+          "audioUrl": null,
+          "gap": {
+            "template": "Linh will {{blank}} on this project.",
+            "acceptedAnswers": [
+              "take the lead"
+            ],
+            "explanationVi": "Sau will dùng take. The là một phần của cụm; on nối với dự án được dẫn dắt."
+          },
+          "sentenceTokens": [
+            "Linh",
+            "will",
+            "take",
+            "the",
+            "lead",
+            "on",
+            "this",
+            "project."
+          ],
+          "arrangementAnswers": [
+            "Linh will take the lead on this project."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Planning with friends",
+          "textEn": "I took the lead in organizing our trip.",
+          "textVi": "Tôi đã chủ động đứng ra tổ chức chuyến đi của chúng tôi.",
+          "targetText": "took the lead",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take, nghĩa là chủ động dẫn dắt một hoạt động. Dùng mạo từ xác định.",
+        "acceptedAnswers": [
+          "take the lead"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take the lead. Lead trong cụm này đọc /liːd/, không phải /led/ như kim loại chì. Mục này luyện nghĩa dẫn dắt hoạt động; trong thể thao còn có nghĩa vươn lên dẫn trước."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_the_lead",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-097",
+      "headword": "take a chance",
+      "senseKey": "try_despite_uncertainty",
+      "itemType": "idiom",
+      "partOfSpeech": "verb",
+      "meaningEn": "To try something even though you do not know whether it will succeed.",
+      "meaningVi": "thử một việc dù chưa chắc thành công",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/teɪk ə tʃɑːns/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/f/f7/En-au-take_a_chance.ogg/En-au-take_a_chance.ogg.mp3",
+          "audioText": "take a chance",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-take_a_chance.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "take a chance on someone",
+        "take a chance on something",
+        "take a chance and do something"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "takes a chance"
+        },
+        {
+          "label": "Past",
+          "text": "took a chance"
+        },
+        {
+          "label": "Past participle",
+          "text": "taken a chance"
+        },
+        {
+          "label": "-ing form",
+          "text": "taking a chance"
+        }
+      ],
+      "register": "neutral",
+      "usageNotes": "Take a chance on someone can mean giving them an opportunity despite uncertainty. Have a chance means having an opportunity or possibility.",
+      "usageNotesVi": "Take a chance on someone có thể là trao cơ hội dù chưa chắc người đó thành công. Have a chance nói về việc có cơ hội/khả năng, chưa chắc đã hành động.",
+      "commonMistakes": [
+        {
+          "incorrect": "take a chance in a new restaurant",
+          "correct": "take a chance on a new restaurant",
+          "explanationVi": "Khi nói thử một lựa chọn chưa chắc tốt, dùng take a chance on lựa chọn đó."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "take a risk",
+          "relation": "synonym",
+          "noteVi": "Cũng chấp nhận kết quả không chắc chắn, thường nhấn mạnh nguy cơ hơn.",
+          "wordId": "colloc-031"
+        },
+        {
+          "text": "have a chance",
+          "relation": "contrast",
+          "noteVi": "Có cơ hội hoặc khả năng; khác quyết định thử."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "take a chance"
+      ],
+      "meaningDistractorsVi": [
+        "bỏ lỡ một cơ hội",
+        "đảm bảo sẽ thành công",
+        "chờ đến khi hết rủi ro"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Trying something new",
+          "textEn": "We decided to take a chance on it.",
+          "textVi": "Chúng tôi quyết định thử dù chưa chắc kết quả.",
+          "targetText": "take a chance",
+          "audioUrl": null,
+          "gap": {
+            "template": "We decided to {{blank}} on it.",
+            "acceptedAnswers": [
+              "take a chance"
+            ],
+            "explanationVi": "Sau decided to dùng take. On nối với lựa chọn mà người nói quyết định thử."
+          },
+          "sentenceTokens": [
+            "We",
+            "decided",
+            "to",
+            "take",
+            "a",
+            "chance",
+            "on",
+            "it."
+          ],
+          "arrangementAnswers": [
+            "We decided to take a chance on it."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "At work",
+          "textEn": "The manager took a chance on a new employee.",
+          "textVi": "Người quản lý đã mạnh dạn trao cơ hội cho một nhân viên mới.",
+          "targetText": "took a chance",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng take và có danh từ chance, nghĩa là thử dù chưa chắc thành công.",
+        "acceptedAnswers": [
+          "take a chance"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: take a chance. Take a chance on someone có thể là trao cơ hội dù chưa chắc người đó thành công. Have a chance nói về việc có cơ hội/khả năng, chưa chắc đã hành động."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/take_a_chance",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    },
+    {
+      "schemaVersion": 2,
+      "contentVersion": 1,
+      "id": "colloc-099",
+      "headword": "pay a visit",
+      "senseKey": "visit_person_or_place",
+      "itemType": "collocation",
+      "partOfSpeech": "verb",
+      "meaningEn": "To go and see a person or a place.",
+      "meaningVi": "ghé thăm một người hoặc nơi chốn",
+      "cefrLevel": "B1",
+      "cefrStatus": "estimated",
+      "cefrSource": "EnglsMyOwn editorial learning-level estimate for this sense; not a verified dictionary CEFR rating.",
+      "topicIds": [
+        "everyday_decisions"
+      ],
+      "topic": "Everyday decisions",
+      "pronunciation": {
+        "au": {
+          "ipa": "/peɪ ə ˈvɪzɪt/",
+          "ipaStatus": "editorial",
+          "audioUrl": "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c7/En-au-pay_a_visit.ogg/En-au-pay_a_visit.ogg.mp3",
+          "audioText": "pay a visit",
+          "voiceType": "human",
+          "speaker": "Commander Keane",
+          "sourceUrl": "https://commons.wikimedia.org/wiki/File:En-au-pay_a_visit.ogg",
+          "license": "CC BY-SA 4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "checkedAt": "2026-10-31",
+          "checkMethod": "Source page confirms phrase, speaker and license; MP3 HTTP 206 audio/mpeg. Broad IPA is editorial, not a narrow transcription of this recording."
+        }
+      },
+      "commonPatterns": [
+        "pay a visit to someone",
+        "pay a visit to a place",
+        "pay someone a visit"
+      ],
+      "forms": [
+        {
+          "label": "Third person",
+          "text": "pays a visit"
+        },
+        {
+          "label": "Past",
+          "text": "paid a visit"
+        },
+        {
+          "label": "Past participle",
+          "text": "paid a visit"
+        },
+        {
+          "label": "-ing form",
+          "text": "paying a visit"
+        }
+      ],
+      "register": "formal",
+      "usageNotes": "This can sound more deliberate or formal than visit. Pay does not mean handing over money in this phrase.",
+      "usageNotesVi": "Cách nói có thể trang trọng hoặc nhấn mạnh việc chủ động đến thăm hơn visit. Pay trong cụm này không có nghĩa trả tiền.",
+      "commonMistakes": [
+        {
+          "incorrect": "pay a visit at my aunt",
+          "correct": "pay a visit to my aunt",
+          "explanationVi": "Dùng pay a visit to someone, hoặc đổi cấu trúc thành pay someone a visit."
+        }
+      ],
+      "relatedExpressions": [
+        {
+          "text": "visit",
+          "relation": "synonym",
+          "noteVi": "Cách diễn đạt ngắn và trung tính hơn."
+        },
+        {
+          "text": "drop by",
+          "relation": "related",
+          "noteVi": "Ghé qua, thường thân mật và ngắn."
+        }
+      ],
+      "tags": [
+        "pilot-v2",
+        "everyday-english"
+      ],
+      "acceptedSpellings": [
+        "pay a visit"
+      ],
+      "meaningDistractorsVi": [
+        "trả tiền vé vào cửa",
+        "mời ai đó đến nhà",
+        "đặt lịch hẹn với ai đó"
+      ],
+      "examples": [
+        {
+          "id": "practice",
+          "context": "Keeping in touch",
+          "textEn": "We paid a visit to our old teacher.",
+          "textVi": "Chúng tôi đã ghé thăm thầy giáo cũ.",
+          "targetText": "paid a visit",
+          "audioUrl": null,
+          "gap": {
+            "template": "We {{blank}} to our old teacher.",
+            "acceptedAnswers": [
+              "paid a visit"
+            ],
+            "explanationVi": "Câu kể một việc đã xảy ra nên dùng paid, quá khứ của pay. Giữ a visit trước to our old teacher."
+          },
+          "sentenceTokens": [
+            "We",
+            "paid",
+            "a",
+            "visit",
+            "to",
+            "our",
+            "old",
+            "teacher."
+          ],
+          "arrangementAnswers": [
+            "We paid a visit to our old teacher."
+          ]
+        },
+        {
+          "id": "another-context",
+          "context": "Family",
+          "textEn": "I will pay my grandparents a visit tomorrow.",
+          "textVi": "Ngày mai tôi sẽ ghé thăm ông bà.",
+          "targetText": "pay my grandparents a visit",
+          "audioUrl": null
+        }
+      ],
+      "practiceExampleId": "practice",
+      "recall": {
+        "promptVi": "Viết cụm 3 từ bắt đầu bằng pay, nghĩa là ghé thăm ai đó hoặc một nơi. Dùng dạng nguyên mẫu.",
+        "acceptedAnswers": [
+          "pay a visit"
+        ],
+        "explanationVi": "Câu hỏi yêu cầu cụm ở dạng gốc: pay a visit. Cách nói có thể trang trọng hoặc nhấn mạnh việc chủ động đến thăm hơn visit. Pay trong cụm này không có nghĩa trả tiền."
+      },
+      "sourceRef": "EnglsMyOwn editorial pilot: original definitions, translations, examples and exercises. Headword/ID selected from collocations_b1_plus_100-v3.xlsx; usage cross-checked against the linked dictionary entry. CEFR and broad IPA are editorial, not independently certified.",
+      "sourceUrl": "https://en.wiktionary.org/wiki/pay_a_visit",
+      "reviewedAt": "2026-10-31",
+      "status": "published"
+    }
+  ],
+  "lessons": []
+}

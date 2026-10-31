@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "contentVersion": 1,
+  "id": "sample_get_along_friendly",
+  "headword": "get along",
+  "senseKey": "friendly_relationship",
+  "itemType": "phrasal_verb",
+  "partOfSpeech": "verb",
+  "meaningEn": "to have a friendly relationship with another person",
+  "meaningVi": "hòa thuận, có quan hệ tốt với ai",
+  "cefrLevel": null,
+  "cefrSource": null,
+  "topicIds": ["relationships", "daily_life"],
+  "pronunciation": {
+    "us": {
+      "ipa": null,
+      "audioUrl": null
+    },
+    "uk": {
+      "ipa": null,
+      "audioUrl": null
+    }
+  },
+  "commonPatterns": ["get along with someone", "get along well with someone"],
+  "forms": ["gets along", "got along", "getting along"],
+  "usageNotes": "Use with before the person: get along with someone.",
+  "relatedWordIds": [],
+  "tags": ["conversation"],
+  "acceptedSpellings": ["get along"],
+  "meaningDistractorsVi": [
+    "giữ liên lạc với ai",
+    "hết một thứ gì đó",
+    "mong chờ điều gì đó"
+  ],
+  "sourceRef": "Original draft for EnglsMyOwn; not language-reviewed",
+  "sourceUrl": null,
+  "status": "draft",
+  "examples": [
+    {
+      "id": "ex01",
+      "textEn": "I get along well with my neighbors.",
+      "textVi": "Tôi hòa thuận với hàng xóm của mình.",
+      "audioUrl": null,
+      "gap": {
+        "template": "I {{blank}} well with my neighbors.",
+        "acceptedAnswers": ["get along"]
+      },
+      "recall": {
+        "promptVi": "Điền cụm từ mang nghĩa hòa thuận: Tôi ___ với hàng xóm.",
+        "acceptedAnswers": ["get along"]
+      },
+      "sentenceTokens": [
+        "I",
+        "get",
+        "along",
+        "well",
+        "with",
+        "my",
+        "neighbors."
+      ]
+    }
+  ]
+}

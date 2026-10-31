@@ -1,0 +1,44 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signedIn() { return request.auth != null; }
+  function owner() { return signedIn() && request.auth.uid == get(/databases/$(database)/documents/config/access).data.ownerUid; }
+  function approved() { return signedIn() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved'; }
+  match /config/{id} { allow read, write: if false; }
+  match /users/{uid} {
+   allow get: if signedIn() && (request.auth.uid == uid || owner());
+   allow list: if owner();
+   allow create: if signedIn() && request.auth.uid == uid
+    && request.auth.token.email_verified == true
+    && request.resource.data.keys().hasOnly(['uid','email','displayName','status','role'])
+    && request.resource.data.uid == uid
+    && request.resource.data.email == request.auth.token.email
+    && request.resource.data.displayName is string && request.resource.data.displayName.size() <= 200
+    && request.resource.data.status == 'pending' && request.resource.data.role == 'learner';
+   allow update: if owner() && uid != request.auth.uid
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+    && request.resource.data.status in ['pending','approved','revoked'];
+   allow delete: if false;
+  }
+  match /words/{id} {
+   allow read: if owner() || (approved() && resource.data.status == 'published');
+   allow write: if owner();
+  }
+  match /lessons/{id} {
+   allow read: if owner() || (approved() && resource.data.status == 'published');
+   allow write: if owner();
+  }
+  match /learning/{uid} {
+   allow read: if approved() && request.auth.uid == uid;
+   allow create, update: if approved() && request.auth.uid == uid
+    && request.resource.data.keys().hasOnly(['records','plans','videos','savedVideos','pet'])
+    && request.resource.data.records is list && request.resource.data.records.size() <= 2000
+    && request.resource.data.plans is map && request.resource.data.videos is map
+    && request.resource.data.savedVideos is list && request.resource.data.pet is map
+    && request.resource.data.pet.keys().hasOnly(['name','color','gender','pattern'])
+    && request.resource.data.pet.name is string && request.resource.data.pet.name.size() <= 24;
+   allow delete: if false;
+  }
+  match /{document=**} { allow read, write: if false; }
+ }
+}
