@@ -19,7 +19,7 @@ Mở URL Vite in ra (mặc định `http://127.0.0.1:5173/EnglsMyOwn/`). Khi ch�
 
 ## Cấu hình
 
-Theo [hướng dẫn Firebase và GitHub Pages](docs/setup.md). Chưa kết nối Firebase project hoặc deploy. Không cần VPS hay service-account key trong frontend.
+Theo [hướng dẫn Firebase và GitHub Pages](docs/setup.md). Project đích: `english-app-6ca48`. Không cần VPS hay service-account key trong frontend. Xem [hướng dẫn nhập XLSX](docs/content/xlsx-import.md) và file mẫu trong `outputs/firebase-xlsx/`.
 
 ## Có trong bản đầu
 

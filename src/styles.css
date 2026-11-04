@@ -3065,3 +3065,23 @@ th {
     scroll-behavior: auto !important;
   }
 }
+
+.import-message {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.import-replace {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 20px 0;
+}
+.import-replace input {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  margin-top: 2px;
+}
+.import-preview li {
+  overflow-wrap: anywhere;
+}

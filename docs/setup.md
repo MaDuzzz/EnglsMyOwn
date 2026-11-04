@@ -2,7 +2,7 @@
 
 ## 1. Firebase project
 
-1. Tạo project ở [Firebase Console](https://console.firebase.google.com/), đăng ký Web app. Không cần Analytics cho pilot.
+1. Project hiện tại: **english-app-6ca48**, web app **english-app**. Cấu hình local nằm trong `.env.local` (được gitignore). Không cần Analytics cho pilot.
 2. Authentication → Sign-in method: bật **Google**, chọn email hỗ trợ.
 3. Tạo Cloud Firestore **Standard edition**, database `(default)`, Production mode. Chọn region trước khi tạo.
 4. Project settings → Your apps → Web SDK configuration: sao chép `.env.example` thành `.env.local`, điền `apiKey`, `authDomain`, `projectId`, `appId` vào biến tương ứng. Khởi động lại dev server.
@@ -37,17 +37,17 @@ Firestore không bật persistent cache; Auth có thể ghi nhớ đăng nhập.
 
 ## 4. Dữ liệu và Google Drive
 
-- Theo [format import](content-import.md), chuẩn bị tối thiểu 10 từ đã thẩm định. Studio → Validate → Import. Draft không hiện cho learner.
+- Theo [hướng dẫn XLSX](content/xlsx-import.md), dùng file mẫu 10 cụm hoặc chuẩn bị file theo format v2. Studio → chọn file → xem trước → Import. Draft không hiện cho learner.
 - Không commit nội dung riêng tư vào repo/public/src. Mẫu trong repo chỉ để kiểm tra UI.
 - Video dùng Drive file ID; iframe mở `https://drive.google.com/file/d/FILE_ID/preview`.
-- Theo quyết định kỹ thuật hiện tại, giữ **Restricted**, chia sẻ thủ công cho từng Google account approved. Thu hồi ở cả Firebase và Drive. Nếu chuyển Anyone with the link, người có link vẫn xem được bên ngoài app; không có app-only access.
+- Video để giai đoạn sau. Quyết định hiện tại cho scope nhỏ là Drive **Anyone with the link**; người có link vẫn xem được bên ngoài app, Firebase không thu hồi quyền xem link đó. Không có app-only access với cơ chế này.
 - Firebase session không đảm bảo Google session trong iframe. Dùng **Open in Drive** khi cần đăng nhập/cấp quyền. Play, tua và mute làm trực tiếp trong player; lượt nghe/xem do người học tự xác nhận.
 - Audio từ vựng cần URL phát trực tiếp trong `<audio>` trên Safari. Drive `/preview` không phải audio URL; importer chặn khi publish. Phương thức phát audio Drive vẫn phải kiểm chứng bằng file thật trước khi nhập giáo trình. Code không tự đổi quyền chia sẻ.
 
 ## 5. GitHub Pages
 
 1. Push source khi sẵn sàng. Settings → Pages → Source: **GitHub Actions**.
-2. Settings → Secrets and variables → Actions → **Variables**: thêm bốn biến `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID` như `.env.local`.
+2. Workflow đã có cấu hình web công khai của `english-app-6ca48`. Nếu muốn đổi project, thay cả bốn giá trị qua Settings → Secrets and variables → Actions → **Variables**: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`. Không chỉ thay một biến vì sẽ trộn cấu hình hai project.
 3. Actions → **Deploy GitHub Pages → Run workflow** trên branch đã kiểm tra. Workflow test, chạy Rules emulator, build rồi deploy `dist`.
 4. Mở URL deployment trả về; repo hiện tại dự kiến `https://maduzzz.github.io/EnglsMyOwn/`. Xác nhận URL ở Pages và thêm hostname vào Firebase Authorized domains.
 
