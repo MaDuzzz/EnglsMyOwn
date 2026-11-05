@@ -40,6 +40,6 @@ npm run build
 npm run test:rules
 ```
 
-CI chạy cả ba bước. Deploy Pages chỉ chạy khi chọn **Run workflow**.
+GitHub Pages dùng nguồn **GitHub Actions**. Khi push lên `main`, workflow kiểm tra app rồi xuất bản thư mục `dist`. Có thể chạy lại bằng **Run workflow**.
 
 [Phần đã làm và còn lại](docs/implementation-status.md) · [Format nội dung](docs/content-import.md) · [Quy tắc học](docs/learning-rules.md) · [Quyết định kỹ thuật](docs/technical-decisions-v1.md)

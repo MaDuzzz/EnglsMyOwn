@@ -48,7 +48,7 @@ Firestore không bật persistent cache; Auth có thể ghi nhớ đăng nhập.
 
 1. Push source khi sẵn sàng. Settings → Pages → Source: **GitHub Actions**.
 2. Workflow đã có cấu hình web công khai của `english-app-6ca48`. Nếu muốn đổi project, thay cả bốn giá trị qua Settings → Secrets and variables → Actions → **Variables**: `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`. Không chỉ thay một biến vì sẽ trộn cấu hình hai project.
-3. Actions → **Deploy GitHub Pages → Run workflow** trên branch đã kiểm tra. Workflow test, chạy Rules emulator, build rồi deploy `dist`.
+3. Push lên `main` để chạy **Deploy GitHub Pages**, hoặc chọn **Run workflow** để chạy lại. Workflow test, chạy Rules emulator, build rồi deploy `dist`. Nếu trang trắng và HTML còn chứa `/src/main.tsx`, kiểm tra lại Source ở bước 1.
 4. Mở URL deployment trả về; repo hiện tại dự kiến `https://maduzzz.github.io/EnglsMyOwn/`. Xác nhận URL ở Pages và thêm hostname vào Firebase Authorized domains.
 
 Base path tự lấy từ tên repo. Custom domain: đổi `VITE_BASE_PATH` trong workflow thành `/`, cấu hình DNS/Pages và Firebase domain tương ứng. Hash navigation không cần server rewrite khi refresh. [GitHub Pages custom workflows](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
