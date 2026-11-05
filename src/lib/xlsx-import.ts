@@ -25,6 +25,71 @@ function cellText(value: CellValue, location: string): string {
 }
 
 export function workbookContent(book: Workbook) {
+  if (book.worksheets.length === 1) {
+    const sheet = book.worksheets[0];
+    const columns: string[] = [];
+    sheet.getRow(1).eachCell((cell, col) => {
+      columns[col - 1] = cellText(cell.value, `${sheet.name}!${cell.address}`);
+    });
+    if (columns.includes("schemaVersion")) {
+      if (sheet.rowCount > 401 || sheet.columnCount > 60)
+        throw Error("Import at most 400 entries and 60 columns.");
+      if (new Set(columns).size !== columns.length)
+        throw Error("Duplicate column headers.");
+      const structured = new Set([
+        "topicIds",
+        "tags",
+        "commonPatterns",
+        "forms",
+        "commonMistakes",
+        "relatedExpressions",
+        "acceptedSpellings",
+        "meaningDistractorsVi",
+        "examples",
+        "pronunciation",
+        "recall",
+      ]);
+      const words: unknown[] = [];
+      sheet.eachRow((row, line) => {
+        if (line === 1) return;
+        if (
+          !row.values ||
+          !Object.values(row.values).some(
+            (value) => value != null && String(value).trim(),
+          )
+        )
+          return;
+        const value: Record<string, unknown> = {};
+        columns.forEach((name, col) => {
+          const raw = cellText(
+            row.getCell(col + 1).value,
+            `${sheet.name} row ${line}, ${name}`,
+          );
+          if (structured.has(name)) {
+            try {
+              value[name] = JSON.parse(raw);
+            } catch {
+              throw Error(
+                `${sheet.name} row ${line}: ${name} must contain valid JSON.`,
+              );
+            }
+          } else
+            value[name] = ["schemaVersion", "contentVersion"].includes(name)
+              ? Number(raw)
+              : raw;
+        });
+        if (!value.id && !value.headword) return;
+        try {
+          validateImport({ words: [value] });
+        } catch (e) {
+          throw Error(`${sheet.name} row ${line}: ${(e as Error).message}`);
+        }
+        words.push(value);
+      });
+      if (!words.length) throw Error("Provide at least one vocabulary entry.");
+      return validateImport({ words });
+    }
+  }
   if (book.worksheets.length === 1 && !book.getWorksheet("Words")) {
     const sheet = book.worksheets[0];
     const headers = new Map<string, number>();
