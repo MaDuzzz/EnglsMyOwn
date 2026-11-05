@@ -25,6 +25,49 @@ function cellText(value: CellValue, location: string): string {
 }
 
 export function workbookContent(book: Workbook) {
+  if (book.worksheets.length === 1 && !book.getWorksheet("Words")) {
+    const sheet = book.worksheets[0];
+    const headers = new Map<string, number>();
+    sheet.getRow(1).eachCell((cell, col) => {
+      const name = cellText(cell.value, `${sheet.name}!${cell.address}`);
+      if (headers.has(name))
+        throw Error(`${sheet.name}: duplicate column ${name}.`);
+      headers.set(name, col);
+    });
+    const required = [
+      "id",
+      "headword",
+      "meaningEn",
+      "meaningVi",
+      "textEn",
+      "gapTemplate",
+      "audioUS",
+      "audioUK",
+    ];
+    if (required.every((name) => headers.has(name))) {
+      let count = 0,
+        missingAudio = 0;
+      sheet.eachRow((row, line) => {
+        if (line === 1) return;
+        const word = cellText(
+          row.getCell(headers.get("headword")!).value,
+          `${sheet.name} row ${line}`,
+        );
+        if (!word) return;
+        count++;
+        const audio = ["audioUS", "audioUK"].map((name) =>
+          cellText(
+            row.getCell(headers.get(name)!).value,
+            `${sheet.name} row ${line}`,
+          ),
+        );
+        if (!audio.some((url) => /^https:\/\//i.test(url))) missingAudio++;
+      });
+      throw Error(
+        `Recognized single-sheet vocabulary format: ${count} entries. ${missingAudio} entries have no HTTPS audio URL. These source files also need exercise and pronunciation review before they can be imported. No content was saved.`,
+      );
+    }
+  }
   const tables: Record<string, Row[]> = {};
   for (const sheet of book.worksheets) {
     if (sheet.name !== "Readme" && !(sheet.name in schema))
