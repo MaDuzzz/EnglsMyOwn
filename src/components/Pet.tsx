@@ -2,20 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import type { createPetScene } from "./petScene";
 import { asset } from "./ui";
 
-export const coats = [
-  { id: "cream", name: "Soft cream", color: "#e9d5bb" },
-  { id: "silver", name: "Silver grey", color: "#a7b3bf" },
-  { id: "ginger", name: "Warm ginger", color: "#cd9866" },
-  { id: "cocoa", name: "Cocoa", color: "#89665a" },
-  { id: "charcoal", name: "Midnight", color: "#48505e" },
-  { id: "snow", name: "Snow", color: "#f3eee5" },
-];
-export const patterns = [
-  { id: "solid", name: "Solid" },
-  { id: "tabby", name: "Tabby" },
-  { id: "tuxedo", name: "Tuxedo" },
-  { id: "spotted", name: "Spotted" },
-];
 type PetAppearance = { name: string; color: string; pattern: string };
 export default function Pet({
   pet,
@@ -86,8 +72,7 @@ export default function Pet({
         onPointerLeave={() => scene.current?.look(0, 0)}
       >
         <span className="sr-only">
-          {pet.name}, a {coats.find((c) => c.id === pet.color)?.name || "cream"}{" "}
-          kitten with {pet.pattern || "solid"} markings.
+          {pet.name}, your little learning companion.
         </span>
       </button>
       <span className="pet-interaction-hint">

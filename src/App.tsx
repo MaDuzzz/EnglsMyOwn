@@ -59,7 +59,7 @@ import { Library, VideoSession } from "./components/Library";
 import Progress from "./components/Progress";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
-import Pet, { coats, patterns } from "./components/Pet";
+import Pet from "./components/Pet";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
@@ -927,9 +927,7 @@ export default function App() {
                   pet: {
                     ...old.pet,
                     name: String(f.get("name")).trim() || "Mochi",
-                    color: petDraft.color,
                     gender: String(f.get("gender")),
-                    pattern: petDraft.pattern,
                   },
                 }))
                 .then(() => setCustomize(false))
@@ -951,39 +949,6 @@ export default function App() {
                 required
               />
             </label>
-            <fieldset className="pet-options">
-              <legend>Coat tone</legend>
-              <div className="coat-options">
-                {coats.map((coat) => (
-                  <button
-                    type="button"
-                    key={coat.id}
-                    aria-pressed={petDraft.color === coat.id}
-                    onClick={() => setPetDraft({ ...petDraft, color: coat.id })}
-                  >
-                    <span style={{ background: coat.color }} />
-                    {coat.name}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
-            <fieldset className="pet-options">
-              <legend>Markings</legend>
-              <div className="pattern-options">
-                {patterns.map((pattern) => (
-                  <button
-                    type="button"
-                    key={pattern.id}
-                    aria-pressed={petDraft.pattern === pattern.id}
-                    onClick={() =>
-                      setPetDraft({ ...petDraft, pattern: pattern.id })
-                    }
-                  >
-                    {pattern.name}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
             <label>
               Gender
               <select name="gender" defaultValue={data.pet.gender}>
