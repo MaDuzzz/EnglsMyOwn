@@ -20,7 +20,8 @@ import {
   sentenceParts,
   arrangeAnswer,
 } from "../lib/model";
-import { Button, Road, Modal, asset, ProgressBar } from "./ui";
+import { Button, Road, Modal, ProgressBar } from "./ui";
+import Pet from "./Pet";
 import WordDetails from "./WordDetails";
 import PronunciationControls from "./PronunciationControls";
 export default function Session({
@@ -30,7 +31,8 @@ export default function Session({
   demo,
   tickets,
   required,
-  petName,
+  pet,
+  theme,
 }: {
   initial: SessionType;
   onClose: () => void;
@@ -38,7 +40,8 @@ export default function Session({
   demo: boolean;
   tickets: number;
   required: number;
-  petName: string;
+  pet: { name: string; color: string; pattern: string };
+  theme: string;
 }) {
   const [s, setS] = useState(initial),
     [answer, setAnswer] = useState(""),
@@ -171,11 +174,9 @@ export default function Session({
               : "You made it to the shop!"}
           </h1>
           {saved && meal ? (
-            <img
-              className="result-pet"
-              src={asset("mochi.png")}
-              alt={`${petName} resting happily after a meal`}
-            />
+            <div className="result-pet-scene">
+              <Pet pet={pet} theme={theme} preview />
+            </div>
           ) : (
             <div className="ticket-hero">
               <Ticket size={70} />
@@ -186,7 +187,7 @@ export default function Session({
             <h2>
               {saved
                 ? meal
-                  ? `${petName} has been fed!`
+                  ? `${pet.name} has been fed!`
                   : "One food ticket earned"
                 : "40 tasks. All yours."}
             </h2>

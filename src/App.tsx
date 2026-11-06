@@ -313,7 +313,8 @@ export default function App() {
         demo={demo}
         tickets={stats.tickets}
         required={stats.required}
-        petName={data.pet.name}
+        pet={data.pet}
+        theme={theme}
       />
     );
   if (selectedLesson)
