@@ -3085,3 +3085,274 @@ th {
 .import-preview li {
   overflow-wrap: anywhere;
 }
+
+/* Short, interruptible motion for navigation; color changes have a CSS fallback. */
+:root,
+body,
+.card,
+.sidebar,
+.modal,
+.bottom-nav,
+.button,
+.word-tabs,
+input,
+select,
+textarea {
+  transition:
+    background-color 420ms ease,
+    color 360ms ease,
+    border-color 420ms ease,
+    box-shadow 420ms ease;
+}
+.theme-toggle svg {
+  animation: theme-icon-in 380ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+:root.theme-transition::view-transition-old(root) {
+  animation: none;
+}
+:root.theme-transition::view-transition-new(root) {
+  animation: theme-reveal 460ms ease both;
+}
+:root.theme-transition::view-transition-group(root) {
+  animation-duration: 460ms;
+}
+@keyframes theme-reveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes theme-icon-in {
+  from {
+    transform: rotate(-35deg) scale(0.7);
+    opacity: 0.3;
+  }
+  to {
+    transform: rotate(0) scale(1);
+    opacity: 1;
+  }
+}
+.page-scene {
+  animation: page-arrive 300ms cubic-bezier(0.2, 0.75, 0.25, 1) backwards;
+}
+@keyframes page-arrive {
+  from {
+    opacity: 0;
+    transform: translate3d(12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+:root[data-route-direction="back"] .page-scene {
+  animation-name: page-arrive-back;
+}
+@keyframes page-arrive-back {
+  from {
+    opacity: 0;
+    transform: translate3d(-12px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+.bottom-nav-indicator {
+  display: none;
+}
+.pet-world {
+  position: relative;
+  width: 100%;
+  height: 290px;
+  isolation: isolate;
+}
+.pet-stage {
+  height: auto;
+  min-height: 310px;
+  padding-bottom: 14px;
+}
+.pet-canvas {
+  position: absolute;
+  inset: 0;
+}
+.pet-canvas canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.pet-fallback {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  position: absolute;
+  inset: 0;
+}
+.pet-interaction {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 28px;
+}
+.pet-interaction:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -5px;
+}
+.pet-interaction-hint {
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 10px;
+  color: var(--muted);
+  pointer-events: none;
+}
+.pet-custom-preview {
+  margin: -10px -10px 12px;
+  background: radial-gradient(ellipse at center, var(--soft), transparent 70%);
+  border-radius: 24px;
+}
+.pet-world-preview {
+  height: 210px;
+}
+.pet-options {
+  border: 0;
+  padding: 0;
+  margin: 0 0 20px;
+  min-width: 0;
+}
+.pet-options legend {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.coat-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.coat-options button,
+.pattern-options button {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 11px;
+  padding: 8px;
+  transition:
+    background-color 220ms,
+    border-color 220ms,
+    transform 180ms;
+}
+.coat-options button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 7px;
+}
+.coat-options button span {
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  box-shadow:
+    inset 0 2px 3px #ffffff66,
+    inset 0 -2px 3px #0002;
+}
+.coat-options button[aria-pressed="true"],
+.pattern-options button[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--softest);
+  color: var(--text);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+.coat-options button:active,
+.pattern-options button:active {
+  transform: scale(0.96);
+}
+.pattern-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (max-width: 800px) {
+  .pet-stage {
+    height: auto;
+    min-height: 285px;
+    padding: 24px 0 12px;
+  }
+  .bottom-nav-indicator {
+    display: block;
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 6px;
+    width: calc((100% - 12px) / 4);
+    border-radius: 32px;
+    background: var(--soft);
+    box-shadow:
+      inset 0 1px 2px #ffffff50,
+      0 2px 8px #00000006;
+    transform: translateX(calc(var(--active-tab) * 100%));
+    transition:
+      transform 420ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      opacity 200ms,
+      background-color 420ms;
+    pointer-events: none;
+  }
+  .bottom-nav button {
+    position: relative;
+    z-index: 1;
+    transition: color 240ms;
+  }
+  .bottom-nav button.active {
+    background: transparent;
+    box-shadow: none;
+  }
+  .bottom-nav button svg {
+    transition: transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .bottom-nav button.active svg {
+    transform: translateY(-1px) scale(1.07);
+  }
+  .bottom-nav button:active svg {
+    transform: scale(0.9);
+  }
+  .pet-world {
+    height: 250px;
+  }
+  .pet-world-preview {
+    height: 200px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}

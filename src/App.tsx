@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { flushSync } from "react-dom";
 import {
   Home,
   BookOpen,
@@ -52,6 +59,7 @@ import { Library, VideoSession } from "./components/Library";
 import Progress from "./components/Progress";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
+import Pet, { coats, patterns } from "./components/Pet";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
@@ -76,6 +84,8 @@ export default function App() {
     [customize, setCustomize] = useState(false),
     [account, setAccount] = useState(false),
     [notice, setNotice] = useState("");
+  const [petDraft, setPetDraft] = useState(app.data.pet);
+  const themeTransition = useRef<ViewTransition | null>(null);
   const { data, words, lessons, profile, demo, today } = app,
     stats = dailyStats(data, today),
     pending = pendingReview(data, today),
@@ -85,13 +95,32 @@ export default function App() {
     completedDays = Object.keys(data.plans).filter(
       (d) => dailyStats(data, d).meal,
     ).length;
-  useEffect(() => {
+  useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("engls-theme", theme);
     document
       .querySelector('meta[name="theme-color"]')
       ?.setAttribute("content", theme === "dark" ? "#101923" : "#fff8f2");
   }, [theme]);
+  function toggleTheme() {
+    if (themeTransition.current) return;
+    const next = theme === "light" ? "dark" : "light";
+    const apply = () => flushSync(() => setTheme(next));
+    if (
+      typeof document.startViewTransition === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      document.documentElement.classList.add("theme-transition");
+      const transition = document.startViewTransition(apply);
+      themeTransition.current = transition;
+      void transition.finished
+        .catch(() => {})
+        .finally(() => {
+          themeTransition.current = null;
+          document.documentElement.classList.remove("theme-transition");
+        });
+    } else apply();
+  }
   useEffect(() => {
     const handler = () => {
       if (session) {
@@ -122,6 +151,11 @@ export default function App() {
     }
   }, [app.phase]);
   function go(p: string) {
+    if (p === page) return;
+    document.documentElement.dataset.routeDirection =
+      nav.findIndex((n) => n.id === p) >= nav.findIndex((n) => n.id === page)
+        ? "forward"
+        : "back";
     location.hash = p;
     setPage(p);
     setVideo(null);
@@ -180,7 +214,7 @@ export default function App() {
     <button
       className="icon-btn theme-toggle"
       aria-label={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
-      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+      onClick={toggleTheme}
     >
       {theme === "light" ? <Moon size={21} /> : <Sun size={21} />}
     </button>
@@ -397,431 +431,449 @@ export default function App() {
             </button>
           </div>
         )}
-        {page === "today" ||
-        !["words", "videos", "progress", "admin"].includes(page) ? (
-          <>
-            <div className="page-intro today-intro">
-              <span className="eyebrow">
-                {new Date(today + "T12:00:00Z").toLocaleDateString("en", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-              <h1>
-                Hello, {profile?.displayName?.split(" ")[0] || "friend"}
-                <span className="hello-sun">☀</span>
-              </h1>
-              <p>A little practice. A little closer to your goals.</p>
-            </div>
-            <div className="today-layout">
-              <section className="pet-card card">
-                <div className="pet-heading">
-                  <div>
-                    <h2>
-                      {data.pet.name}
-                      <span className="health-dot" />
-                    </h2>
-                    <span className="muted small">
-                      Your little learning companion
-                    </span>
+        <div className="page-scene" key={page}>
+          {page === "today" ||
+          !["words", "videos", "progress", "admin"].includes(page) ? (
+            <>
+              <div className="page-intro today-intro">
+                <span className="eyebrow">
+                  {new Date(today + "T12:00:00Z").toLocaleDateString("en", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </span>
+                <h1>
+                  Hello, {profile?.displayName?.split(" ")[0] || "friend"}
+                  <span className="hello-sun">☀</span>
+                </h1>
+                <p>A little practice. A little closer to your goals.</p>
+              </div>
+              <div className="today-layout">
+                <section className="pet-card card">
+                  <div className="pet-heading">
+                    <div>
+                      <h2>
+                        {data.pet.name}
+                        <span className="health-dot" />
+                      </h2>
+                      <span className="muted small">
+                        Your little learning companion
+                      </span>
+                    </div>
+                    <button
+                      className="pet-customize"
+                      onClick={() => {
+                        setPetDraft({ ...data.pet });
+                        setCustomize(true);
+                      }}
+                    >
+                      <Settings size={15} />
+                      Customize
+                    </button>
                   </div>
-                  <button
-                    className="pet-customize"
-                    onClick={() => setCustomize(true)}
-                  >
-                    <Settings size={15} />
-                    Customize
-                  </button>
-                </div>
-                <div className="pet-stage">
-                  <span className="pet-sparkle first">✦</span>
-                  <span className="pet-sparkle second">✧</span>
-                  <div className="pet-caption">
-                    {stats.meal
-                      ? "That was lovely. Thank you!"
-                      : "A little learning, a happy tummy."}
-                    <Heart size={12} />
-                  </div>
-                  <img
-                    className={"pet-image pet-" + data.pet.color}
-                    src={asset("mochi.png")}
-                    alt={`${data.pet.name}, a tiny cream kitten on a soft cushion`}
-                  />
-                </div>
-                <div className="pet-growth">
-                  <div>
-                    <span className="pill">
-                      {growth.milestone === 1
-                        ? "Newborn"
-                        : `Growth milestone ${growth.milestone}`}
-                    </span>
-                    <span className="muted small">
-                      {completedDays} nourishing{" "}
-                      {completedDays === 1 ? "day" : "days"}
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={growth.percent}
-                    label="Progress toward next growth milestone"
-                  />
-                  <div>
-                    <span>Growing, little by little</span>
-                    <span>{growth.points % 500} / 500 growth</span>
-                  </div>
-                </div>
-              </section>
-              <section className="daily-column">
-                <SectionTitle
-                  title="A little progress today"
-                  aside={
-                    <span className="pill">
+                  <div className="pet-stage">
+                    <span className="pet-sparkle first">✦</span>
+                    <span className="pet-sparkle second">✧</span>
+                    <div className="pet-caption">
                       {stats.meal
-                        ? "Complete"
-                        : `${(pending.length === 0 ? 1 : 0) + (stats.learned > 0 ? 1 : 0)} / 2`}
-                    </span>
-                  }
-                />
-                <div className="card daily-tasks">
-                  <div className="task-item">
-                    <div className="task-icon">
-                      <RefreshCw size={23} />
+                        ? "That was lovely. Thank you!"
+                        : "A little learning, a happy tummy."}
+                      <Heart size={12} />
                     </div>
-                    <div>
-                      <h3>Review your words</h3>
-                      <p>
-                        {stats.total
-                          ? `${stats.reviewed} of ${stats.total} words reviewed`
-                          : "You’re all caught up"}
-                      </p>
-                      <ProgressBar
-                        value={
-                          stats.total
-                            ? (stats.reviewed / stats.total) * 100
-                            : 100
-                        }
-                      />
-                    </div>
-                    {pending.length === 0 && <Check size={20} />}
+                    <Pet pet={data.pet} theme={theme} />
                   </div>
-                  <div className="task-item">
-                    <div className="task-icon">
-                      <BookOpen size={23} />
-                    </div>
+                  <div className="pet-growth">
                     <div>
-                      <h3>Learn 10 new words</h3>
-                      <p>
-                        {stats.learned
-                          ? "A new batch, made yours"
-                          : pending.length
-                            ? "After your daily review"
-                            : "Your next little discovery"}
-                      </p>
-                      <ProgressBar value={stats.learned ? 100 : 0} />
+                      <span className="pill">
+                        {growth.milestone === 1
+                          ? "Newborn"
+                          : `Growth milestone ${growth.milestone}`}
+                      </span>
+                      <span className="muted small">
+                        {completedDays} nourishing{" "}
+                        {completedDays === 1 ? "day" : "days"}
+                      </span>
                     </div>
-                    {pending.length > 0 ? (
-                      <Lock size={18} />
-                    ) : stats.learned > 0 ? (
-                      <Check size={20} />
-                    ) : null}
+                    <ProgressBar
+                      value={growth.percent}
+                      label="Progress toward next growth milestone"
+                    />
+                    <div>
+                      <span>Growing, little by little</span>
+                      <span>{growth.points % 500} / 500 growth</span>
+                    </div>
                   </div>
-                  <Button
-                    disabled={
-                      app.busy || (!pending.length && fresh.length < 10)
+                </section>
+                <section className="daily-column">
+                  <SectionTitle
+                    title="A little progress today"
+                    aside={
+                      <span className="pill">
+                        {stats.meal
+                          ? "Complete"
+                          : `${(pending.length === 0 ? 1 : 0) + (stats.learned > 0 ? 1 : 0)} / 2`}
+                      </span>
                     }
-                    onClick={() => begin(pending.length ? "review" : "learn")}
-                  >
-                    {pending.length
-                      ? "Continue review"
-                      : stats.learned
-                        ? "Learn another batch"
-                        : "Learn 10 new words"}
-                    <ArrowRight size={18} />
-                  </Button>
-                  {!pending.length && fresh.length < 10 && (
-                    <p className="small muted">
-                      More words will appear when your administrator publishes
-                      them.
-                    </p>
-                  )}
-                </div>
-                <div className="meal-card">
-                  <div className="meal-icon">
-                    <Ticket size={26} />
-                  </div>
-                  <div>
-                    <b>
-                      {stats.meal
-                        ? "A meal well earned"
-                        : "A meal for " + data.pet.name}
-                    </b>
-                    <p>
-                      {stats.tickets} / {stats.required} tickets ·{" "}
-                      {stats.meal
-                        ? "Fed automatically"
-                        : `${stats.required - stats.tickets} more to go`}
-                    </p>
-                  </div>
-                  <div className="ticket-dots">
-                    {Array.from(
-                      { length: Math.min(stats.required, 5) },
-                      (_, i) => (
-                        <span
-                          key={i}
-                          className={i < stats.tickets ? "earned" : ""}
+                  />
+                  <div className="card daily-tasks">
+                    <div className="task-item">
+                      <div className="task-icon">
+                        <RefreshCw size={23} />
+                      </div>
+                      <div>
+                        <h3>Review your words</h3>
+                        <p>
+                          {stats.total
+                            ? `${stats.reviewed} of ${stats.total} words reviewed`
+                            : "You’re all caught up"}
+                        </p>
+                        <ProgressBar
+                          value={
+                            stats.total
+                              ? (stats.reviewed / stats.total) * 100
+                              : 100
+                          }
                         />
-                      ),
+                      </div>
+                      {pending.length === 0 && <Check size={20} />}
+                    </div>
+                    <div className="task-item">
+                      <div className="task-icon">
+                        <BookOpen size={23} />
+                      </div>
+                      <div>
+                        <h3>Learn 10 new words</h3>
+                        <p>
+                          {stats.learned
+                            ? "A new batch, made yours"
+                            : pending.length
+                              ? "After your daily review"
+                              : "Your next little discovery"}
+                        </p>
+                        <ProgressBar value={stats.learned ? 100 : 0} />
+                      </div>
+                      {pending.length > 0 ? (
+                        <Lock size={18} />
+                      ) : stats.learned > 0 ? (
+                        <Check size={20} />
+                      ) : null}
+                    </div>
+                    <Button
+                      disabled={
+                        app.busy || (!pending.length && fresh.length < 10)
+                      }
+                      onClick={() => begin(pending.length ? "review" : "learn")}
+                    >
+                      {pending.length
+                        ? "Continue review"
+                        : stats.learned
+                          ? "Learn another batch"
+                          : "Learn 10 new words"}
+                      <ArrowRight size={18} />
+                    </Button>
+                    {!pending.length && fresh.length < 10 && (
+                      <p className="small muted">
+                        More words will appear when your administrator publishes
+                        them.
+                      </p>
                     )}
                   </div>
-                </div>
-                <div className="daily-quote">
-                  <span>“</span>
-                  <p>
-                    You don’t have to be perfect.
-                    <br />
-                    Just a little more curious.
-                  </p>
-                  <small>YOUR DAILY REMINDER</small>
-                </div>
-              </section>
-            </div>
-          </>
-        ) : page === "words" ? (
-          <>
-            <div className="page-intro">
-              <span className="eyebrow">WORDS THAT STAY WITH YOU</span>
-              <h1>
-                A growing vocabulary.
-                <br />
-                <em>A world of possibilities.</em>
-              </h1>
-            </div>
-            <div className="segmented word-tabs">
-              {["Learn", "My words"].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => setWordTab(t)}
-                  className={wordTab === t ? "selected" : ""}
-                >
-                  {t === "Learn" ? <BookOpen size={18} /> : <BookmarkIcon />}
-                  {t}
-                  {t === "My words" && <span>{known.size}</span>}
-                </button>
-              ))}
-            </div>
-            {wordTab === "Learn" ? (
-              <>
-                <div className="words-layout">
-                  <div className="words-review-column">
-                    <div className="meal-card">
+                  <div className="meal-card">
+                    <div className="meal-icon">
                       <Ticket size={26} />
-                      <div>
-                        <b>Today’s meal</b>
-                        <p>
-                          {stats.tickets} / {stats.required} tickets ·{" "}
-                          {stats.meal
-                            ? "Already enjoyed"
-                            : "A little motivation for you both"}
-                        </p>
-                      </div>
                     </div>
-                    <div className="card review-card">
-                      <div className="review-card-heading">
+                    <div>
+                      <b>
+                        {stats.meal
+                          ? "A meal well earned"
+                          : "A meal for " + data.pet.name}
+                      </b>
+                      <p>
+                        {stats.tickets} / {stats.required} tickets ·{" "}
+                        {stats.meal
+                          ? "Fed automatically"
+                          : `${stats.required - stats.tickets} more to go`}
+                      </p>
+                    </div>
+                    <div className="ticket-dots">
+                      {Array.from(
+                        { length: Math.min(stats.required, 5) },
+                        (_, i) => (
+                          <span
+                            key={i}
+                            className={i < stats.tickets ? "earned" : ""}
+                          />
+                        ),
+                      )}
+                    </div>
+                  </div>
+                  <div className="daily-quote">
+                    <span>“</span>
+                    <p>
+                      You don’t have to be perfect.
+                      <br />
+                      Just a little more curious.
+                    </p>
+                    <small>YOUR DAILY REMINDER</small>
+                  </div>
+                </section>
+              </div>
+            </>
+          ) : page === "words" ? (
+            <>
+              <div className="page-intro">
+                <span className="eyebrow">WORDS THAT STAY WITH YOU</span>
+                <h1>
+                  A growing vocabulary.
+                  <br />
+                  <em>A world of possibilities.</em>
+                </h1>
+              </div>
+              <div className="segmented word-tabs">
+                {["Learn", "My words"].map((t) => (
+                  <button
+                    key={t}
+                    onClick={() => setWordTab(t)}
+                    className={wordTab === t ? "selected" : ""}
+                  >
+                    {t === "Learn" ? <BookOpen size={18} /> : <BookmarkIcon />}
+                    {t}
+                    {t === "My words" && <span>{known.size}</span>}
+                  </button>
+                ))}
+              </div>
+              {wordTab === "Learn" ? (
+                <>
+                  <div className="words-layout">
+                    <div className="words-review-column">
+                      <div className="meal-card">
+                        <Ticket size={26} />
                         <div>
-                          <h2>Today’s review</h2>
-                          <p className="muted">
-                            {stats.total} words to review today
+                          <b>Today’s meal</b>
+                          <p>
+                            {stats.tickets} / {stats.required} tickets ·{" "}
+                            {stats.meal
+                              ? "Already enjoyed"
+                              : "A little motivation for you both"}
                           </p>
                         </div>
-                        <span className="round-icon">
-                          <RefreshCw />
-                        </span>
                       </div>
-                      <div className="review-count">
-                        <b>{stats.reviewed}</b>
-                        <span>/ {stats.total} words reviewed</span>
+                      <div className="card review-card">
+                        <div className="review-card-heading">
+                          <div>
+                            <h2>Today’s review</h2>
+                            <p className="muted">
+                              {stats.total} words to review today
+                            </p>
+                          </div>
+                          <span className="round-icon">
+                            <RefreshCw />
+                          </span>
+                        </div>
+                        <div className="review-count">
+                          <b>{stats.reviewed}</b>
+                          <span>/ {stats.total} words reviewed</span>
+                        </div>
+                        <ProgressBar
+                          value={
+                            stats.total
+                              ? (stats.reviewed / stats.total) * 100
+                              : 100
+                          }
+                        />
+                        <Button
+                          disabled={!pending.length || app.busy}
+                          onClick={() => begin("review")}
+                        >
+                          {pending.length ? "Start review" : "All caught up"}
+                          {pending.length ? (
+                            <ArrowRight size={18} />
+                          ) : (
+                            <Check size={18} />
+                          )}
+                        </Button>
                       </div>
-                      <ProgressBar
-                        value={
-                          stats.total
-                            ? (stats.reviewed / stats.total) * 100
-                            : 100
-                        }
-                      />
+                    </div>
+                    <div className="card new-words-card">
+                      <span className="eyebrow">YOUR NEXT CHAPTER</span>
+                      <div className="book-decoration">
+                        <BookOpen size={70} strokeWidth={1.3} />
+                        <span>✦</span>
+                      </div>
+                      <h2>
+                        10 new words.
+                        <br />
+                        So much to say.
+                      </h2>
+                      <p className="muted">
+                        {fresh[0]?.topic || "New lessons are on their way"}
+                      </p>
+                      <div className="word-chips">
+                        {fresh.slice(0, 3).map((w) => (
+                          <span key={w.id}>{w.headword}</span>
+                        ))}
+                      </div>
+                      <p className="small muted">
+                        {pending.length
+                          ? "Finish your remaining review to unlock."
+                          : fresh.length >= 10
+                            ? "Meet each word, then make it yours through practice."
+                            : "Ask your administrator to publish more vocabulary."}
+                      </p>
                       <Button
-                        disabled={!pending.length || app.busy}
-                        onClick={() => begin("review")}
+                        disabled={
+                          pending.length > 0 || fresh.length < 10 || app.busy
+                        }
+                        onClick={() => begin("learn")}
                       >
-                        {pending.length ? "Start review" : "All caught up"}
                         {pending.length ? (
-                          <ArrowRight size={18} />
+                          <>
+                            <Lock size={17} />
+                            Batch locked
+                          </>
                         ) : (
-                          <Check size={18} />
+                          "Start learning"
                         )}
                       </Button>
                     </div>
                   </div>
-                  <div className="card new-words-card">
-                    <span className="eyebrow">YOUR NEXT CHAPTER</span>
-                    <div className="book-decoration">
-                      <BookOpen size={70} strokeWidth={1.3} />
-                      <span>✦</span>
-                    </div>
-                    <h2>
-                      10 new words.
-                      <br />
-                      So much to say.
-                    </h2>
-                    <p className="muted">
-                      {fresh[0]?.topic || "New lessons are on their way"}
-                    </p>
-                    <div className="word-chips">
-                      {fresh.slice(0, 3).map((w) => (
-                        <span key={w.id}>{w.headword}</span>
-                      ))}
-                    </div>
-                    <p className="small muted">
-                      {pending.length
-                        ? "Finish your remaining review to unlock."
-                        : fresh.length >= 10
-                          ? "Meet each word, then make it yours through practice."
-                          : "Ask your administrator to publish more vocabulary."}
-                    </p>
-                    <Button
-                      disabled={
-                        pending.length > 0 || fresh.length < 10 || app.busy
-                      }
-                      onClick={() => begin("learn")}
-                    >
-                      {pending.length ? (
-                        <>
-                          <Lock size={17} />
-                          Batch locked
-                        </>
-                      ) : (
-                        "Start learning"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-                <SectionTitle title="Explore your topics" />
-                <div className="topic-grid">
-                  {[...new Set(words.map((w) => w.topic))].map((t, i) => (
-                    <button
-                      className="topic-card card"
-                      key={t}
-                      onClick={() => {
-                        setTopic(t);
-                      }}
-                    >
-                      <span className={"topic-art art-" + i}>
-                        {i % 2 ? <BookOpen size={32} /> : <Heart size={32} />}
-                      </span>
-                      <h3>{t}</h3>
-                      <p>
-                        {words.filter((w) => w.topic === t).length} published
-                        words
-                      </p>
-                      <ChevronRight size={18} />
-                    </button>
-                  ))}
-                </div>
-              </>
-            ) : (
-              <>
-                <label className="search">
-                  <Search size={19} />
-                  <input
-                    placeholder="Search your words or topics"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                </label>
-                <div className="word-list">
-                  {words
-                    .filter(
-                      (w) =>
-                        known.has(w.id) &&
-                        `${w.headword} ${w.meaningVi} ${w.topic}`
-                          .toLowerCase()
-                          .includes(search.toLowerCase()),
-                    )
-                    .map((w) => (
+                  <SectionTitle title="Explore your topics" />
+                  <div className="topic-grid">
+                    {[...new Set(words.map((w) => w.topic))].map((t, i) => (
                       <button
-                        className="word-row card"
-                        key={w.id}
-                        onClick={() => setDetail(w)}
+                        className="topic-card card"
+                        key={t}
+                        onClick={() => {
+                          setTopic(t);
+                        }}
                       >
-                        <span className="word-initial">{w.headword[0]}</span>
-                        <div>
-                          <h3>
-                            {w.headword}
-                            <span>{w.partOfSpeech}</span>
-                          </h3>
-                          <p>{w.meaningVi}</p>
-                        </div>
-                        <span className="pill">{w.cefrLevel}</span>
+                        <span className={"topic-art art-" + i}>
+                          {i % 2 ? <BookOpen size={32} /> : <Heart size={32} />}
+                        </span>
+                        <h3>{t}</h3>
+                        <p>
+                          {words.filter((w) => w.topic === t).length} published
+                          words
+                        </p>
                         <ChevronRight size={18} />
                       </button>
                     ))}
-                </div>
-                {!words.some(
-                  (w) =>
-                    known.has(w.id) &&
-                    `${w.headword} ${w.meaningVi} ${w.topic}`
-                      .toLowerCase()
-                      .includes(search.toLowerCase()),
-                ) && (
-                  <Empty
-                    title={
-                      known.size
-                        ? "No matching words"
-                        : "Your collection starts here"
-                    }
-                  >
-                    {known.size
-                      ? "Try a different word or clear the topic search."
-                      : "Complete your first new-word batch to add ten words to your collection."}
-                  </Empty>
-                )}
-              </>
-            )}
-          </>
-        ) : page === "videos" ? (
-          <Library
-            lessons={lessons}
-            data={data}
-            onOpen={(id) => {
-              setVideo(id);
-              window.scrollTo(0, 0);
-            }}
-            onSave={(id) =>
-              save((old) => ({
-                ...old,
-                savedVideos: old.savedVideos.includes(id)
-                  ? old.savedVideos.filter((x) => x !== id)
-                  : [...old.savedVideos, id],
-              }))
-            }
-          />
-        ) : page === "progress" ? (
-          <Progress data={data} />
-        ) : profile?.role === "admin" ? (
-          <Admin demo={demo} uid={profile.uid} />
-        ) : (
-          <Empty title="This is your administrator’s space">
-            Return to your learning tabs below.
-          </Empty>
-        )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <label className="search">
+                    <Search size={19} />
+                    <input
+                      placeholder="Search your words or topics"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </label>
+                  <div className="word-list">
+                    {words
+                      .filter(
+                        (w) =>
+                          known.has(w.id) &&
+                          `${w.headword} ${w.meaningVi} ${w.topic}`
+                            .toLowerCase()
+                            .includes(search.toLowerCase()),
+                      )
+                      .map((w) => (
+                        <button
+                          className="word-row card"
+                          key={w.id}
+                          onClick={() => setDetail(w)}
+                        >
+                          <span className="word-initial">{w.headword[0]}</span>
+                          <div>
+                            <h3>
+                              {w.headword}
+                              <span>{w.partOfSpeech}</span>
+                            </h3>
+                            <p>{w.meaningVi}</p>
+                          </div>
+                          <span className="pill">{w.cefrLevel}</span>
+                          <ChevronRight size={18} />
+                        </button>
+                      ))}
+                  </div>
+                  {!words.some(
+                    (w) =>
+                      known.has(w.id) &&
+                      `${w.headword} ${w.meaningVi} ${w.topic}`
+                        .toLowerCase()
+                        .includes(search.toLowerCase()),
+                  ) && (
+                    <Empty
+                      title={
+                        known.size
+                          ? "No matching words"
+                          : "Your collection starts here"
+                      }
+                    >
+                      {known.size
+                        ? "Try a different word or clear the topic search."
+                        : "Complete your first new-word batch to add ten words to your collection."}
+                    </Empty>
+                  )}
+                </>
+              )}
+            </>
+          ) : page === "videos" ? (
+            <Library
+              lessons={lessons}
+              data={data}
+              onOpen={(id) => {
+                setVideo(id);
+                window.scrollTo(0, 0);
+              }}
+              onSave={(id) =>
+                save((old) => ({
+                  ...old,
+                  savedVideos: old.savedVideos.includes(id)
+                    ? old.savedVideos.filter((x) => x !== id)
+                    : [...old.savedVideos, id],
+                }))
+              }
+            />
+          ) : page === "progress" ? (
+            <Progress data={data} />
+          ) : profile?.role === "admin" ? (
+            <Admin demo={demo} uid={profile.uid} />
+          ) : (
+            <Empty title="This is your administrator’s space">
+              Return to your learning tabs below.
+            </Empty>
+          )}
+        </div>
         <footer className="desktop-footer">
           Made for your own kind of progress.<span>EnglsMyOwn ✦</span>
         </footer>
       </main>
-      <nav className="bottom-nav" aria-label="Main navigation">
+      <nav
+        className="bottom-nav"
+        aria-label="Main navigation"
+        style={
+          {
+            "--active-tab": Math.max(
+              0,
+              nav.findIndex((n) => n.id === page),
+            ),
+          } as CSSProperties
+        }
+      >
+        <span
+          className="bottom-nav-indicator"
+          aria-hidden="true"
+          style={{ opacity: nav.some((n) => n.id === page) ? 1 : 0 }}
+        />
         {nav.map((n) => (
           <button
             key={n.id}
             className={page === n.id ? "active" : ""}
+            aria-current={page === n.id ? "page" : undefined}
             onClick={() => go(n.id)}
           >
             <n.icon size={23} />
@@ -874,31 +926,63 @@ export default function App() {
                   pet: {
                     ...old.pet,
                     name: String(f.get("name")).trim() || "Mochi",
-                    color: String(f.get("color")),
+                    color: petDraft.color,
                     gender: String(f.get("gender")),
+                    pattern: petDraft.pattern,
                   },
                 }))
                 .then(() => setCustomize(false))
                 .catch(() => {});
             }}
           >
+            <div className="pet-custom-preview">
+              <Pet pet={petDraft} theme={theme} preview />
+            </div>
             <label>
               Name
               <input
                 name="name"
-                defaultValue={data.pet.name}
+                value={petDraft.name}
+                onChange={(e) =>
+                  setPetDraft({ ...petDraft, name: e.target.value })
+                }
                 maxLength={24}
                 required
               />
             </label>
-            <label>
-              Coat tone
-              <select name="color" defaultValue={data.pet.color}>
-                <option value="cream">Soft cream</option>
-                <option value="silver">Silver grey</option>
-                <option value="ginger">Warm ginger</option>
-              </select>
-            </label>
+            <fieldset className="pet-options">
+              <legend>Coat tone</legend>
+              <div className="coat-options">
+                {coats.map((coat) => (
+                  <button
+                    type="button"
+                    key={coat.id}
+                    aria-pressed={petDraft.color === coat.id}
+                    onClick={() => setPetDraft({ ...petDraft, color: coat.id })}
+                  >
+                    <span style={{ background: coat.color }} />
+                    {coat.name}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="pet-options">
+              <legend>Markings</legend>
+              <div className="pattern-options">
+                {patterns.map((pattern) => (
+                  <button
+                    type="button"
+                    key={pattern.id}
+                    aria-pressed={petDraft.pattern === pattern.id}
+                    onClick={() =>
+                      setPetDraft({ ...petDraft, pattern: pattern.id })
+                    }
+                  >
+                    {pattern.name}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
             <label>
               Gender
               <select name="gender" defaultValue={data.pet.gender}>
