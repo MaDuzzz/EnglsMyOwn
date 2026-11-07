@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { LoaderCircle, Volume2, Turtle, RotateCcw } from "lucide-react";
 import type { Word } from "../lib/model";
 import {
@@ -10,18 +10,15 @@ import {
 import {
   playPronunciation,
   playbackSnapshot,
-  stopPronunciation,
   subscribePlayback,
 } from "../lib/pronunciationAudio";
 
 export default function PronunciationControls({
   word,
   hideAnswer = false,
-  stopToken,
 }: {
   word: Word;
   hideAnswer?: boolean;
-  stopToken?: unknown;
 }) {
   const sources = pronunciationsFor(word);
   const accents = availableAccents(word);
@@ -34,10 +31,6 @@ export default function PronunciationControls({
     playbackSnapshot,
   );
   const state = playback.url === source?.audioUrl ? playback.status : "idle";
-  useEffect(() => {
-    if (stopToken !== null && stopToken !== undefined) stopPronunciation();
-  }, [stopToken]);
-
   return (
     <div
       className={

@@ -1734,9 +1734,6 @@ th {
   font-weight: 800;
   letter-spacing: 0.09em;
 }
-.walker {
-  will-change: transform;
-}
 .walker.is-walking .walker-doodle {
   animation: walker-step 0.33s ease-in-out infinite alternate;
 }
@@ -1930,7 +1927,7 @@ th {
   border-radius: 2px;
   background: var(--accent);
   opacity: 0;
-  animation: answer-burst 850ms ease-out var(--burst-delay) both;
+  animation: answer-burst 1600ms ease-out var(--burst-delay) both;
 }
 .answer-fireworks i:nth-child(3n) {
   background: #e8bd70;
@@ -1974,6 +1971,19 @@ th {
 .feedback p {
   font-size: 13px;
   color: var(--muted);
+}
+.feedback-replay {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  margin: 0 0 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
 }
 .feedback small {
   font-size: 12px;
@@ -3191,6 +3201,10 @@ th {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
+  }
+  .answer-fireworks i {
+    opacity: 1;
+    transform: translate(var(--burst-x), var(--burst-y)) scale(0.75);
   }
 }
 

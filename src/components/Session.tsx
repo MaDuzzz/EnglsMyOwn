@@ -16,6 +16,7 @@ import {
   AlertCircle,
   Ticket,
   BookOpen,
+  Volume2,
 } from "lucide-react";
 import {
   type Session as SessionType,
@@ -38,9 +39,15 @@ import WordDetails from "./WordDetails";
 import PronunciationControls from "./PronunciationControls";
 import {
   playWordRecording,
+  playbackSnapshot,
   stopPronunciation,
 } from "../lib/pronunciationAudio";
-import { playAnswerFeedback, stopFeedbackVoice } from "../lib/feedbackAudio";
+import {
+  playAnswerFeedback,
+  speakPraise,
+  stopFeedbackVoice,
+} from "../lib/feedbackAudio";
+import { availableAccents, pronunciationsFor } from "../lib/vocabulary";
 
 function readNextStep(session: SessionType) {
   const introduction = nextIntroduction(session);
@@ -52,13 +59,13 @@ function readNextStep(session: SessionType) {
   else stopPronunciation();
 }
 
-const fireworks = Array.from({ length: 18 }, (_, i) => {
-  const angle = (i * Math.PI * 2) / 18;
+const fireworks = Array.from({ length: 24 }, (_, i) => {
+  const angle = (i * Math.PI * 2) / 24;
   const radius = 60 + (i % 4) * 17;
   return {
     "--burst-x": `${Math.round(Math.cos(angle) * radius)}px`,
     "--burst-y": `${Math.round(Math.sin(angle) * radius)}px`,
-    "--burst-delay": `${(i % 3) * 35}ms`,
+    "--burst-delay": `${(i % 4) * 75}ms`,
   } as CSSProperties;
 });
 
@@ -154,6 +161,19 @@ export default function Session({
     return () => window.removeEventListener("pagehide", persist);
   }, [s, answer, tokens, feedback, saved]);
   useEffect(() => {
+    if (s.mode !== "review" || task?.kind !== "listen" || feedback !== null)
+      return;
+    const accent = availableAccents(word)[0];
+    const url = accent && pronunciationsFor(word)[accent]?.audioUrl;
+    if (!url) return;
+    const playback = playbackSnapshot();
+    if (
+      playback.url !== url ||
+      (playback.status !== "loading" && playback.status !== "playing")
+    )
+      playWordRecording(word);
+  }, [s.mode, task?.id, feedback, word]);
+  useEffect(() => {
     if (feedback === null) return;
     feedbackRef.current?.scrollIntoView({
       behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
@@ -179,7 +199,13 @@ export default function Session({
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
     stopPronunciation();
-    playAnswerFeedback(correct);
+    const hasRecording = correct && availableAccents(word).length > 0;
+    if (hasRecording)
+      playWordRecording(word, {
+        onEnded: speakPraise,
+        onError: speakPraise,
+      });
+    playAnswerFeedback(correct, !hasRecording);
     setFeedback(correct);
   }
   function next() {
@@ -431,7 +457,6 @@ export default function Session({
                       key={word.id}
                       word={word}
                       hideAnswer
-                      stopToken={feedback}
                     />
                   </>
                 ) : task.kind === "gap" ? (
@@ -585,6 +610,15 @@ export default function Session({
                   <p>
                     {word.meaningVi} · {word.meaningEn}
                   </p>
+                  {availableAccents(word).length > 0 && (
+                    <button
+                      type="button"
+                      className="feedback-replay"
+                      onClick={() => playWordRecording(word)}
+                    >
+                      <Volume2 size={16} /> Hear the word again
+                    </button>
+                  )}
                   {(task.kind === "gap" || task.kind === "arrange") &&
                     word.gapExplanationVi && (
                       <p className="answer-explanation" lang="vi">

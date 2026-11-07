@@ -119,7 +119,7 @@ export function Road({ count }: { count: number }) {
       const point = curve.getPointAtLength(
         (curve.getTotalLength() * value) / 40,
       );
-      walker.style.transform = `translate(${point.x}px, ${point.y}px)`;
+      walker.setAttribute("transform", `translate(${point.x} ${point.y})`);
       line.setAttribute("stroke-dasharray", `${value} 40`);
       position.current = value;
     };
@@ -150,7 +150,7 @@ export function Road({ count }: { count: number }) {
   }, [count]);
   return (
     <div className="road">
-      <svg viewBox="0 0 380 122" aria-hidden="true">
+      <svg viewBox="0 -12 380 134" aria-hidden="true">
         <path
           ref={path}
           d="M15 90 C65 105 80 36 135 54 S220 114 265 81 S320 68 345 76"
@@ -169,12 +169,9 @@ export function Road({ count }: { count: number }) {
           strokeLinecap="round"
           strokeDasharray="0 40"
         />
-        <g
-          ref={person}
-          className="walker"
-          style={{ transform: "translate(15px,90px)" }}
-        >
+        <g ref={person} className="walker" transform="translate(15 90)">
           <g className="walker-doodle">
+            <circle cx="0" cy="-28" r="7" fill="var(--bg)" />
             <circle cx="0" cy="-28" r="5" fill="var(--accent)" />
             <path
               d="M0-21v12m0-10-7 7m7-7 8 6M0-9-6 9m6-18 7 18"

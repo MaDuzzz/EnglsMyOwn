@@ -1,20 +1,20 @@
 let context: AudioContext | undefined;
 
 function note(
+  audioContext: AudioContext,
   frequency: number,
   start: number,
   duration: number,
   volume: number,
 ) {
-  if (!context) return;
-  const oscillator = context.createOscillator();
-  const gain = context.createGain();
+  const oscillator = audioContext.createOscillator();
+  const gain = audioContext.createGain();
   oscillator.type = "sine";
   oscillator.frequency.setValueAtTime(frequency, start);
   gain.gain.setValueAtTime(0.0001, start);
   gain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
-  oscillator.connect(gain).connect(context.destination);
+  oscillator.connect(gain).connect(audioContext.destination);
   oscillator.start(start);
   oscillator.stop(start + duration + 0.02);
 }
@@ -23,29 +23,37 @@ export function stopFeedbackVoice() {
   if ("speechSynthesis" in window) window.speechSynthesis.cancel();
 }
 
-export function playAnswerFeedback(correct: boolean) {
+export function speakPraise() {
+  if (!("speechSynthesis" in window)) return;
+  stopFeedbackVoice();
+  const voice = new SpeechSynthesisUtterance("Great job!");
+  voice.lang = "en-US";
+  voice.rate = 1.1;
+  voice.volume = 0.62;
+  window.speechSynthesis.speak(voice);
+}
+
+export function playAnswerFeedback(correct: boolean, spokenPraise = true) {
   try {
     context ||= new AudioContext();
-    void context.resume();
-    const start = context.currentTime + 0.015;
-    if (correct) {
-      [523, 659, 784, 1047].forEach((frequency, i) =>
-        note(frequency, start + i * 0.105, 0.24, 0.075),
-      );
-    } else {
-      [392, 330, 247].forEach((frequency, i) =>
-        note(frequency, start + i * 0.17, 0.24, 0.065),
-      );
-    }
+    const audioContext = context;
+    void audioContext
+      .resume()
+      .then(() => {
+        const start = audioContext.currentTime + 0.015;
+        if (correct) {
+          [523, 659, 784, 1047].forEach((frequency, i) =>
+            note(audioContext, frequency, start + i * 0.105, 0.24, 0.075),
+          );
+        } else {
+          [392, 330, 247].forEach((frequency, i) =>
+            note(audioContext, frequency, start + i * 0.17, 0.24, 0.065),
+          );
+        }
+      })
+      .catch(() => {});
   } catch {
     // Spoken confirmation still works if Web Audio is unavailable.
   }
-  if (correct && "speechSynthesis" in window) {
-    stopFeedbackVoice();
-    const voice = new SpeechSynthesisUtterance("Great job!");
-    voice.lang = "en-US";
-    voice.rate = 1.1;
-    voice.volume = 0.62;
-    window.speechSynthesis.speak(voice);
-  }
+  if (correct && spokenPraise) speakPraise();
 }
