@@ -899,7 +899,7 @@ export default function App() {
         <Modal
           title={
             start === "review"
-              ? "A little practice. A meal for Mochi."
+              ? `A little practice. A meal for ${data.pet.name}.`
               : "Meet your next ten words."
           }
           onClose={() => setStart(null)}
