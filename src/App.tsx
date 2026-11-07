@@ -37,7 +37,13 @@ import {
   type Word,
   type Session as SessionType,
   type BatchRecord,
+  type SessionDraft,
   createSession,
+  selectLearningBatch,
+  nextIntroduction,
+  makeSessionDraft,
+  restoreSession,
+  checkpointSession,
   pendingReview,
   dailyStats,
   commitBatch,
@@ -76,6 +82,11 @@ export default function App() {
         (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
     ),
     [session, setSession] = useState<SessionType | null>(null),
+    [sessionDraft, setSessionDraft] = useState<SessionDraft | null>(null),
+    [localDraft, setLocalDraft] = useState<{
+      key: string;
+      draft: SessionDraft;
+    } | null>(null),
     [start, setStart] = useState<"review" | "learn" | null>(null),
     [wordTab, setWordTab] = useState("Learn"),
     [search, setSearch] = useState(""),
@@ -88,16 +99,51 @@ export default function App() {
   const [petDraft, setPetDraft] = useState(app.data.pet);
   const [previewStage, setPreviewStage] = useState(0);
   const themeTransition = useRef<ViewTransition | null>(null);
+  const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latestDraft = useRef<SessionDraft | null>(null);
   const { data, words, lessons, profile, demo, today } = app,
     stats = dailyStats(data, today),
     pending = pendingReview(data, today),
     known = learnedIds(data),
     fresh = words.filter((w) => !known.has(w.id)),
+    learningBatch = selectLearningBatch(fresh, today),
+    draftKey = demo
+      ? `engls-session:demo:${app.previewScenario}`
+      : app.user
+        ? `engls-session:${app.user.uid}`
+        : null,
+    savedLocal = localDraft?.key === draftKey ? localDraft.draft : null,
+    resumeDraft = [savedLocal, data.activeSession]
+      .filter((draft): draft is SessionDraft =>
+        Boolean(draft && restoreSession(draft, words)),
+      )
+      .sort((a, b) => b.updatedAt - a.updatedAt)
+      .find((draft) => !data.records.some((record) => record.id === draft.id)),
+    previewBatch =
+      resumeDraft?.mode === "learn"
+        ? resumeDraft.wordIds
+            .map((id) => words.find((word) => word.id === id))
+            .filter((word): word is Word => Boolean(word))
+        : learningBatch,
     growth = petGrowth(data, today),
     petStage = growthStage(growth.points),
     completedDays = Object.keys(data.plans).filter(
       (d) => dailyStats(data, d).meal,
     ).length;
+  useEffect(() => {
+    cancelDraftTimer();
+    latestDraft.current = null;
+    if (!draftKey) {
+      setLocalDraft(null);
+      return;
+    }
+    try {
+      const draft = JSON.parse(localStorage.getItem(draftKey) || "null");
+      setLocalDraft(draft ? { key: draftKey, draft } : null);
+    } catch {
+      setLocalDraft(null);
+    }
+  }, [draftKey]);
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("engls-theme", theme);
@@ -138,15 +184,6 @@ export default function App() {
     return () => window.removeEventListener("hashchange", handler);
   }, [session, page]);
   useEffect(() => {
-    if (session && session.day !== today) {
-      stopPronunciation();
-      setSession(null);
-      setNotice(
-        "A new learning day has started. Your unfinished batch has reset.",
-      );
-    }
-  }, [today, session]);
-  useEffect(() => {
     if (app.phase !== "ready") {
       stopPronunciation();
       setSession(null);
@@ -166,7 +203,74 @@ export default function App() {
     setVideo(null);
     window.scrollTo(0, 0);
   }
+  function rememberDraft(draft: SessionDraft) {
+    if (!draftKey) return;
+    latestDraft.current = draft;
+    localStorage.setItem(draftKey, JSON.stringify(draft));
+    setLocalDraft({ key: draftKey, draft });
+  }
+  function cancelDraftTimer() {
+    if (draftTimer.current) clearTimeout(draftTimer.current);
+    draftTimer.current = null;
+  }
+  function checkpoint(draft: SessionDraft) {
+    const previous = latestDraft.current;
+    const stageChanged =
+      !previous ||
+      previous.id !== draft.id ||
+      previous.introduced.length !== draft.introduced.length ||
+      previous.completed.length !== draft.completed.length ||
+      previous.queue[0]?.id !== draft.queue[0]?.id ||
+      previous.feedback !== draft.feedback;
+    rememberDraft(draft);
+    cancelDraftTimer();
+    const sync = () => {
+      draftTimer.current = null;
+      void app
+        .save((old) => checkpointSession(old, draft), true)
+        .catch(() => {
+          setNotice(
+            "Your place is saved here. Cloud sync will retry when you return.",
+          );
+        });
+    };
+    if (stageChanged) sync();
+    else draftTimer.current = setTimeout(sync, 700);
+  }
+  async function pauseBatch(draft: SessionDraft) {
+    cancelDraftTimer();
+    rememberDraft(draft);
+    try {
+      await app.save((old) => checkpointSession(old, draft), true);
+    } catch {
+      setNotice(
+        "Your place is saved on this device. Cloud sync is unavailable right now.",
+      );
+    }
+  }
+  function resumeBatch() {
+    if (!resumeDraft) return;
+    const restored = restoreSession(resumeDraft, words);
+    if (!restored) return;
+    const current = nextIntroduction(restored);
+    const task = restored.queue[0];
+    const audioWord = current || words.find((word) => word.id === task?.wordId);
+    if (
+      resumeDraft.feedback === null &&
+      audioWord &&
+      (current || task?.kind === "listen" || task?.refresher)
+    )
+      playWordRecording(audioWord);
+    setSessionDraft(resumeDraft);
+    latestDraft.current = resumeDraft;
+    setSession(restored);
+    window.scrollTo(0, 0);
+  }
   function begin(mode: "review" | "learn") {
+    if (resumeDraft) {
+      resumeBatch();
+      return;
+    }
     if (mode === "learn" && pending.length) {
       setNotice("Finish all required review before learning new words.");
       return;
@@ -181,7 +285,7 @@ export default function App() {
         ? requirement?.wordIds
             .map((id) => words.find((w) => w.id === id))
             .filter((w): w is Word => Boolean(w)) || []
-        : fresh.slice(0, 10);
+        : learningBatch;
     if (batch.length !== 10) {
       setNotice(
         "This batch needs ten published words. Ask the administrator to check the content.",
@@ -189,27 +293,39 @@ export default function App() {
       setStart(null);
       return;
     }
-    playWordRecording(batch[0]);
-    setSession(
-      createSession(
-        batch,
-        start,
-        start === "review"
-          ? requirement.id
-          : `learn:${today}:${crypto.randomUUID()}`,
-        today,
-      ),
+    const next = createSession(
+      batch,
+      start,
+      start === "review"
+        ? requirement.id
+        : `learn:${today}:${crypto.randomUUID()}`,
+      today,
     );
+    playWordRecording(batch[0]);
+    checkpoint(
+      makeSessionDraft(next, {
+        answer: "",
+        tokens: [],
+        feedback: null,
+        seconds: 0,
+      }),
+    );
+    setSessionDraft(null);
+    setSession(next);
     setStart(null);
     window.scrollTo(0, 0);
   }
   async function complete(record: BatchRecord) {
     let meal = false;
+    cancelDraftTimer();
     await app.save((old) => {
       const next = commitBatch(old, record);
       meal = dailyStats(next, today).meal;
       return next;
     });
+    if (draftKey) localStorage.removeItem(draftKey);
+    latestDraft.current = null;
+    setLocalDraft(null);
     return meal;
   }
   const save = (f: Parameters<typeof app.save>[0]) => {
@@ -312,11 +428,15 @@ export default function App() {
       <Session
         key={session.id}
         initial={session}
+        draft={sessionDraft}
         onClose={() => {
           setSession(null);
+          setSessionDraft(null);
           go("words");
         }}
         onComplete={complete}
+        onCheckpoint={checkpoint}
+        onPause={pauseBatch}
         demo={demo}
         tickets={stats.tickets}
         required={stats.required}
@@ -575,18 +695,25 @@ export default function App() {
                     </div>
                     <Button
                       disabled={
-                        app.busy || (!pending.length && fresh.length < 10)
+                        app.busy ||
+                        (!resumeDraft && !pending.length && fresh.length < 10)
                       }
-                      onClick={() => begin(pending.length ? "review" : "learn")}
+                      onClick={() =>
+                        resumeDraft
+                          ? resumeBatch()
+                          : begin(pending.length ? "review" : "learn")
+                      }
                     >
-                      {pending.length
-                        ? "Continue review"
-                        : stats.learned
-                          ? "Learn another batch"
-                          : "Learn 10 new words"}
+                      {resumeDraft
+                        ? `Resume ${resumeDraft.mode === "review" ? "review" : "learning"} · ${resumeDraft.completed.length}/40`
+                        : pending.length
+                          ? "Continue review"
+                          : stats.learned
+                            ? "Learn another batch"
+                            : "Learn 10 new words"}
                       <ArrowRight size={18} />
                     </Button>
-                    {!pending.length && fresh.length < 10 && (
+                    {!resumeDraft && !pending.length && fresh.length < 10 && (
                       <p className="small muted">
                         More words will appear when your administrator publishes
                         them.
@@ -659,6 +786,30 @@ export default function App() {
               </div>
               {wordTab === "Learn" ? (
                 <>
+                  {resumeDraft && (
+                    <section className="card resume-batch">
+                      <div>
+                        <span className="eyebrow">
+                          PICK UP WHERE YOU LEFT OFF
+                        </span>
+                        <h2>
+                          {resumeDraft.mode === "review"
+                            ? "Your review is waiting."
+                            : "Your new words are waiting."}
+                        </h2>
+                        <p>
+                          {resumeDraft.mode === "learn" &&
+                          resumeDraft.introduced.length < 10
+                            ? `${resumeDraft.introduced.length} of 10 words introduced`
+                            : `${resumeDraft.completed.length} of 40 tasks complete`}
+                          {resumeDraft.answer ? " · Your answer is saved" : ""}
+                        </p>
+                      </div>
+                      <Button onClick={resumeBatch}>
+                        Resume batch <ArrowRight size={18} />
+                      </Button>
+                    </section>
+                  )}
                   <div className="words-layout">
                     <div className="words-review-column">
                       <div className="meal-card">
@@ -697,11 +848,20 @@ export default function App() {
                           }
                         />
                         <Button
-                          disabled={!pending.length || app.busy}
+                          disabled={
+                            app.busy ||
+                            (resumeDraft
+                              ? resumeDraft.mode !== "review"
+                              : !pending.length)
+                          }
                           onClick={() => begin("review")}
                         >
-                          {pending.length ? "Start review" : "All caught up"}
-                          {pending.length ? (
+                          {resumeDraft?.mode === "review"
+                            ? "Resume review"
+                            : pending.length
+                              ? "Start review"
+                              : "All caught up"}
+                          {pending.length || resumeDraft?.mode === "review" ? (
                             <ArrowRight size={18} />
                           ) : (
                             <Check size={18} />
@@ -721,27 +881,38 @@ export default function App() {
                         So much to say.
                       </h2>
                       <p className="muted">
-                        {fresh[0]?.topic || "New lessons are on their way"}
+                        {previewBatch.length
+                          ? resumeDraft?.mode === "learn"
+                            ? "The ten words in your saved batch"
+                            : "Useful words and phrases for your next batch"
+                          : "New lessons are on their way"}
                       </p>
                       <div className="word-chips">
-                        {fresh.slice(0, 3).map((w) => (
+                        {previewBatch.slice(0, 3).map((w) => (
                           <span key={w.id}>{w.headword}</span>
                         ))}
                       </div>
                       <p className="small muted">
-                        {pending.length
-                          ? "Finish your remaining review to unlock."
-                          : fresh.length >= 10
-                            ? "Meet each word, then make it yours through practice."
-                            : "Ask your administrator to publish more vocabulary."}
+                        {resumeDraft
+                          ? "Pick up your paused batch first."
+                          : pending.length
+                            ? "Finish your remaining review to unlock."
+                            : learningBatch.length >= 10
+                              ? "Meet all ten words, then practise what you learned."
+                              : "Ask your administrator to publish more vocabulary."}
                       </p>
                       <Button
                         disabled={
-                          pending.length > 0 || fresh.length < 10 || app.busy
+                          (resumeDraft
+                            ? resumeDraft.mode !== "learn"
+                            : pending.length > 0 ||
+                              learningBatch.length < 10) || app.busy
                         }
                         onClick={() => begin("learn")}
                       >
-                        {pending.length ? (
+                        {resumeDraft?.mode === "learn" ? (
+                          "Resume learning"
+                        ) : pending.length ? (
                           <>
                             <Lock size={17} />
                             Batch locked
@@ -924,8 +1095,7 @@ export default function App() {
             ))}
           </div>
           <p className="notice">
-            Leaving or reloading restarts this batch. Completed batches stay
-            safe.
+            Your place is saved as you study. Leave or reopen the app to resume.
           </p>
           <Button onClick={startBatch}>
             Start {start === "review" ? "review" : "learning"}

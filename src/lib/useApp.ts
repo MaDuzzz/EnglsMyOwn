@@ -163,8 +163,8 @@ export function useApp() {
     ];
     return () => off.forEach((f) => f());
   }, [user, phase, demo]);
-  async function save(transform: (old: Learning) => Learning) {
-    setBusy(true);
+  async function save(transform: (old: Learning) => Learning, quiet = false) {
+    if (!quiet) setBusy(true);
     try {
       if (demo) {
         const next = transform(dataRef.current);
@@ -193,7 +193,7 @@ export function useApp() {
       setError((e as Error).message);
       throw e;
     } finally {
-      setBusy(false);
+      if (!quiet) setBusy(false);
     }
   }
   useEffect(() => {

@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -19,9 +20,10 @@ import {
 import {
   type Session as SessionType,
   type BatchRecord,
+  type SessionDraft,
   advance,
   grade,
-  dayKey,
+  makeSessionDraft,
   normalize,
   shuffledTokens,
   sentenceParts,
@@ -62,8 +64,11 @@ const fireworks = Array.from({ length: 18 }, (_, i) => {
 
 export default function Session({
   initial,
+  draft,
   onClose,
   onComplete,
+  onCheckpoint,
+  onPause,
   demo,
   tickets,
   required,
@@ -72,8 +77,11 @@ export default function Session({
   petStage,
 }: {
   initial: SessionType;
+  draft?: SessionDraft | null;
   onClose: () => void;
   onComplete: (record: BatchRecord) => Promise<boolean>;
+  onCheckpoint: (draft: SessionDraft) => void;
+  onPause: (draft: SessionDraft) => Promise<void>;
   demo: boolean;
   tickets: number;
   required: number;
@@ -82,16 +90,18 @@ export default function Session({
   petStage: number;
 }) {
   const [s, setS] = useState(initial),
-    [answer, setAnswer] = useState(""),
-    [tokens, setTokens] = useState<number[]>([]),
-    [feedback, setFeedback] = useState<boolean | null>(null),
+    [answer, setAnswer] = useState(draft?.answer || ""),
+    [tokens, setTokens] = useState<number[]>(draft?.tokens || []),
+    [feedback, setFeedback] = useState<boolean | null>(draft?.feedback ?? null),
     [exit, setExit] = useState(false),
     [saving, setSaving] = useState(false),
     [saved, setSaved] = useState(false),
     [meal, setMeal] = useState(false),
     [error, setError] = useState("");
-  const seconds = useRef(0),
+  const seconds = useRef(draft?.seconds || 0),
     lastActivity = useRef(Date.now()),
+    checkpointRef = useRef(onCheckpoint),
+    finishBusy = useRef(false),
     swipeStart = useRef<{ x: number; y: number } | null>(null),
     transitioning = useRef(false),
     feedbackRef = useRef<HTMLDivElement>(null);
@@ -103,15 +113,23 @@ export default function Session({
   const intro = Boolean(introWord),
     refresher = !intro && Boolean(task?.refresher);
   const advanceReady = Boolean(intro || refresher || feedback !== null);
+  checkpointRef.current = onCheckpoint;
+  function snapshot() {
+    return makeSessionDraft(s, {
+      answer,
+      tokens,
+      feedback,
+      seconds: seconds.current,
+    });
+  }
+  useLayoutEffect(() => {
+    if (!saved) checkpointRef.current(snapshot());
+  }, [s, answer, tokens, feedback, saved]);
   useEffect(() => {
     const touch = () => {
       lastActivity.current = Date.now();
     };
     const timer = setInterval(() => {
-      if (dayKey() !== s.day) {
-        leave();
-        return;
-      }
       if (
         !document.hidden &&
         !exit &&
@@ -127,17 +145,14 @@ export default function Session({
       window.removeEventListener("pointerdown", touch);
       window.removeEventListener("keydown", touch);
     };
-  }, [s.day, exit, saved]);
+  }, [exit, saved]);
   useEffect(() => {
-    const warn = (e: BeforeUnloadEvent) => {
-      if (!saved) {
-        e.preventDefault();
-        e.returnValue = "";
-      }
+    const persist = () => {
+      if (!saved) checkpointRef.current(snapshot());
     };
-    window.addEventListener("beforeunload", warn);
-    return () => window.removeEventListener("beforeunload", warn);
-  }, [saved]);
+    window.addEventListener("pagehide", persist);
+    return () => window.removeEventListener("pagehide", persist);
+  }, [s, answer, tokens, feedback, saved]);
   useEffect(() => {
     if (feedback === null) return;
     feedbackRef.current?.scrollIntoView({
@@ -147,9 +162,15 @@ export default function Session({
       block: "nearest",
     });
   }, [feedback]);
-  function leave() {
+  async function leave() {
     stopPronunciation();
     stopFeedbackVoice();
+    if (saved) {
+      onClose();
+      return;
+    }
+    setSaving(true);
+    await onPause(snapshot());
     onClose();
   }
   function submit() {
@@ -214,11 +235,11 @@ export default function Session({
     continueStep();
   }
   async function finish() {
+    if (finishBusy.current || saved) return;
+    finishBusy.current = true;
     setSaving(true);
     setError("");
     try {
-      if (dayKey() !== s.day)
-        throw Error("A new learning day has started. Please return to Words.");
       const fed = await onComplete({
         id: s.id,
         mode: s.mode,
@@ -232,6 +253,7 @@ export default function Session({
     } catch (e) {
       setError((e as Error).message);
     } finally {
+      finishBusy.current = false;
       setSaving(false);
     }
   }
@@ -647,20 +669,20 @@ export default function Session({
       )}
       {exit && (
         <Modal
-          title={saved ? "Leave this result?" : "Leave this batch?"}
+          title={saved ? "Leave this result?" : "Save your place?"}
           onClose={() => setExit(false)}
         >
           <p>
             {saved
               ? "Your completed batch has been saved."
-              : "Your progress in this batch will reset. You’ll start again from the beginning."}
+              : "Your word, answer and task progress will be here when you return."}
           </p>
           <p className="muted">
-            Completed batches and earned tickets stay safe.
+            You can resume from Words on this or another signed-in device.
           </p>
           <Button onClick={() => setExit(false)}>Keep learning</Button>
-          <Button secondary onClick={leave}>
-            Leave batch
+          <Button secondary disabled={saving} onClick={() => void leave()}>
+            {saving ? "Saving…" : "Save & leave"}
           </Button>
         </Modal>
       )}

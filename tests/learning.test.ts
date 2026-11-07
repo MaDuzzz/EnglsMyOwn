@@ -2,6 +2,10 @@ import { describe, it, expect } from "vitest";
 import {
   advance,
   createSession,
+  selectLearningBatch,
+  makeSessionDraft,
+  restoreSession,
+  checkpointSession,
   nextIntroduction,
   introduceWord,
   grade,
@@ -20,6 +24,62 @@ import { validateImport } from "../src/lib/content";
 import canonicalDraft from "../docs/content/vocabulary.example.json";
 const batch = words.slice(0, 10);
 describe("word sessions", () => {
+  it("mixes available word types without depending on import order", () => {
+    const pool = ["adjective", "verb", "collocation"].flatMap((kind) =>
+      Array.from({ length: 12 }, (_, i) => ({
+        ...batch[0],
+        id: `${kind}-${i}`,
+        itemType:
+          kind === "collocation" ? ("collocation" as const) : ("word" as const),
+        partOfSpeech: kind === "collocation" ? "verb" : kind,
+      })),
+    );
+    const selected = selectLearningBatch(pool, "2026-11-07");
+    expect(selected).toHaveLength(10);
+    expect(new Set(selected.map((word) => word.id)).size).toBe(10);
+    expect(new Set(selected.map((word) => word.id.split("-")[0])).size).toBe(3);
+    expect(
+      selectLearningBatch([...pool].reverse(), "2026-11-07").map((w) => w.id),
+    ).toEqual(selected.map((word) => word.id));
+    expect(selectLearningBatch(pool.slice(0, 10), "2026-11-07")).toHaveLength(
+      10,
+    );
+  });
+  it("restores the exact question, introduction and typed answer", () => {
+    let session = createSession(batch, "learn", "unfinished");
+    session = introduceWord(introduceWord(session));
+    const draft = makeSessionDraft(
+      session,
+      { answer: "take", tokens: [2, 0], feedback: false, seconds: 137 },
+      1234,
+    );
+    expect(restoreSession(draft, batch)).toEqual({ ...session, seconds: 137 });
+    expect(draft).toMatchObject({
+      answer: "take",
+      tokens: [2, 0],
+      feedback: false,
+    });
+    expect(restoreSession(draft, batch.slice(1))).toBeNull();
+    expect(
+      restoreSession(
+        { ...draft, queue: [null] } as unknown as typeof draft,
+        batch,
+      ),
+    ).toBeNull();
+    expect(restoreSession({ ...draft, updatedAt: NaN }, batch)).toBeNull();
+    const saved = checkpointSession(emptyLearning(), draft);
+    expect(checkpointSession(saved, { ...draft, updatedAt: 1200 })).toBe(saved);
+    expect(
+      commitBatch(saved, {
+        id: "unfinished",
+        mode: "learn",
+        day: "2026-11-07",
+        wordIds: batch.map((word) => word.id),
+        seconds: 137,
+        completedAt: "",
+      }).activeSession,
+    ).toBeNull();
+  });
   it("scrambles seven-word sentences without losing or duplicating tokens", () => {
     const order = shuffledTokens(7, "demo_helpful");
     expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6]);

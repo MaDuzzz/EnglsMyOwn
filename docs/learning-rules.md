@@ -6,6 +6,7 @@ This supersedes the yesterday-only unlock rule in Words v2 and any conflicting o
 ## Assignment and unlock
 
 - Each new/review batch contains 10 words, with four required tasks per word: listening, one sentence task, English-to-Vietnamese meaning, Vietnamese-to-English recall. Total: 40 unique tasks.
+- A new batch selects from the unlearned published pool by vocabulary type (collocation, phrase, or a word's part of speech). It alternates available types and varies the items within each type using a stable day-based ordering. The selection is independent of Firestore import order. If only one type remains, fill the batch from it. The selected ten IDs stay fixed in the saved session.
 - ALL mandatory review must be complete before new learning: yesterday, the selected earlier day, and outstanding review. Finishing yesterday alone is insufficient.
 - Apply the gate at every entry point: Words, Today, topic details, direct links and session creation. Recheck eligibility on entry.
 - Review includes all assigned batches, not just the first ten words. An empty required-review set permits new learning; an empty yesterday set does not bypass other pending review.
@@ -66,21 +67,22 @@ No Claim or Feed action. Reopening a result must not duplicate tickets, meals or
 The illustrated +1 growth and 9/365 total are sample presentation values, not a growth formula established by this delivery. The kitten does not instantly evolve.
 This scope does not redefine growth balancing, extra-learning rewards or ticket carryover outside the illustrated day.
 
-## Leaving, lifecycle and reset
+## Leaving and restoring a batch
 
-| Event                                 | Current unfinished word batch                                |
-| ------------------------------------- | ------------------------------------------------------------ |
-| Open confirmation                     | Pause, no reset                                              |
-| Keep learning / dismiss confirmation  | Resume same question and progress                            |
-| Confirm Leave batch                   | Reset current batch; return to Words                         |
-| Close app or reload                   | Reset current unfinished batch                               |
-| Cross 00:00 Vietnam time              | Reset unfinished batch and re-evaluate daily assignment/gate |
-| Switch app or lock screen temporarily | Pause; resume if session is alive and learning day unchanged |
+| Event                                 | Current unfinished word batch                                                                                |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| Open exit confirmation                | Pause; retain the current question and answer                                                                |
+| Keep learning / dismiss confirmation  | Continue the same question                                                                                   |
+| Confirm Save & leave                  | Save the checkpoint and return to Words                                                                      |
+| Close app or reload                   | Restore the latest valid checkpoint and offer Resume batch                                                   |
+| Cross 00:00 Vietnam time              | Keep the original batch and its learning day; the new day's assignment is evaluated when the learner returns |
+| Switch app or lock screen temporarily | Pause; resume the same session                                                                               |
 
-System termination/reload while backgrounded follows the reset rule; merely hiding the page does not.
-Reset clears current answers, task credit and retry queue. Previously completed batches, learned words and recorded rewards are not deleted. Unfinished review remains outstanding.
-Stop audio and active-study time while paused. Do not unexpectedly autoplay audio when returning.
-These reset rules apply to word batches, not automatically to video lessons or other flows.
+A checkpoint includes the chosen word IDs, introduction position, task queue including retries, completed task IDs, round, answer, arranged tokens, feedback, and study seconds. Save it immediately on this device and sync it to the learner's own Firestore learning document. Stage changes sync at once; typing is debounced. On another device, the most recent synced checkpoint is available. If the network is interrupted, the same device can still resume from its local checkpoint.
+
+Only one unfinished batch is active at a time. Starting new learning still requires all mandatory review to be complete. The original batch keeps its learning-day ID when it crosses midnight; finishing it records the original day once, while subsequent assignments use the current Vietnam day. A completed batch clears its checkpoint and cannot award duplicate progress or tickets.
+
+Stop audio and active-study time while paused. Resuming a word introduction or listening task from a learner gesture may replay its recording. These rules apply to word batches, not automatically to video lessons or other flows.
 
 ## Implementation acceptance checks
 
@@ -92,7 +94,8 @@ These reset rules apply to word batches, not automatically to video lessons or o
 - All ten introductions seen but only 39 unique tasks correct → no ticket or new-word batch commit.
 - Final mandatory review in sample → 2/3 and unlock; no meal.
 - New batch in sample → 3/3 receipt, one automatic meal and one growth update.
-- Cancel exit → same progress; confirm exit → restart at 0/40.
-- Temporary background → preserve live session; reload/Vietnam midnight → reset unfinished batch.
+- Cancel exit → same progress; confirm exit → Resume batch appears in Today and Words.
+- Reload after a typed but unchecked answer, graded feedback, or a queued retry → restore the same state without duplicate task credit.
+- Cross Vietnam midnight → retain the batch and its original day; evaluate the next daily assignment after completion.
 
 See [mockups and interaction specification](mockups/word-sessions-v1/README.md). Earlier mockups still show the previous introduction order; this document and the running app take precedence.

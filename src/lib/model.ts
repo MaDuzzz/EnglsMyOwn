@@ -72,6 +72,7 @@ export type Learning = {
     pattern: string;
     species?: PetSpecies;
   };
+  activeSession?: SessionDraft | null;
 };
 export const emptyLearning = (): Learning => ({
   records: [],
@@ -84,6 +85,7 @@ export const emptyLearning = (): Learning => ({
     gender: "unspecified",
     pattern: "solid",
   },
+  activeSession: null,
 });
 export const emptyVideo = (): VideoProgress => ({
   step: 0,
@@ -169,7 +171,11 @@ export function commitBatch(s: Learning, record: BatchRecord): Learning {
     throw Error(
       "These words were already completed in another session. Return to Words to choose a fresh batch.",
     );
-  return { ...s, records: [...s.records, record] };
+  return {
+    ...s,
+    records: [...s.records, record],
+    activeSession: s.activeSession?.id === record.id ? null : s.activeSession,
+  };
 }
 export const normalize = (s: string) =>
   s
@@ -210,6 +216,172 @@ export type Session = {
   round: number;
   seconds: number;
 };
+export type SessionDraft = {
+  version: 1;
+  id: string;
+  mode: Mode;
+  day: string;
+  wordIds: string[];
+  queue: Task[];
+  completed: string[];
+  introduced: string[];
+  round: number;
+  answer: string;
+  tokens: number[];
+  feedback: boolean | null;
+  seconds: number;
+  updatedAt: number;
+};
+
+function hash(value: string) {
+  let result = 2166136261;
+  for (const character of value)
+    result = Math.imul(result ^ character.charCodeAt(0), 16777619);
+  return result >>> 0;
+}
+function wordKind(word: Word) {
+  if (word.itemType && word.itemType !== "word") return word.itemType;
+  const part = word.partOfSpeech.toLowerCase();
+  if (/adject|\badj\b/.test(part)) return "adjective";
+  if (/\bverb\b/.test(part)) return "verb";
+  if (/\bnoun\b/.test(part)) return "noun";
+  if (/\badverb\b/.test(part)) return "adverb";
+  return part || "word";
+}
+export function selectLearningBatch(words: Word[], day: string, size = 10) {
+  const groups = new Map<string, Word[]>();
+  for (const word of words) {
+    const kind = wordKind(word);
+    groups.set(kind, [...(groups.get(kind) || []), word]);
+  }
+  const kinds = [...groups.keys()].sort(
+    (a, b) => hash(`${day}:${a}`) - hash(`${day}:${b}`) || a.localeCompare(b),
+  );
+  for (const [kind, group] of groups)
+    group.sort(
+      (a, b) =>
+        hash(`${day}:${kind}:${a.id}`) - hash(`${day}:${kind}:${b.id}`) ||
+        a.id.localeCompare(b.id),
+    );
+  const selected: Word[] = [];
+  while (selected.length < size && kinds.length) {
+    for (let i = 0; i < kinds.length && selected.length < size;) {
+      const group = groups.get(kinds[i])!;
+      const word = group.shift();
+      if (word) selected.push(word);
+      if (!group.length) kinds.splice(i, 1);
+      else i++;
+    }
+  }
+  return selected;
+}
+
+export function makeSessionDraft(
+  session: Session,
+  input: Pick<SessionDraft, "answer" | "tokens" | "feedback" | "seconds">,
+  updatedAt = Date.now(),
+): SessionDraft {
+  return {
+    version: 1,
+    id: session.id,
+    mode: session.mode,
+    day: session.day,
+    wordIds: session.words.map((word) => word.id),
+    queue: session.queue,
+    completed: session.completed,
+    introduced: session.introduced,
+    round: session.round,
+    ...input,
+    updatedAt,
+  };
+}
+
+export function restoreSession(
+  draft: SessionDraft,
+  catalog: Word[],
+): Session | null {
+  if (
+    draft?.version !== 1 ||
+    typeof draft.id !== "string" ||
+    !draft.id ||
+    !["learn", "review"].includes(draft.mode) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(draft.day) ||
+    !Array.isArray(draft.wordIds) ||
+    draft.wordIds.length !== 10 ||
+    !draft.wordIds.every((id) => typeof id === "string") ||
+    new Set(draft.wordIds).size !== 10 ||
+    !Array.isArray(draft.queue) ||
+    draft.queue.length > 40 ||
+    !draft.queue.every(
+      (task) =>
+        task &&
+        typeof task === "object" &&
+        typeof task.id === "string" &&
+        typeof task.wordId === "string" &&
+        Number.isInteger(task.round) &&
+        (task.refresher === undefined || typeof task.refresher === "boolean"),
+    ) ||
+    !Array.isArray(draft.completed) ||
+    draft.completed.length > 40 ||
+    !draft.completed.every((id) => typeof id === "string") ||
+    !Array.isArray(draft.introduced) ||
+    draft.introduced.length > 10 ||
+    !draft.introduced.every((id) => typeof id === "string") ||
+    !Number.isInteger(draft.round) ||
+    draft.round < 1 ||
+    draft.round > 4 ||
+    typeof draft.answer !== "string" ||
+    draft.answer.length > 500 ||
+    !Array.isArray(draft.tokens) ||
+    draft.tokens.length > 50 ||
+    !draft.tokens.every((token) => Number.isInteger(token) && token >= 0) ||
+    ![true, false, null].includes(draft.feedback) ||
+    !Number.isFinite(draft.seconds) ||
+    draft.seconds < 0 ||
+    !Number.isSafeInteger(draft.updatedAt) ||
+    draft.updatedAt < 0
+  )
+    return null;
+  const byId = new Map(catalog.map((word) => [word.id, word]));
+  const words = draft.wordIds.map((id) => byId.get(id));
+  if (words.some((word) => !word)) return null;
+  const validTasks = new Map(
+    tasksFor(words as Word[]).map((task) => [task.id, task]),
+  );
+  if (
+    draft.queue.some(
+      (task) =>
+        !validTasks.has(task.id) ||
+        validTasks.get(task.id)?.wordId !== task.wordId ||
+        validTasks.get(task.id)?.kind !== task.kind ||
+        validTasks.get(task.id)?.round !== task.round,
+    ) ||
+    draft.completed.some((id) => !validTasks.has(id)) ||
+    draft.introduced.some((id) => !draft.wordIds.includes(id))
+  )
+    return null;
+  return {
+    id: draft.id,
+    mode: draft.mode,
+    day: draft.day,
+    words: words as Word[],
+    queue: draft.queue,
+    completed: draft.completed,
+    introduced: draft.introduced,
+    round: draft.round,
+    seconds: draft.seconds,
+  };
+}
+export function checkpointSession(
+  learning: Learning,
+  draft: SessionDraft,
+): Learning {
+  if (learning.records.some((record) => record.id === draft.id))
+    return learning;
+  if ((learning.activeSession?.updatedAt || 0) > draft.updatedAt)
+    return learning;
+  return { ...learning, activeSession: draft };
+}
 export function tasksFor(words: Word[]): Task[] {
   return words.flatMap((w, i) =>
     ["listen", i % 2 === 0 ? "gap" : "arrange", "meaning", "recall"].map(
