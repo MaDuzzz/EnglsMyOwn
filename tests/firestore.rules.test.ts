@@ -155,6 +155,23 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertFails(getDocs(collection(db, "users")));
   });
+  it("accepts supported companion species but rejects invalid or extra fields", async () => {
+    const db = env.authenticatedContext("approved").firestore();
+    const ref = doc(db, "learning/approved");
+    const own = (await getDoc(ref)).data()!;
+    for (const species of ["cat", "dog", "lion", "tiger"])
+      await assertSucceeds(
+        setDoc(ref, { ...own, pet: { ...own.pet, species } }),
+      );
+    await assertFails(
+      setDoc(ref, { ...own, pet: { ...own.pet, species: "dragon" } }),
+    );
+    await assertFails(setDoc(ref, { ...own, pet: { ...own.pet, species: 3 } }));
+    await assertFails(
+      setDoc(ref, { ...own, pet: { ...own.pet, admin: true } }),
+    );
+    await assertSucceeds(setDoc(ref, own));
+  });
   it("revocation immediately denies new protected reads", async () => {
     const owner = env.authenticatedContext("owner").firestore();
     const learner = env.authenticatedContext("new").firestore();

@@ -1,4 +1,5 @@
 import type { RichVocabulary } from "./vocabulary";
+import type { PetSpecies } from "./pets";
 export type Mode = "review" | "learn";
 export type Word = RichVocabulary & {
   sourceRef?: string;
@@ -64,7 +65,13 @@ export type Learning = {
   plans: Record<string, Requirement[]>;
   videos: Record<string, VideoProgress>;
   savedVideos: string[];
-  pet: { name: string; color: string; gender: string; pattern: string };
+  pet: {
+    name: string;
+    color: string;
+    gender: string;
+    pattern: string;
+    species?: PetSpecies;
+  };
 };
 export const emptyLearning = (): Learning => ({
   records: [],

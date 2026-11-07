@@ -52,7 +52,6 @@ import {
   ProgressBar,
   SectionTitle,
   Empty,
-  asset,
 } from "./components/ui";
 import Session from "./components/Session";
 import { Library, VideoSession } from "./components/Library";
@@ -60,6 +59,7 @@ import Progress from "./components/Progress";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
+import { growthStage, petSpecies, petStages, speciesOf } from "./lib/pets";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
@@ -85,6 +85,7 @@ export default function App() {
     [account, setAccount] = useState(false),
     [notice, setNotice] = useState("");
   const [petDraft, setPetDraft] = useState(app.data.pet);
+  const [previewStage, setPreviewStage] = useState(0);
   const themeTransition = useRef<ViewTransition | null>(null);
   const { data, words, lessons, profile, demo, today } = app,
     stats = dailyStats(data, today),
@@ -92,6 +93,7 @@ export default function App() {
     known = learnedIds(data),
     fresh = words.filter((w) => !known.has(w.id)),
     growth = petGrowth(data, today),
+    petStage = growthStage(growth.points),
     completedDays = Object.keys(data.plans).filter(
       (d) => dailyStats(data, d).meal,
     ).length;
@@ -237,9 +239,10 @@ export default function App() {
               <br />
               for a little <em>growth.</em>
             </h1>
-            <img
-              src={asset("mochi.png")}
-              alt="Mochi, your tiny learning companion"
+            <Pet
+              pet={{ name: "Mochi", gender: "unspecified", species: "cat" }}
+              theme={theme}
+              stage={1}
             />
           </div>
           <div className="auth-card card">
@@ -315,6 +318,7 @@ export default function App() {
         required={stats.required}
         pet={data.pet}
         theme={theme}
+        petStage={petStage.index}
       />
     );
   if (selectedLesson)
@@ -466,6 +470,7 @@ export default function App() {
                       className="pet-customize"
                       onClick={() => {
                         setPetDraft({ ...data.pet });
+                        setPreviewStage(petStage.index);
                         setCustomize(true);
                       }}
                     >
@@ -482,27 +487,31 @@ export default function App() {
                         : "A little learning, a happy tummy."}
                       <Heart size={12} />
                     </div>
-                    <Pet pet={data.pet} theme={theme} />
+                    <Pet pet={data.pet} theme={theme} stage={petStage.index} />
                   </div>
                   <div className="pet-growth">
                     <div>
-                      <span className="pill">
-                        {growth.milestone === 1
-                          ? "Newborn"
-                          : `Growth milestone ${growth.milestone}`}
-                      </span>
+                      <span className="pill">{petStage.label}</span>
                       <span className="muted small">
                         {completedDays} nourishing{" "}
                         {completedDays === 1 ? "day" : "days"}
                       </span>
                     </div>
                     <ProgressBar
-                      value={growth.percent}
+                      value={petStage.percent}
                       label="Progress toward next growth milestone"
                     />
                     <div>
-                      <span>Growing, little by little</span>
-                      <span>{growth.points % 500} / 500 growth</span>
+                      <span>
+                        {petStage.adult
+                          ? "All grown up, always your companion"
+                          : `Growing toward ${petStage.next}`}
+                      </span>
+                      <span>
+                        {petStage.adult
+                          ? "Fully grown"
+                          : `${petStage.earned} / 500 growth`}
+                      </span>
                     </div>
                   </div>
                 </section>
@@ -928,6 +937,7 @@ export default function App() {
                     ...old.pet,
                     name: String(f.get("name")).trim() || "Mochi",
                     gender: String(f.get("gender")),
+                    species: speciesOf(petDraft),
                   },
                 }))
                 .then(() => setCustomize(false))
@@ -935,8 +945,43 @@ export default function App() {
             }}
           >
             <div className="pet-custom-preview">
-              <Pet pet={petDraft} theme={theme} preview />
+              <Pet pet={petDraft} theme={theme} stage={previewStage} preview />
             </div>
+            <fieldset className="companion-options">
+              <legend>Your companion</legend>
+              <div className="species-options">
+                {petSpecies.map((species) => (
+                  <button
+                    type="button"
+                    key={species.id}
+                    aria-pressed={speciesOf(petDraft) === species.id}
+                    onClick={() =>
+                      setPetDraft({ ...petDraft, species: species.id })
+                    }
+                  >
+                    {species.label}
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+            <fieldset className="companion-options growth-preview-options">
+              <legend>Preview growth</legend>
+              <div className="growth-preview-stages">
+                {petStages.map((label, index) => (
+                  <button
+                    type="button"
+                    key={label}
+                    aria-pressed={previewStage === index}
+                    onClick={() => setPreviewStage(index)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <p className="small muted">
+                A preview of what's ahead. Growth is earned through learning.
+              </p>
+            </fieldset>
             <label>
               Name
               <input
@@ -951,7 +996,13 @@ export default function App() {
             </label>
             <label>
               Gender
-              <select name="gender" defaultValue={data.pet.gender}>
+              <select
+                name="gender"
+                value={petDraft.gender}
+                onChange={(e) =>
+                  setPetDraft({ ...petDraft, gender: e.target.value })
+                }
+              >
                 <option value="unspecified">A little mystery</option>
                 <option value="female">Female</option>
                 <option value="male">Male</option>

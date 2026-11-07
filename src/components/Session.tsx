@@ -22,6 +22,7 @@ import {
 } from "../lib/model";
 import { Button, Road, Modal, ProgressBar } from "./ui";
 import Pet from "./Pet";
+import type { Companion } from "../lib/pets";
 import WordDetails from "./WordDetails";
 import PronunciationControls from "./PronunciationControls";
 export default function Session({
@@ -33,6 +34,7 @@ export default function Session({
   required,
   pet,
   theme,
+  petStage,
 }: {
   initial: SessionType;
   onClose: () => void;
@@ -40,8 +42,9 @@ export default function Session({
   demo: boolean;
   tickets: number;
   required: number;
-  pet: { name: string; color: string; pattern: string };
+  pet: Companion;
   theme: string;
+  petStage: number;
 }) {
   const [s, setS] = useState(initial),
     [answer, setAnswer] = useState(""),
@@ -175,7 +178,7 @@ export default function Session({
           </h1>
           {saved && meal ? (
             <div className="result-pet-scene">
-              <Pet pet={pet} theme={theme} preview />
+              <Pet pet={pet} theme={theme} stage={petStage} preview />
             </div>
           ) : (
             <div className="ticket-hero">
