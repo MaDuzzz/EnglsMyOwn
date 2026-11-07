@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
   type TouchEvent,
 } from "react";
 import {
@@ -139,6 +140,15 @@ export default function Session({
     finishBusy = useRef(false),
     swipeStart = useRef<{ x: number; y: number } | null>(null),
     transitioning = useRef(false),
+    wordCard = useRef<HTMLDivElement>(null),
+    wordDrag = useRef<{
+      id: number;
+      x: number;
+      y: number;
+      offset: number;
+    } | null>(null),
+    wordAnimation = useRef<Animation | null>(null),
+    enterNextWord = useRef(false),
     feedbackRef = useRef<HTMLDivElement>(null),
     completionPlayed = useRef(false),
     gradedRef = useRef(
@@ -237,6 +247,20 @@ export default function Session({
     if (timedQuestion && !exit && remaining === 0 && feedback === null)
       revealAnswer("timeout");
   }, [timedQuestion, task?.id, remaining, feedback, exit]);
+  useLayoutEffect(() => {
+    if (!enterNextWord.current) return;
+    enterNextWord.current = false;
+    const card = wordCard.current;
+    if (!card || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    card.animate(
+      [
+        { transform: "translate3d(48px, 0, 0)", opacity: 0 },
+        { transform: "translate3d(0, 0, 0)", opacity: 1 },
+      ],
+      { duration: 340, easing: "cubic-bezier(.2,.8,.2,1)" },
+    );
+  }, [introWord?.id]);
+  useEffect(() => () => wordAnimation.current?.cancel(), []);
   async function leave() {
     stopPronunciation();
     stopFeedbackVoice();
@@ -309,6 +333,121 @@ export default function Session({
     setAnswer("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
+  function slideToNextWord() {
+    if (!intro || transitioning.current) return;
+    const following = introduceWord(s);
+    // Start the next recording in the swipe/tap gesture for iOS audio playback.
+    readNextStep(following);
+    const card = wordCard.current;
+    const offset = wordDrag.current?.offset || 0;
+    wordDrag.current = null;
+    if (
+      !card ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !card.animate
+    ) {
+      setS(following);
+      setAnswer("");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      return;
+    }
+    transitioning.current = true;
+    const animation = card.animate(
+      [
+        {
+          transform: `translate3d(${offset}px, 0, 0) rotate(${offset * 0.008}deg)`,
+          opacity: Math.max(0.68, 1 + offset / 450),
+        },
+        {
+          transform: `translate3d(${-card.clientWidth - 55}px, 0, 0) rotate(-4deg)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 280, easing: "cubic-bezier(.3,.7,.2,1)", fill: "forwards" },
+    );
+    wordAnimation.current = animation;
+    void animation.finished
+      .then(() => {
+        if (wordAnimation.current !== animation) return;
+        card.style.visibility = "hidden";
+        wordAnimation.current = null;
+        animation.cancel();
+        enterNextWord.current = true;
+        setS(following);
+        setAnswer("");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        requestAnimationFrame(() => {
+          transitioning.current = false;
+        });
+      })
+      .catch(() => {
+        transitioning.current = false;
+      });
+  }
+  function onWordPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (
+      transitioning.current ||
+      (event.pointerType === "mouse" && event.button !== 0) ||
+      (event.target as HTMLElement).closest("button, a, input, select")
+    )
+      return;
+    if (event.pointerType === "mouse") event.preventDefault();
+    wordDrag.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      offset: 0,
+    };
+  }
+  function onWordPointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const drag = wordDrag.current;
+    const card = wordCard.current;
+    if (!drag || !card || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (Math.abs(dy) > Math.abs(dx) * 1.2 && drag.offset === 0) {
+      wordDrag.current = null;
+      return;
+    }
+    if (dx >= -8 || Math.abs(dx) < Math.abs(dy) * 1.15) return;
+    if (!card.hasPointerCapture(event.pointerId))
+      card.setPointerCapture(event.pointerId);
+    drag.offset = Math.max(-card.clientWidth, dx);
+    card.style.userSelect = "none";
+    card.style.transform = `translate3d(${drag.offset}px, 0, 0) rotate(${drag.offset * 0.008}deg)`;
+    card.style.opacity = String(Math.max(0.68, 1 + drag.offset / 450));
+  }
+  function onWordPointerUp(
+    event: ReactPointerEvent<HTMLDivElement>,
+    cancelled = false,
+  ) {
+    const drag = wordDrag.current;
+    const card = wordCard.current;
+    if (!drag || !card || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (card.hasPointerCapture(event.pointerId))
+      card.releasePointerCapture(event.pointerId);
+    card.style.userSelect = "";
+    if (!cancelled && dx < -80 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      event.preventDefault();
+      slideToNextWord();
+      return;
+    }
+    wordDrag.current = null;
+    const from = card.style.transform;
+    const opacity = card.style.opacity || "1";
+    card.style.transform = "";
+    card.style.opacity = "";
+    if (from && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+      card.animate(
+        [
+          { transform: from, opacity },
+          { transform: "translate3d(0, 0, 0)", opacity: 1 },
+        ],
+        { duration: 190, easing: "ease-out" },
+      );
+  }
   function continueStep() {
     if (transitioning.current) return;
     transitioning.current = true;
@@ -372,9 +511,13 @@ export default function Session({
   const options = [...choices.slice(offset), ...choices.slice(0, offset)];
   return (
     <main
-      className={"session-page" + (advanceReady ? " can-advance" : "")}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
+      className={
+        "session-page" +
+        (advanceReady && !intro ? " can-advance" : "") +
+        (intro ? " is-word-intro" : "")
+      }
+      onTouchStart={intro ? undefined : onTouchStart}
+      onTouchEnd={intro ? undefined : onTouchEnd}
     >
       <header className="session-header">
         <button
@@ -520,16 +663,33 @@ export default function Session({
                   />
                 </div>
               )}
-              <div className="card word-intro">
+              <div
+                ref={intro ? wordCard : undefined}
+                key={intro ? word.id : "refresher"}
+                className={"card word-intro" + (intro ? " is-swipeable" : "")}
+                onPointerDown={intro ? onWordPointerDown : undefined}
+                onPointerMove={intro ? onWordPointerMove : undefined}
+                onPointerUp={intro ? onWordPointerUp : undefined}
+                onPointerCancel={
+                  intro ? (event) => onWordPointerUp(event, true) : undefined
+                }
+              >
                 <WordDetails key={word.id} word={word} />
+                {intro && (
+                  <p className="word-card-hint">
+                    <ArrowLeft size={15} /> Swipe this card left for the next
+                    word
+                  </p>
+                )}
               </div>
               <div className="word-practice-action">
-                <Button onClick={continueStep}>
+                <Button onClick={intro ? slideToNextWord : continueStep}>
                   {intro
                     ? s.introduced.length === 9
                       ? "Start practice"
                       : "Next word"
                     : "Try again"}
+                  {intro && <ArrowRight size={16} />}
                 </Button>
               </div>
             </>
@@ -771,7 +931,7 @@ export default function Session({
               )}
             </form>
           )}
-          {advanceReady && (
+          {advanceReady && !intro && (
             <button
               type="button"
               className="swipe-next"

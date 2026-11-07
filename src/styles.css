@@ -1687,6 +1687,7 @@ th {
   margin: 0 auto;
   padding: 15px 26px max(35px, env(safe-area-inset-bottom));
   min-height: 100dvh;
+  overflow-x: clip;
 }
 .session-header {
   display: flex;
@@ -1796,6 +1797,21 @@ th {
 }
 .intro-progress .progress-track {
   height: 6px;
+}
+.word-intro.is-swipeable {
+  touch-action: pan-y;
+  will-change: transform, opacity;
+}
+.word-card-hint {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 17px 0 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 11px;
 }
 .swipe-next {
   display: none;
@@ -2424,6 +2440,21 @@ th {
   z-index: 3;
   padding: 16px 0 max(12px, env(safe-area-inset-bottom));
   background: linear-gradient(transparent, var(--bg) 18px);
+}
+.session-page.is-word-intro .word-practice-action {
+  position: static;
+  padding: 0 0 14px;
+  background: none;
+}
+.session-page.is-word-intro .word-practice-action .button {
+  width: auto;
+  min-height: 44px;
+  margin-left: auto;
+  padding: 10px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--accent);
 }
 .feedback .answer-explanation {
   color: var(--text);
@@ -3154,6 +3185,12 @@ th {
   .word-practice-action,
   .session-feedback-next {
     display: none;
+  }
+  .session-page.is-word-intro .word-practice-action {
+    display: block;
+  }
+  .session-page.is-word-intro .word-card-hint {
+    display: flex;
   }
   .swipe-next {
     position: fixed;
