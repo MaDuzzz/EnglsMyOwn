@@ -31,13 +31,31 @@ service cloud.firestore {
   match /learning/{uid} {
    allow read: if approved() && request.auth.uid == uid;
    allow create, update: if approved() && request.auth.uid == uid
-    && request.resource.data.keys().hasOnly(['records','plans','videos','savedVideos','pet'])
+    && request.resource.data.keys().hasOnly(['records','plans','videos','savedVideos','pet','activeSession'])
     && request.resource.data.records is list && request.resource.data.records.size() <= 2000
     && request.resource.data.plans is map && request.resource.data.videos is map
     && request.resource.data.savedVideos is list && request.resource.data.pet is map
     && request.resource.data.pet.keys().hasOnly(['name','color','gender','pattern','species'])
     && (!('species' in request.resource.data.pet) || request.resource.data.pet.species in ['cat','dog','lion','tiger'])
-    && request.resource.data.pet.name is string && request.resource.data.pet.name.size() <= 24;
+    && request.resource.data.pet.name is string && request.resource.data.pet.name.size() <= 24
+    && (!('activeSession' in request.resource.data)
+      || request.resource.data.activeSession == null
+      || (request.resource.data.activeSession is map
+        && request.resource.data.activeSession.keys().hasOnly(['version','id','mode','day','wordIds','queue','completed','introduced','round','answer','tokens','feedback','seconds','updatedAt'])
+        && request.resource.data.activeSession.version == 1
+        && request.resource.data.activeSession.id is string && request.resource.data.activeSession.id.size() <= 200
+        && request.resource.data.activeSession.mode in ['learn','review']
+        && request.resource.data.activeSession.day is string && request.resource.data.activeSession.day.size() == 10
+        && request.resource.data.activeSession.wordIds is list && request.resource.data.activeSession.wordIds.size() == 10
+        && request.resource.data.activeSession.queue is list && request.resource.data.activeSession.queue.size() <= 40
+        && request.resource.data.activeSession.completed is list && request.resource.data.activeSession.completed.size() <= 40
+        && request.resource.data.activeSession.introduced is list && request.resource.data.activeSession.introduced.size() <= 10
+        && request.resource.data.activeSession.round is int && request.resource.data.activeSession.round >= 1 && request.resource.data.activeSession.round <= 4
+        && request.resource.data.activeSession.answer is string && request.resource.data.activeSession.answer.size() <= 500
+        && request.resource.data.activeSession.tokens is list && request.resource.data.activeSession.tokens.size() <= 50
+        && (request.resource.data.activeSession.feedback == null || request.resource.data.activeSession.feedback is bool)
+        && request.resource.data.activeSession.seconds is number && request.resource.data.activeSession.seconds >= 0
+        && request.resource.data.activeSession.updatedAt is int));
    allow delete: if false;
   }
   match /{document=**} { allow read, write: if false; }

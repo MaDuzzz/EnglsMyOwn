@@ -172,6 +172,44 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertSucceeds(setDoc(ref, own));
   });
+  it("saves only a bounded draft in the approved learner's own document", async () => {
+    const db = env.authenticatedContext("approved").firestore();
+    const ref = doc(db, "learning/approved");
+    const own = (await getDoc(ref)).data()!;
+    const draft = {
+      version: 1,
+      id: "learn:2026-11-07:test",
+      mode: "learn",
+      day: "2026-11-07",
+      wordIds: Array.from({ length: 10 }, (_, i) => `word-${i}`),
+      queue: [],
+      completed: [],
+      introduced: [],
+      round: 1,
+      answer: "a saved answer",
+      tokens: [],
+      feedback: null,
+      seconds: 25,
+      updatedAt: 1794000000000,
+    };
+    await assertSucceeds(setDoc(ref, { ...own, activeSession: draft }));
+    await assertFails(
+      setDoc(ref, { ...own, activeSession: { ...draft, mode: "admin" } }),
+    );
+    await assertFails(
+      setDoc(ref, { ...own, activeSession: { ...draft, secret: true } }),
+    );
+    await assertFails(
+      setDoc(ref, {
+        ...own,
+        activeSession: { ...draft, answer: "a".repeat(501) },
+      }),
+    );
+    await assertFails(
+      setDoc(doc(db, "learning/revoked"), { ...own, activeSession: draft }),
+    );
+    await assertSucceeds(setDoc(ref, { ...own, activeSession: null }));
+  });
   it("revocation immediately denies new protected reads", async () => {
     const owner = env.authenticatedContext("owner").firestore();
     const learner = env.authenticatedContext("new").firestore();
