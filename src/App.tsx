@@ -4,6 +4,7 @@ import {
   useRef,
   useState,
   type CSSProperties,
+  type MouseEvent,
 } from "react";
 import { flushSync } from "react-dom";
 import {
@@ -341,11 +342,20 @@ export default function App() {
       {theme === "light" ? <Moon size={21} /> : <Sun size={21} />}
     </button>
   );
+  function reloadApp(event: MouseEvent<HTMLAnchorElement>) {
+    event.preventDefault();
+    window.location.reload();
+  }
   if (app.phase !== "ready")
     return (
       <div className="auth-page">
         <header>
-          <a className="brand" href="#today">
+          <a
+            className="brand"
+            href={window.location.href}
+            onClick={reloadApp}
+            title="Reload app"
+          >
             <BookOpen />
             EnglsMyOwn<span>your little learning space</span>
           </a>
@@ -464,7 +474,12 @@ export default function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="#today">
+        <a
+          className="brand"
+          href={window.location.href}
+          onClick={reloadApp}
+          title="Reload app"
+        >
           <span className="brand-mark">
             <BookOpen size={26} />
           </span>
@@ -515,7 +530,14 @@ export default function App() {
       <main className="main-content">
         <header className="topbar">
           <div>
-            <span className="mobile-brand">EnglsMyOwn</span>
+            <a
+              className="mobile-brand"
+              href={window.location.href}
+              onClick={reloadApp}
+              title="Reload app"
+            >
+              EnglsMyOwn
+            </a>
             <span className="desktop-breadcrumb">
               Your space <ChevronRight size={13} />{" "}
               {page === "admin"
