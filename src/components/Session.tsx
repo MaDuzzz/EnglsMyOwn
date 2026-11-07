@@ -17,6 +17,8 @@ import {
   Ticket,
   BookOpen,
   Volume2,
+  Timer,
+  Eye,
 } from "lucide-react";
 import {
   type Session as SessionType,
@@ -44,7 +46,9 @@ import {
 } from "../lib/pronunciationAudio";
 import {
   playAnswerFeedback,
+  playCompletionFanfare,
   speakPraise,
+  speakWord,
   stopFeedbackVoice,
 } from "../lib/feedbackAudio";
 import { availableAccents, pronunciationsFor } from "../lib/vocabulary";
@@ -68,6 +72,23 @@ const fireworks = Array.from({ length: 24 }, (_, i) => {
     "--burst-delay": `${(i % 4) * 75}ms`,
   } as CSSProperties;
 });
+
+function Celebration({ complete = false }: { complete?: boolean }) {
+  return (
+    <div
+      className={"celebration-sky" + (complete ? " is-complete" : "")}
+      aria-hidden="true"
+    >
+      {[0, 1, 2].map((burst) => (
+        <div className="celebration-burst" key={burst}>
+          {fireworks.map((style, i) => (
+            <i key={i} style={style} />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default function Session({
   initial,
@@ -105,20 +126,35 @@ export default function Session({
     [saved, setSaved] = useState(false),
     [meal, setMeal] = useState(false),
     [error, setError] = useState("");
+  const [timer, setTimer] = useState({
+      taskId: initial.queue[0]?.id || "",
+      remaining: 20,
+    }),
+    [revealReason, setRevealReason] = useState<"wrong" | "skip" | "timeout">(
+      draft?.feedback === false && !normalize(draft.answer) ? "skip" : "wrong",
+    );
   const seconds = useRef(draft?.seconds || 0),
     lastActivity = useRef(Date.now()),
     checkpointRef = useRef(onCheckpoint),
     finishBusy = useRef(false),
     swipeStart = useRef<{ x: number; y: number } | null>(null),
     transitioning = useRef(false),
-    feedbackRef = useRef<HTMLDivElement>(null);
+    feedbackRef = useRef<HTMLDivElement>(null),
+    completionPlayed = useRef(false),
+    gradedRef = useRef(
+      draft?.feedback !== null && draft?.feedback !== undefined,
+    );
   const task = s.queue[0],
     introWord = nextIntroduction(s),
     word =
       introWord ||
       (task ? s.words.find((w) => w.id === task.wordId)! : s.words[0]);
   const intro = Boolean(introWord),
-    refresher = !intro && Boolean(task?.refresher);
+    refresher = !intro && Boolean(task?.refresher),
+    complete = s.completed.length === 40;
+  const timedQuestion =
+    s.mode === "review" && !intro && !refresher && !complete && !!task;
+  const remaining = timer.taskId === task?.id ? timer.remaining : 20;
   const advanceReady = Boolean(intro || refresher || feedback !== null);
   checkpointRef.current = onCheckpoint;
   function snapshot() {
@@ -182,6 +218,25 @@ export default function Session({
       block: "nearest",
     });
   }, [feedback]);
+  useEffect(() => {
+    if (!timedQuestion || !task || feedback !== null || exit || remaining === 0)
+      return;
+    const interval = window.setInterval(() => {
+      if (document.hidden) return;
+      setTimer((current) => ({
+        taskId: task.id,
+        remaining: Math.max(
+          0,
+          (current.taskId === task.id ? current.remaining : 20) - 1,
+        ),
+      }));
+    }, 1000);
+    return () => window.clearInterval(interval);
+  }, [timedQuestion, task?.id, feedback, exit, remaining === 0]);
+  useEffect(() => {
+    if (timedQuestion && !exit && remaining === 0 && feedback === null)
+      revealAnswer("timeout");
+  }, [timedQuestion, task?.id, remaining, feedback, exit]);
   async function leave() {
     stopPronunciation();
     stopFeedbackVoice();
@@ -194,7 +249,8 @@ export default function Session({
     onClose();
   }
   function submit() {
-    if (feedback !== null || !task) return;
+    if (feedback !== null || gradedRef.current || !task) return;
+    gradedRef.current = true;
     const correct = grade(word, task, answer);
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
@@ -203,16 +259,34 @@ export default function Session({
     if (hasRecording)
       playWordRecording(word, {
         onEnded: speakPraise,
-        onError: speakPraise,
+        onError: () => speakWord(word.headword, speakPraise),
       });
-    playAnswerFeedback(correct, !hasRecording);
+    else if (correct) speakWord(word.headword, speakPraise);
+    playAnswerFeedback(correct, false);
+    setRevealReason("wrong");
     setFeedback(correct);
+  }
+  function revealAnswer(reason: "skip" | "timeout") {
+    if (feedback !== null || gradedRef.current || !task) return;
+    gradedRef.current = true;
+    if (document.activeElement instanceof HTMLElement)
+      document.activeElement.blur();
+    stopPronunciation();
+    setRevealReason(reason);
+    setFeedback(false);
+  }
+  function celebrateCompletion() {
+    if (completionPlayed.current) return;
+    completionPlayed.current = true;
+    playCompletionFanfare();
   }
   function next() {
     if (feedback === null) return;
     const following = advance(s, feedback);
     stopFeedbackVoice();
     readNextStep(following);
+    if (following.completed.length === 40) celebrateCompletion();
+    gradedRef.current = false;
     setS(following);
     setFeedback(null);
     setAnswer("");
@@ -230,6 +304,7 @@ export default function Session({
           ),
         };
     readNextStep(following);
+    if (refresher && task) setTimer({ taskId: task.id, remaining: 20 });
     setS(following);
     setAnswer("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -276,6 +351,7 @@ export default function Session({
       });
       setMeal(fed);
       setSaved(true);
+      celebrateCompletion();
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -283,7 +359,6 @@ export default function Session({
       setSaving(false);
     }
   }
-  const complete = s.completed.length === 40;
   useEffect(() => {
     if (complete) void finish();
   }, [complete]);
@@ -333,6 +408,7 @@ export default function Session({
         </button>
       </header>
       <Road count={displayed} />
+      {(feedback === true || complete) && <Celebration complete={complete} />}
       {complete ? (
         <div className="session-result">
           <span className="eyebrow">ONE LITTLE STEP, EVERY DAY</span>
@@ -399,7 +475,7 @@ export default function Session({
                 ? `MEET WORD ${s.introduced.length + 1} OF 10`
                 : refresher
                   ? "A QUICK REFRESH"
-                  : `QUESTION ${s.completed.length + 1} OF 40 · GO AT YOUR OWN PACE`}
+                  : `QUESTION ${s.completed.length + 1} OF 40${timedQuestion ? " · 20 SECONDS" : ""}`}
             </span>
             <h1>
               {intro
@@ -414,6 +490,24 @@ export default function Session({
                       recall: "Recall in English",
                     }[task.kind]}
             </h1>
+            {timedQuestion && feedback === null && (
+              <div
+                className={
+                  "question-timer" + (remaining <= 5 ? " is-urgent" : "")
+                }
+                role="timer"
+                aria-label={`${remaining} seconds remaining`}
+              >
+                <div className="question-timer-label">
+                  <Timer size={16} />
+                  <span>Time to answer</span>
+                  <strong>{remaining}s</strong>
+                </div>
+                <div className="question-timer-track" aria-hidden="true">
+                  <span style={{ width: `${(remaining / 20) * 100}%` }} />
+                </div>
+              </div>
+            )}
           </div>
           {intro || refresher ? (
             <>
@@ -585,16 +679,17 @@ export default function Session({
                   className={"feedback " + (feedback ? "correct" : "incorrect")}
                   role="status"
                 >
-                  {feedback && (
-                    <div className="answer-fireworks" aria-hidden="true">
-                      {fireworks.map((style, i) => (
-                        <i key={i} style={style} />
-                      ))}
-                    </div>
-                  )}
                   <div className="feedback-title">
                     {feedback ? <Check /> : <AlertCircle />}
-                    <b>{feedback ? "That’s right!" : "Not quite yet"}</b>
+                    <b>
+                      {feedback
+                        ? "That’s right! ✦"
+                        : revealReason === "timeout"
+                          ? "Time’s up — here’s the answer"
+                          : revealReason === "skip"
+                            ? "Here’s the answer"
+                            : "Not quite yet"}
+                    </b>
                   </div>
                   <strong>
                     {task.kind === "arrange"
@@ -630,15 +725,18 @@ export default function Session({
                       {word.recallExplanationVi}
                     </p>
                   )}
-                  {!feedback && (
-                    <p className="your-attempt">
-                      Your answer: <span>{answer}</span>
-                    </p>
-                  )}
+                  {!feedback &&
+                    revealReason === "wrong" &&
+                    normalize(answer) && (
+                      <p className="your-attempt">
+                        Your answer: <span>{answer}</span>
+                      </p>
+                    )}
                   {!feedback && (
                     <small>
-                      Check the spelling and meaning. You’ll try this again
-                      after other questions, or a short refresh.
+                      {revealReason === "wrong"
+                        ? "Check the spelling and meaning. You’ll try this again after other questions, or a short refresh."
+                        : "Take a moment to learn it. This question will return after other questions or a short refresh."}
                     </small>
                   )}
                 </div>
@@ -649,15 +747,23 @@ export default function Session({
                 </p>
               )}
               {feedback === null ? (
-                <Button
-                  type="submit"
-                  disabled={
-                    !normalize(answer) ||
-                    (task.kind === "arrange" && tokens.length !== parts.length)
-                  }
-                >
-                  Check answer
-                </Button>
+                <div className="question-actions">
+                  <Button
+                    type="submit"
+                    disabled={
+                      !normalize(answer) ||
+                      (task.kind === "arrange" &&
+                        tokens.length !== parts.length)
+                    }
+                  >
+                    Check answer
+                  </Button>
+                  {s.mode === "review" && (
+                    <Button secondary onClick={() => revealAnswer("skip")}>
+                      <Eye size={17} /> Show answer
+                    </Button>
+                  )}
+                </div>
               ) : (
                 <div className="session-feedback-next">
                   <Button onClick={continueStep}>Continue</Button>
@@ -697,7 +803,9 @@ export default function Session({
           )}
           <p className="session-note">
             <Info size={14} />
-            Little steps count. There’s no time limit.
+            {s.mode === "review"
+              ? "Each review question has 20 seconds. You can reveal an answer and try it again later."
+              : "Little steps count. There’s no time limit."}
           </p>
         </>
       )}

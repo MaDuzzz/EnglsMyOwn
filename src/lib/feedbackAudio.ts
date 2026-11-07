@@ -33,6 +33,16 @@ export function speakPraise() {
   window.speechSynthesis.speak(voice);
 }
 
+export function speakWord(word: string, onEnded?: () => void) {
+  if (!("speechSynthesis" in window)) return;
+  stopFeedbackVoice();
+  const voice = new SpeechSynthesisUtterance(word);
+  voice.lang = "en-US";
+  voice.rate = 0.9;
+  voice.onend = () => onEnded?.();
+  window.speechSynthesis.speak(voice);
+}
+
 export function playAnswerFeedback(correct: boolean, spokenPraise = true) {
   try {
     context ||= new AudioContext();
@@ -56,4 +66,40 @@ export function playAnswerFeedback(correct: boolean, spokenPraise = true) {
     // Spoken confirmation still works if Web Audio is unavailable.
   }
   if (correct && spokenPraise) speakPraise();
+}
+
+export function playCompletionFanfare() {
+  try {
+    context ||= new AudioContext();
+    const audioContext = context;
+    void audioContext
+      .resume()
+      .then(() => {
+        const start = audioContext.currentTime + 0.02;
+        const melody = [392, 523, 659, 784, 659, 1047];
+        melody.forEach((frequency, i) => {
+          const oscillator = audioContext.createOscillator();
+          const filter = audioContext.createBiquadFilter();
+          const gain = audioContext.createGain();
+          const begins = start + [0, 0.15, 0.3, 0.48, 0.64, 0.82][i];
+          const duration = i === melody.length - 1 ? 0.72 : 0.22;
+          oscillator.type = "sawtooth";
+          oscillator.frequency.setValueAtTime(frequency, begins);
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(1450, begins);
+          gain.gain.setValueAtTime(0.0001, begins);
+          gain.gain.exponentialRampToValueAtTime(0.045, begins + 0.035);
+          gain.gain.exponentialRampToValueAtTime(0.0001, begins + duration);
+          oscillator
+            .connect(filter)
+            .connect(gain)
+            .connect(audioContext.destination);
+          oscillator.start(begins);
+          oscillator.stop(begins + duration + 0.02);
+        });
+      })
+      .catch(() => {});
+  } catch {
+    // The completed result remains visible if audio is unavailable.
+  }
 }

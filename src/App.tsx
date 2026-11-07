@@ -1117,7 +1117,9 @@ export default function App() {
             ))}
           </div>
           <p className="notice">
-            Your place is saved as you study. Leave or reopen the app to resume.
+            {start === "review"
+              ? "20 seconds per question. Show the answer any time; the question will return later. Your place is saved if you leave."
+              : "Your place is saved as you study. Leave or reopen the app to resume."}
           </p>
           <Button onClick={startBatch}>
             Start {start === "review" ? "review" : "learning"}

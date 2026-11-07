@@ -43,7 +43,9 @@ Only completing all 40 unique tasks commits the 10 newly learned words and award
 - Typing, selecting an option or arranging tokens does not grade or advance automatically.
 - Check answer grades an explicit submission. Empty input, no selection or an incomplete arrangement keeps it disabled.
 - Show feedback until Continue is pressed.
+- Every active review question has 20 seconds. The timer pauses while the app is hidden or the leave dialog is open, and restarts at 20 seconds when a saved question is reopened. A visible Show answer button reveals the answer early. Timeout and reveal both use incorrect feedback, award no progress, and return the task later in the same round. New-word practice remains untimed.
 - Correct feedback has a rising chime, a visible confetti burst, automatic replay of the word's verified recording where available, then short spoken encouragement where browser speech is available. Incorrect feedback has a descending three-note cue. The graded card retains a manual audio replay control. Reduced-motion mode shows still confetti instead of an animation.
+- All correct question types use viewport-wide confetti so it stays visible when the feedback card is scrolled into view; a synthesized English reading is the fallback when a verified recording is missing or fails. Completing a review or new-word batch triggers a distinct fanfare and celebration on the result screen.
 - On touch devices, a left swipe advances from a word introduction, refresher or graded answer. A persistent tappable Continue action remains available; no swipe can submit an ungraded answer.
 - Ignore case and leading/trailing/repeated whitespace. Actual spelling errors remain incorrect; no fuzzy typo acceptance.
 - Accepted variants and punctuation belong in the question's content specification. Ambiguous prompts must be corrected rather than penalizing valid alternatives.
