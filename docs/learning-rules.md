@@ -1,7 +1,7 @@
 # Learning rules — current decisions
 
-Updated: 2026-10-30. Source: approved word-session design plan.
-This supersedes the yesterday-only unlock rule in Words v2 and any conflicting older mockup. Design rules only; enforcement is not implemented.
+Updated: 2026-11-07. Source: approved word-session design and batch-learning changes.
+This supersedes the yesterday-only unlock rule in Words v2 and any conflicting older mockup. The batch flow is implemented in the app.
 
 ## Assignment and unlock
 
@@ -30,9 +30,10 @@ If too few other questions remain, show a knowledge refresher, then retry unfini
 
 ## New-word flow
 
-Introduce one word, then attempt its four exercise styles, then introduce the next word. Wrong tasks may return after 2–3 intervening questions while learning subsequent words. Resolve all remaining tasks after the tenth word, with a refresher where needed.
+Introduce all ten words first, then start the 40 practice tasks. Practice presents the four exercise styles for each word before moving through the remaining words. Wrong tasks may return after 2–3 intervening questions. Resolve all remaining tasks with a refresher where needed.
 
 Introduction includes part of speech, level, US/UK pronunciation, EN/VI meanings, common pattern and bilingual example. Viewing it earns no progress.
+Play an available verified recording when a word introduction opens and when a listening question opens. Start and advance actions initiate playback from the learner's gesture so iPhone Safari can allow it. Keep the replay and slow controls available if playback is blocked or fails.
 Use five gap fills and five sentence arrangements across the batch, not both sentence types for every word.
 Only completing all 40 unique tasks commits the 10 newly learned words and awards a ticket. A partial batch does not add partial newly-learned counts or entries to My words.
 
@@ -41,11 +42,13 @@ Only completing all 40 unique tasks commits the 10 newly learned words and award
 - Typing, selecting an option or arranging tokens does not grade or advance automatically.
 - Check answer grades an explicit submission. Empty input, no selection or an incomplete arrangement keeps it disabled.
 - Show feedback until Continue is pressed.
+- Correct feedback has an audible rising chime, short spoken encouragement where browser speech is available, and a brief confetti burst. Incorrect feedback has a descending three-note cue. Respect reduced-motion preferences for visual effects.
+- On touch devices, a left swipe advances from a word introduction, refresher or graded answer. A persistent tappable Continue action remains available; no swipe can submit an ungraded answer.
 - Ignore case and leading/trailing/repeated whitespace. Actual spelling errors remain incorrect; no fuzzy typo acceptance.
 - Accepted variants and punctuation belong in the question's content specification. Ambiguous prompts must be corrected rather than penalizing valid alternatives.
 - First correct completion of a unique task: +1/40, or 2.5% of the path. Wrong: +0. No backward movement.
 - A previously wrong task earns its one step when first answered correctly. Already completed tasks and duplicate submissions earn no additional progress.
-- Position the character using completed-task count / 40 along the path length. Milestone dots are decoration.
+- Position the entire character within the SVG safe area using completed-task count / 40 along the path length. Animate along the curve on correct answers; do not move on wrong answers. Milestone dots are decoration.
 - At 40/40, arrive at the shop and award one ticket exactly once.
 
 ## Daily tickets and the illustrated scenario
@@ -79,7 +82,7 @@ Reset clears current answers, task credit and retry queue. Previously completed 
 Stop audio and active-study time while paused. Do not unexpectedly autoplay audio when returning.
 These reset rules apply to word batches, not automatically to video lessons or other flows.
 
-## Future implementation acceptance checks
+## Implementation acceptance checks
 
 - Yesterday complete + earlier review pending → locked.
 - Yesterday/earlier complete + outstanding review pending → locked.
@@ -92,4 +95,4 @@ These reset rules apply to word batches, not automatically to video lessons or o
 - Cancel exit → same progress; confirm exit → restart at 0/40.
 - Temporary background → preserve live session; reload/Vietnam midnight → reset unfinished batch.
 
-See [mockups and interaction specification](mockups/word-sessions-v1/README.md). These checks have not been run against an app implementation.
+See [mockups and interaction specification](mockups/word-sessions-v1/README.md). Earlier mockups still show the previous introduction order; this document and the running app take precedence.

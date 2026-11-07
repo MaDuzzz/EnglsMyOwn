@@ -242,6 +242,15 @@ export function createSession(
     seconds: 0,
   };
 }
+export function nextIntroduction(s: Session): Word | undefined {
+  if (s.mode !== "learn") return undefined;
+  const seen = new Set(s.introduced);
+  return s.words.find((word) => !seen.has(word.id));
+}
+export function introduceWord(s: Session): Session {
+  const word = nextIntroduction(s);
+  return word ? { ...s, introduced: [...s.introduced, word.id] } : s;
+}
 export function grade(word: Word, task: Task, answer: string) {
   const expected =
     task.kind === "listen"

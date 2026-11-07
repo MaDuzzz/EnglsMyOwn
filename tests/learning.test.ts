@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   advance,
   createSession,
+  nextIntroduction,
+  introduceWord,
   grade,
   dayKey,
   emptyLearning,
@@ -56,12 +58,26 @@ describe("word sessions", () => {
     expect(s.queue).toHaveLength(0);
     expect(advance(s, true).completed).toHaveLength(40);
   });
-  it("new learning presents four task types per word and does not count introductions", () => {
+  it("introduces all ten words before any practice task earns progress", () => {
     let s = createSession(batch, "learn", "l");
     expect(s.queue.slice(0, 4).every((t) => t.wordId === batch[0].id)).toBe(
       true,
     );
-    s = { ...s, introduced: [batch[0].id] };
+    for (const word of batch) {
+      expect(nextIntroduction(s)?.id).toBe(word.id);
+      s = introduceWord(s);
+      expect(s.queue[0].wordId).toBe(batch[0].id);
+      expect(s.completed).toHaveLength(0);
+    }
+    expect(nextIntroduction(s)).toBeUndefined();
+    expect(introduceWord(s)).toBe(s);
+    s = advance(s, true);
+    expect(s.completed).toHaveLength(1);
+  });
+  it("review begins directly with listening questions", () => {
+    const s = createSession(batch, "review", "r");
+    expect(nextIntroduction(s)).toBeUndefined();
+    expect(s.queue[0].kind).toBe("listen");
     expect(s.completed).toHaveLength(0);
   });
   it("normalizes case and whitespace, but rejects spelling errors", () => {

@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type TouchEvent,
+} from "react";
 import {
   X,
   ArrowLeft,
+  ArrowRight,
   RotateCcw,
   Check,
   Info,
@@ -19,12 +26,40 @@ import {
   shuffledTokens,
   sentenceParts,
   arrangeAnswer,
+  nextIntroduction,
+  introduceWord,
 } from "../lib/model";
 import { Button, Road, Modal, ProgressBar } from "./ui";
 import Pet from "./Pet";
 import type { Companion } from "../lib/pets";
 import WordDetails from "./WordDetails";
 import PronunciationControls from "./PronunciationControls";
+import {
+  playWordRecording,
+  stopPronunciation,
+} from "../lib/pronunciationAudio";
+import { playAnswerFeedback, stopFeedbackVoice } from "../lib/feedbackAudio";
+
+function readNextStep(session: SessionType) {
+  const introduction = nextIntroduction(session);
+  const task = session.queue[0];
+  const word =
+    introduction || session.words.find((item) => item.id === task?.wordId);
+  if (word && (introduction || task?.kind === "listen" || task?.refresher))
+    playWordRecording(word);
+  else stopPronunciation();
+}
+
+const fireworks = Array.from({ length: 18 }, (_, i) => {
+  const angle = (i * Math.PI * 2) / 18;
+  const radius = 60 + (i % 4) * 17;
+  return {
+    "--burst-x": `${Math.round(Math.cos(angle) * radius)}px`,
+    "--burst-y": `${Math.round(Math.sin(angle) * radius)}px`,
+    "--burst-delay": `${(i % 3) * 35}ms`,
+  } as CSSProperties;
+});
+
 export default function Session({
   initial,
   onClose,
@@ -56,18 +91,25 @@ export default function Session({
     [meal, setMeal] = useState(false),
     [error, setError] = useState("");
   const seconds = useRef(0),
-    lastActivity = useRef(Date.now());
+    lastActivity = useRef(Date.now()),
+    swipeStart = useRef<{ x: number; y: number } | null>(null),
+    transitioning = useRef(false),
+    feedbackRef = useRef<HTMLDivElement>(null);
   const task = s.queue[0],
-    word = task ? s.words.find((w) => w.id === task.wordId)! : s.words[0];
-  const intro = task && s.mode === "learn" && !s.introduced.includes(word.id),
-    refresher = Boolean(task?.refresher);
+    introWord = nextIntroduction(s),
+    word =
+      introWord ||
+      (task ? s.words.find((w) => w.id === task.wordId)! : s.words[0]);
+  const intro = Boolean(introWord),
+    refresher = !intro && Boolean(task?.refresher);
+  const advanceReady = Boolean(intro || refresher || feedback !== null);
   useEffect(() => {
     const touch = () => {
       lastActivity.current = Date.now();
     };
     const timer = setInterval(() => {
       if (dayKey() !== s.day) {
-        onClose();
+        leave();
         return;
       }
       if (
@@ -96,17 +138,80 @@ export default function Session({
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [saved]);
+  useEffect(() => {
+    if (feedback === null) return;
+    feedbackRef.current?.scrollIntoView({
+      behavior: matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "instant"
+        : "smooth",
+      block: "nearest",
+    });
+  }, [feedback]);
+  function leave() {
+    stopPronunciation();
+    stopFeedbackVoice();
+    onClose();
+  }
   function submit() {
     if (feedback !== null || !task) return;
     const correct = grade(word, task, answer);
+    if (document.activeElement instanceof HTMLElement)
+      document.activeElement.blur();
+    stopPronunciation();
+    playAnswerFeedback(correct);
     setFeedback(correct);
   }
   function next() {
     if (feedback === null) return;
-    setS(advance(s, feedback));
+    const following = advance(s, feedback);
+    stopFeedbackVoice();
+    readNextStep(following);
+    setS(following);
     setFeedback(null);
     setAnswer("");
     setTokens([]);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function continueWord() {
+    if (!intro && !refresher) return;
+    const following = intro
+      ? introduceWord(s)
+      : {
+          ...s,
+          queue: s.queue.map((item, i) =>
+            i === 0 ? { ...item, refresher: false } : item,
+          ),
+        };
+    readNextStep(following);
+    setS(following);
+    setAnswer("");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  function continueStep() {
+    if (transitioning.current) return;
+    transitioning.current = true;
+    if (intro || refresher) continueWord();
+    else next();
+    requestAnimationFrame(() => {
+      transitioning.current = false;
+    });
+  }
+  function onTouchStart(event: TouchEvent<HTMLElement>) {
+    if (event.touches.length !== 1) return;
+    swipeStart.current = {
+      x: event.touches[0].clientX,
+      y: event.touches[0].clientY,
+    };
+  }
+  function onTouchEnd(event: TouchEvent<HTMLElement>) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (!start || !advanceReady || exit || complete) return;
+    const dx = start.x - event.changedTouches[0].clientX;
+    const dy = start.y - event.changedTouches[0].clientY;
+    if (dx < 72 || dx < Math.abs(dy) * 1.4) return;
+    event.preventDefault();
+    continueStep();
   }
   async function finish() {
     setSaving(true);
@@ -143,12 +248,19 @@ export default function Session({
   const offset = word.id.length % 4;
   const options = [...choices.slice(offset), ...choices.slice(0, offset)];
   return (
-    <main className="session-page">
+    <main
+      className={"session-page" + (advanceReady ? " can-advance" : "")}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <header className="session-header">
         <button
           className="icon-btn"
           aria-label="Leave batch"
-          onClick={() => setExit(true)}
+          onClick={() => {
+            stopPronunciation();
+            setExit(true);
+          }}
         >
           <ArrowLeft />
         </button>
@@ -157,12 +269,17 @@ export default function Session({
             ? "Batch complete"
             : s.mode === "review"
               ? `Review · Round ${s.round} of 4`
-              : "Learn new words"}
+              : intro
+                ? `Meet the words · ${s.introduced.length + 1} of 10`
+                : "Practise new words"}
         </b>
         <button
           className="icon-btn"
           aria-label="Close batch"
-          onClick={() => setExit(true)}
+          onClick={() => {
+            stopPronunciation();
+            setExit(true);
+          }}
         >
           <X />
         </button>
@@ -216,7 +333,7 @@ export default function Session({
             </p>
           )}
           {saved ? (
-            <Button onClick={onClose}>Back to Words</Button>
+            <Button onClick={leave}>Back to Words</Button>
           ) : (
             <Button disabled={saving} onClick={() => void finish()}>
               {saving ? "Saving…" : "Retry saving"}
@@ -231,10 +348,10 @@ export default function Session({
           <div className="exercise-title">
             <span className="eyebrow">
               {intro
-                ? "MEET YOUR NEXT WORD"
+                ? `MEET WORD ${s.introduced.length + 1} OF 10`
                 : refresher
                   ? "A QUICK REFRESH"
-                  : `QUESTION ${(s.completed.length % 10) + 1} · GO AT YOUR OWN PACE`}
+                  : `QUESTION ${s.completed.length + 1} OF 40 · GO AT YOUR OWN PACE`}
             </span>
             <h1>
               {intro
@@ -252,26 +369,24 @@ export default function Session({
           </div>
           {intro || refresher ? (
             <>
+              {intro && (
+                <div className="intro-progress">
+                  <span>First, meet all ten words. Practice comes next.</span>
+                  <ProgressBar
+                    value={(s.introduced.length / 10) * 100}
+                    label="Words introduced"
+                  />
+                </div>
+              )}
               <div className="card word-intro">
                 <WordDetails key={word.id} word={word} />
               </div>
               <div className="word-practice-action">
-                <Button
-                  onClick={() => {
-                    setS({
-                      ...s,
-                      introduced: [...s.introduced, word.id],
-                      queue: s.queue.map((t, i) =>
-                        i === 0 ? { ...t, refresher: false } : t,
-                      ),
-                    });
-                    setAnswer("");
-                  }}
-                >
+                <Button onClick={continueStep}>
                   {intro
-                    ? word.headword.includes(" ")
-                      ? "Practise this phrase"
-                      : "Practise this word"
+                    ? s.introduced.length === 9
+                      ? "Start practice"
+                      : "Next word"
                     : "Try again"}
                 </Button>
               </div>
@@ -419,9 +534,17 @@ export default function Session({
               </div>
               {feedback !== null ? (
                 <div
+                  ref={feedbackRef}
                   className={"feedback " + (feedback ? "correct" : "incorrect")}
                   role="status"
                 >
+                  {feedback && (
+                    <div className="answer-fireworks" aria-hidden="true">
+                      {fireworks.map((style, i) => (
+                        <i key={i} style={style} />
+                      ))}
+                    </div>
+                  )}
                   <div className="feedback-title">
                     {feedback ? <Check /> : <AlertCircle />}
                     <b>{feedback ? "That’s right!" : "Not quite yet"}</b>
@@ -480,9 +603,41 @@ export default function Session({
                   Check answer
                 </Button>
               ) : (
-                <Button onClick={next}>Continue</Button>
+                <div className="session-feedback-next">
+                  <Button onClick={continueStep}>Continue</Button>
+                </div>
               )}
             </form>
+          )}
+          {advanceReady && (
+            <button
+              type="button"
+              className="swipe-next"
+              onClick={continueStep}
+              aria-label={
+                intro
+                  ? s.introduced.length === 9
+                    ? "Start practice"
+                    : "Next word"
+                  : refresher
+                    ? "Try again"
+                    : "Continue to next question"
+              }
+            >
+              <span>
+                <ArrowLeft size={17} /> Swipe left to continue
+              </span>
+              <strong>
+                {intro
+                  ? s.introduced.length === 9
+                    ? "Start practice"
+                    : "Next word"
+                  : refresher
+                    ? "Try again"
+                    : "Continue"}
+              </strong>
+              <ArrowRight size={18} />
+            </button>
           )}
           <p className="session-note">
             <Info size={14} />
@@ -504,7 +659,7 @@ export default function Session({
             Completed batches and earned tickets stay safe.
           </p>
           <Button onClick={() => setExit(false)}>Keep learning</Button>
-          <Button secondary onClick={onClose}>
+          <Button secondary onClick={leave}>
             Leave batch
           </Button>
         </Modal>

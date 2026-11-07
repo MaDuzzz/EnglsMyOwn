@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { LoaderCircle, Volume2, Turtle, RotateCcw } from "lucide-react";
 import type { Word } from "../lib/model";
 import {
@@ -7,6 +7,12 @@ import {
   pronunciationsFor,
   type Accent,
 } from "../lib/vocabulary";
+import {
+  playPronunciation,
+  playbackSnapshot,
+  stopPronunciation,
+  subscribePlayback,
+} from "../lib/pronunciationAudio";
 
 export default function PronunciationControls({
   word,
@@ -22,61 +28,15 @@ export default function PronunciationControls({
   const [choice, setChoice] = useState<Accent>(accents[0] || "us");
   const accent = accents.includes(choice) ? choice : accents[0];
   const source = accent ? sources[accent] : undefined;
-  const audio = useRef<HTMLAudioElement>(null);
-  const request = useRef(0);
-  const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [state, setState] = useState<"idle" | "loading" | "playing" | "error">(
-    "idle",
+  const playback = useSyncExternalStore(
+    subscribePlayback,
+    playbackSnapshot,
+    playbackSnapshot,
   );
-
-  function stop() {
-    request.current++;
-    if (timeout.current) clearTimeout(timeout.current);
-    audio.current?.pause();
-    setState("idle");
-  }
+  const state = playback.url === source?.audioUrl ? playback.status : "idle";
   useEffect(() => {
-    stop();
-    const player = audio.current;
-    const hide = () => {
-      if (document.hidden) stop();
-    };
-    document.addEventListener("visibilitychange", hide);
-    return () => {
-      request.current++;
-      if (timeout.current) clearTimeout(timeout.current);
-      player?.pause();
-      document.removeEventListener("visibilitychange", hide);
-    };
-  }, [word.id, source?.audioUrl, stopToken]);
-
-  async function play(slow = false) {
-    const player = audio.current;
-    if (!source?.audioUrl || !player) return;
-    stop();
-    const current = ++request.current;
-    setState("loading");
-    player.currentTime = 0;
-    player.playbackRate = slow ? 0.75 : 1;
-    player.preservesPitch = true;
-    timeout.current = setTimeout(() => {
-      if (request.current !== current) return;
-      request.current++;
-      player.pause();
-      setState("error");
-    }, 15000);
-    try {
-      await player.play();
-      if (request.current !== current) return;
-      if (timeout.current) clearTimeout(timeout.current);
-      setState("playing");
-    } catch {
-      if (request.current === current) {
-        if (timeout.current) clearTimeout(timeout.current);
-        setState("error");
-      }
-    }
-  }
+    if (stopToken !== null && stopToken !== undefined) stopPronunciation();
+  }, [stopToken]);
 
   return (
     <div
@@ -84,12 +44,6 @@ export default function PronunciationControls({
         "pronunciation-player" + (hideAnswer ? " listening-player" : "")
       }
     >
-      <audio
-        ref={audio}
-        src={source?.audioUrl || undefined}
-        preload="none"
-        onEnded={() => setState("idle")}
-      />
       {accents.length > 0 ? (
         <>
           <div className="pronunciation-heading">
@@ -100,8 +54,8 @@ export default function PronunciationControls({
                   key={a}
                   aria-pressed={accent === a}
                   onClick={() => {
-                    stop();
                     setChoice(a);
+                    playPronunciation(sources[a]?.audioUrl || "");
                   }}
                 >
                   {a.toUpperCase()}
@@ -131,7 +85,7 @@ export default function PronunciationControls({
             <button
               type="button"
               className="play-pronunciation"
-              onClick={() => void play()}
+              onClick={() => playPronunciation(source?.audioUrl || "")}
               aria-label={hideAnswer ? "Play recording" : "Play pronunciation"}
             >
               {state === "loading" ? (
@@ -148,7 +102,7 @@ export default function PronunciationControls({
             <button
               type="button"
               className="slow-pronunciation"
-              onClick={() => void play(true)}
+              onClick={() => playPronunciation(source?.audioUrl || "", true)}
             >
               <Turtle size={20} />
               Slow
@@ -159,7 +113,10 @@ export default function PronunciationControls({
               <span>
                 Audio could not load. Check your connection and try again.
               </span>
-              <button type="button" onClick={() => void play()}>
+              <button
+                type="button"
+                onClick={() => playPronunciation(source?.audioUrl || "")}
+              >
                 <RotateCcw size={16} />
                 Retry audio
               </button>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from "react";
 import { X, ArrowRight, Store, PersonStanding } from "lucide-react";
 export const asset = (name: string) =>
   import.meta.env.BASE_URL + "assets/" + name;
@@ -105,48 +105,85 @@ export function Modal({
 }
 export function Road({ count }: { count: number }) {
   const path = useRef<SVGPathElement>(null);
+  const progressPath = useRef<SVGPathElement>(null);
   const person = useRef<SVGGElement>(null);
-  useEffect(() => {
-    if (path.current && person.current) {
-      const point = path.current.getPointAtLength(
-        (path.current.getTotalLength() * count) / 40,
+  const position = useRef(count);
+  const positioned = useRef(false);
+  useLayoutEffect(() => {
+    const curve = path.current;
+    const walker = person.current;
+    const line = progressPath.current;
+    if (!curve || !walker || !line) return;
+    const destination = Math.min(40, Math.max(0, count));
+    const place = (value: number) => {
+      const point = curve.getPointAtLength(
+        (curve.getTotalLength() * value) / 40,
       );
-      person.current.style.transform = `translate(${point.x}px, ${point.y - 6}px)`;
+      walker.style.transform = `translate(${point.x}px, ${point.y}px)`;
+      line.setAttribute("stroke-dasharray", `${value} 40`);
+      position.current = value;
+    };
+    if (
+      !positioned.current ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      place(destination);
+      positioned.current = true;
+      return;
     }
+    const from = position.current;
+    const started = performance.now();
+    let frame = 0;
+    walker.classList.add("is-walking");
+    const animate = (now: number) => {
+      const t = Math.min(1, (now - started) / 660);
+      const eased = t * t * (3 - 2 * t);
+      place(from + (destination - from) * eased);
+      if (t < 1) frame = requestAnimationFrame(animate);
+      else walker.classList.remove("is-walking");
+    };
+    frame = requestAnimationFrame(animate);
+    return () => {
+      cancelAnimationFrame(frame);
+      walker.classList.remove("is-walking");
+    };
   }, [count]);
   return (
     <div className="road">
-      <svg viewBox="0 0 380 88" aria-hidden="true">
+      <svg viewBox="0 0 380 122" aria-hidden="true">
         <path
-          d="M15 64 C65 80 80 10 135 28 S220 88 265 55 S320 42 345 50"
+          ref={path}
+          d="M15 90 C65 105 80 36 135 54 S220 114 265 81 S320 68 345 76"
           stroke="var(--track)"
           strokeWidth="9"
           fill="none"
           strokeLinecap="round"
         />
         <path
-          ref={path}
+          ref={progressPath}
           pathLength="40"
-          d="M15 64 C65 80 80 10 135 28 S220 88 265 55 S320 42 345 50"
+          d="M15 90 C65 105 80 36 135 54 S220 114 265 81 S320 68 345 76"
           stroke="var(--accent)"
           strokeWidth="9"
           fill="none"
           strokeLinecap="round"
-          strokeDasharray={`${count} 40`}
+          strokeDasharray="0 40"
         />
         <g
           ref={person}
           className="walker"
-          style={{ transform: "translate(15px,58px)" }}
+          style={{ transform: "translate(15px,90px)" }}
         >
-          <circle cx="0" cy="-28" r="5" fill="var(--accent)" />
-          <path
-            d="M0-21v12m0-10-7 7m7-7 8 6M0-9-6 9m6-18 7 18"
-            fill="none"
-            stroke="var(--accent)"
-            strokeWidth="3.5"
-            strokeLinecap="round"
-          />
+          <g className="walker-doodle">
+            <circle cx="0" cy="-28" r="5" fill="var(--accent)" />
+            <path
+              d="M0-21v12m0-10-7 7m7-7 8 6M0-9-6 9m6-18 7 18"
+              fill="none"
+              stroke="var(--accent)"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+            />
+          </g>
         </g>
       </svg>
       <div className="road-shop">

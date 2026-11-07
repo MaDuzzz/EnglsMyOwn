@@ -60,6 +60,7 @@ import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
 import { growthStage, petSpecies, petStages, speciesOf } from "./lib/pets";
+import { playWordRecording, stopPronunciation } from "./lib/pronunciationAudio";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
@@ -138,6 +139,7 @@ export default function App() {
   }, [session, page]);
   useEffect(() => {
     if (session && session.day !== today) {
+      stopPronunciation();
       setSession(null);
       setNotice(
         "A new learning day has started. Your unfinished batch has reset.",
@@ -146,6 +148,7 @@ export default function App() {
   }, [today, session]);
   useEffect(() => {
     if (app.phase !== "ready") {
+      stopPronunciation();
       setSession(null);
       setVideo(null);
       setDetail(null);
@@ -186,6 +189,7 @@ export default function App() {
       setStart(null);
       return;
     }
+    playWordRecording(batch[0]);
     setSession(
       createSession(
         batch,
@@ -900,7 +904,12 @@ export default function App() {
           }
           onClose={() => setStart(null)}
         >
-          <p>10 words · 40 tasks · 1 food ticket</p>
+          <p>
+            {start === "learn"
+              ? "Meet all 10 words, then practise 40 tasks"
+              : "10 words · 40 tasks"}
+            {" · 1 food ticket"}
+          </p>
           <div className="round-list">
             {[
               "Listen & type",
@@ -1036,7 +1045,14 @@ export default function App() {
         </Modal>
       )}
       {detail && (
-        <Modal title={detail.headword} onClose={() => setDetail(null)} wide>
+        <Modal
+          title={detail.headword}
+          onClose={() => {
+            stopPronunciation();
+            setDetail(null);
+          }}
+          wide
+        >
           <WordDetails key={detail.id} word={detail} showTitle={false} />
         </Modal>
       )}
