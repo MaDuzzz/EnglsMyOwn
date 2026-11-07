@@ -360,15 +360,35 @@ export function restoreSession(
     draft.introduced.some((id) => !draft.wordIds.includes(id))
   )
     return null;
+  const sessionWords = words as Word[];
+  const oldLearningOrder =
+    draft.mode === "learn" &&
+    (draft.queue.length > 10 ||
+      draft.queue.some((task) => task.round !== draft.queue[0]?.round) ||
+      (draft.queue[0] && draft.round !== draft.queue[0].round));
+  let queue = draft.queue;
+  let round = draft.round;
+  if (oldLearningOrder) {
+    const unfinished = tasksFor(sessionWords).filter(
+      (task) => !draft.completed.includes(task.id),
+    );
+    const firstRound = Math.min(...unfinished.map((task) => task.round));
+    const current = draft.introduced.length === 10 ? draft.queue[0] : undefined;
+    const roundTasks = unfinished.filter(
+      (task) => task.round === firstRound && task.id !== current?.id,
+    );
+    queue = current ? [current, ...roundTasks] : roundTasks;
+    round = queue[0]?.round || firstRound;
+  }
   return {
     id: draft.id,
     mode: draft.mode,
     day: draft.day,
-    words: words as Word[],
-    queue: draft.queue,
+    words: sessionWords,
+    queue,
     completed: draft.completed,
     introduced: draft.introduced,
-    round: draft.round,
+    round,
     seconds: draft.seconds,
   };
 }
@@ -407,7 +427,7 @@ export function createSession(
     mode,
     day,
     words,
-    queue: mode === "review" ? all.filter((t) => t.round === 1) : all,
+    queue: all.filter((t) => t.round === 1),
     completed: [],
     introduced: [],
     round: 1,
@@ -454,16 +474,18 @@ export function advance(s: Session, correct: boolean): Session {
   let round = s.round;
   if (correct) {
     if (!completed.includes(task.id)) completed.push(task.id);
-  } else {
+  } else if (!queue.length || queue[0].round === task.round) {
     const index = Math.min(2, queue.length);
     queue.splice(index, 0, { ...task, refresher: index < 2 });
   }
-  if (!queue.length && s.mode === "review" && round < 4) {
-    round++;
-    queue = tasksFor(s.words).filter(
-      (t) => t.round === round && !completed.includes(t.id),
+  if (!queue.length && completed.length < 40) {
+    const unfinished = tasksFor(s.words).filter(
+      (candidate) => !completed.includes(candidate.id),
     );
+    round = Math.min(...unfinished.map((candidate) => candidate.round));
+    queue = unfinished.filter((candidate) => candidate.round === round);
   }
+  if (queue.length) round = queue[0].round;
   return { ...s, queue, completed, round };
 }
 export function learnedIds(s: Learning) {

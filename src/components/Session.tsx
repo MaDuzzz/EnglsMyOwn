@@ -537,7 +537,7 @@ export default function Session({
               ? `Review · Round ${s.round} of 4`
               : intro
                 ? `Meet the words · ${s.introduced.length + 1} of 10`
-                : "Practise new words"}
+                : `Practice · Round ${s.round} of 4`}
         </b>
         <button
           className="icon-btn"

@@ -1099,7 +1099,7 @@ export default function App() {
         >
           <p>
             {start === "learn"
-              ? "Meet all 10 words, then practise 40 tasks"
+              ? "Meet all 10 words, then practise four skill rounds (40 tasks)"
               : "10 words · 40 tasks"}
             {" · 1 food ticket"}
           </p>

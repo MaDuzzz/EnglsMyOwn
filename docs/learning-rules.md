@@ -31,7 +31,7 @@ If too few other questions remain, show a knowledge refresher, then retry unfini
 
 ## New-word flow
 
-Introduce all ten words first, then start the 40 practice tasks. Practice presents the four exercise styles for each word before moving through the remaining words. Wrong tasks may return after 2–3 intervening questions. Resolve all remaining tasks with a refresher where needed.
+Introduce all ten words first, then practise in four skill rounds, just like review: 10 listening questions, 10 sentence questions (five gaps and five arrangements), 10 meaning choices, then 10 Vietnamese-to-English recall questions. Each round cycles through the ten different words; finish its retries before entering the next skill. Wrong tasks return after 2–3 other questions in the same round, or after a refresher near its end.
 
 Introduction includes part of speech, level, US/UK pronunciation, EN/VI meanings, common pattern and bilingual example. Viewing it earns no progress.
 Play an available verified recording when a word introduction opens and when a listening question opens. Start and advance actions initiate playback from the learner's gesture so iPhone Safari can allow it. Keep the replay and slow controls available if playback is blocked or fails.
@@ -81,6 +81,8 @@ This scope does not redefine growth balancing, extra-learning rewards or ticket 
 | Switch app or lock screen temporarily | Pause; resume the same session                                                                               |
 
 A checkpoint includes the chosen word IDs, introduction position, task queue including retries, completed task IDs, round, answer, arranged tokens, feedback, and study seconds. Save it immediately on this device and sync it to the learner's own Firestore learning document. Stage changes sync at once; typing is debounced. On another device, the most recent synced checkpoint is available. If the network is interrupted, the same device can still resume from its local checkpoint.
+
+Older unfinished new-word checkpoints that still group four tasks per word are reorganized on resume. Keep the current question and its draft answer/feedback first, then continue with skill-grouped tasks. Already completed task IDs remain credited once; no new ticket or word is awarded during migration.
 
 Only one unfinished batch is active at a time. Starting new learning still requires all mandatory review to be complete. The original batch keeps its learning-day ID when it crosses midnight; finishing it records the original day once, while subsequent assignments use the current Vietnam day. A completed batch clears its checkpoint and cannot award duplicate progress or tickets.
 

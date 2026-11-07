@@ -120,9 +120,9 @@ describe("word sessions", () => {
   });
   it("introduces all ten words before any practice task earns progress", () => {
     let s = createSession(batch, "learn", "l");
-    expect(s.queue.slice(0, 4).every((t) => t.wordId === batch[0].id)).toBe(
-      true,
-    );
+    expect(s.queue).toHaveLength(10);
+    expect(s.queue.map((task) => task.wordId)).toEqual(batch.map((w) => w.id));
+    expect(s.queue.every((task) => task.kind === "listen")).toBe(true);
     for (const word of batch) {
       expect(nextIntroduction(s)?.id).toBe(word.id);
       s = introduceWord(s);
@@ -133,6 +133,81 @@ describe("word sessions", () => {
     expect(introduceWord(s)).toBe(s);
     s = advance(s, true);
     expect(s.completed).toHaveLength(1);
+  });
+  it("practises new words in four skill rounds without repeating a word immediately", () => {
+    let s = createSession(batch, "learn", "l");
+    for (let round = 1; round <= 4; round++) {
+      expect(s.round).toBe(round);
+      expect(s.queue).toHaveLength(10);
+      expect(s.queue.map((task) => task.wordId)).toEqual(
+        batch.map((word) => word.id),
+      );
+      expect(s.queue.every((task) => task.round === round)).toBe(true);
+      for (let i = 0; i < 10; i++) s = advance(s, true);
+    }
+    expect(s.completed).toHaveLength(40);
+    expect(s.queue).toHaveLength(0);
+  });
+  it("keeps wrong new-word answers within their skill round", () => {
+    let s = createSession(batch, "learn", "l");
+    const wrong = s.queue[0].id;
+    s = advance(s, false);
+    expect(s.queue[2].id).toBe(wrong);
+    for (let i = 0; i < 9; i++) s = advance(s, true);
+    expect(s.round).toBe(1);
+    expect(s.completed).toHaveLength(9);
+    expect(s.queue).toHaveLength(1);
+    s = advance(s, true);
+    expect(s.round).toBe(2);
+    expect(s.completed).toHaveLength(10);
+  });
+  it("migrates an old per-word learning queue while preserving the current answer", () => {
+    const oldQueue = tasksFor(batch);
+    const oldSession = {
+      ...createSession(batch, "learn", "legacy"),
+      queue: oldQueue.slice(2),
+      completed: oldQueue.slice(0, 2).map((task) => task.id),
+      introduced: batch.map((word) => word.id),
+    };
+    const draft = makeSessionDraft(oldSession, {
+      answer: "partial",
+      tokens: [],
+      feedback: null,
+      seconds: 30,
+    });
+    const restored = restoreSession(draft, batch)!;
+    expect(restored.queue[0].id).toBe(oldQueue[2].id);
+    expect(restored.completed).toEqual(oldSession.completed);
+    expect(restored.queue.slice(1).every((task) => task.round === 1)).toBe(
+      true,
+    );
+    const next = advance(restored, true);
+    expect(next.round).toBe(1);
+    expect(next.queue[0].round).toBe(1);
+    expect(draft.answer).toBe("partial");
+    let retried = advance(restored, false);
+    expect(retried.queue.every((task) => task.round === 1)).toBe(true);
+    for (let i = 0; i < 9; i++) retried = advance(retried, true);
+    expect(retried.round).toBe(2);
+    for (let i = 0; i < 9; i++) retried = advance(retried, true);
+    expect(retried.round).toBe(3);
+    expect(retried.queue.some((task) => task.id === oldQueue[2].id)).toBe(true);
+  });
+  it("starts a saved legacy introduction with the new listening round", () => {
+    const legacy = {
+      ...createSession(batch, "learn", "old-intro"),
+      queue: tasksFor(batch),
+    };
+    const draft = makeSessionDraft(legacy, {
+      answer: "",
+      tokens: [],
+      feedback: null,
+      seconds: 5,
+    });
+    const restored = restoreSession(draft, batch)!;
+    expect(restored.queue).toHaveLength(10);
+    expect(restored.queue.every((task) => task.round === 1)).toBe(true);
+    expect(nextIntroduction(restored)?.id).toBe(batch[0].id);
   });
   it("review begins directly with listening questions", () => {
     const s = createSession(batch, "review", "r");
