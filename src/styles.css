@@ -2567,6 +2567,63 @@ th {
   place-items: center;
   border-radius: 50%;
 }
+.batch-picker {
+  margin: 20px 0 8px;
+}
+.batch-picker h3 {
+  font-size: 15px;
+  margin-bottom: 11px;
+}
+.batch-group-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+.batch-group-options button {
+  min-height: 58px;
+  padding: 10px 13px;
+  text-align: left;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+.batch-group-options button[aria-pressed="true"] {
+  background: var(--soft);
+  border-color: var(--accent);
+}
+.batch-group-options button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+.batch-group-options button:disabled {
+  opacity: 0.45;
+}
+.batch-group-options strong {
+  font-size: 13px;
+}
+.batch-group-options span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.batch-topic-select {
+  margin-top: 16px;
+}
+.batch-topic-select select {
+  margin-top: 7px;
+}
+.batch-picker-summary {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
 .auth-page {
   min-height: 100dvh;
   padding: 35px 6vw;

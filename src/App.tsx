@@ -39,8 +39,11 @@ import {
   type Session as SessionType,
   type BatchRecord,
   type SessionDraft,
+  type LearningGroup,
   createSession,
   selectLearningBatch,
+  learningGroupOf,
+  wordTopicKeys,
   nextIntroduction,
   makeSessionDraft,
   restoreSession,
@@ -74,6 +77,16 @@ const nav = [
   { id: "videos", label: "Videos", icon: Play },
   { id: "progress", label: "Progress", icon: BarChart3 },
 ];
+const batchGroups: { id: LearningGroup; label: string }[] = [
+  { id: "all", label: "Mixed" },
+  { id: "verbs", label: "Verbs" },
+  { id: "adjectives", label: "Adjectives" },
+  { id: "collocations", label: "Collocations" },
+  { id: "nouns", label: "Nouns" },
+  { id: "other", label: "Other" },
+];
+const topicLabel = (key: string) =>
+  key === "hr" ? "HR" : key.replace(/\b\w/g, (letter) => letter.toUpperCase());
 export default function App() {
   const app = useApp();
   const [page, setPage] = useState(location.hash.slice(1) || "today"),
@@ -90,6 +103,13 @@ export default function App() {
     } | null>(null),
     [start, setStart] = useState<"review" | "learn" | null>(null),
     [wordTab, setWordTab] = useState("Learn"),
+    [batchGroup, setBatchGroup] = useState<LearningGroup>(() => {
+      const saved = localStorage.getItem("engls-batch-group");
+      return batchGroups.find((group) => group.id === saved)?.id || "all";
+    }),
+    [batchTopic, setBatchTopic] = useState(
+      () => localStorage.getItem("engls-batch-topic") || "",
+    ),
     [search, setSearch] = useState(""),
     [detail, setDetail] = useState<Word | null>(null),
     [topic, setTopic] = useState<string | null>(null),
@@ -107,7 +127,24 @@ export default function App() {
     pending = pendingReview(data, today),
     known = learnedIds(data),
     fresh = words.filter((w) => !known.has(w.id)),
-    learningBatch = selectLearningBatch(fresh, today),
+    batchPool = fresh.filter(
+      (word) => batchGroup === "all" || learningGroupOf(word) === batchGroup,
+    ),
+    topicCounts = batchPool.reduce((counts, word) => {
+      for (const key of wordTopicKeys(word))
+        counts.set(key, (counts.get(key) || 0) + 1);
+      return counts;
+    }, new Map<string, number>()),
+    topicOptions = [...topicCounts.entries()].sort(
+      ([a, countA], [b, countB]) => countB - countA || a.localeCompare(b),
+    ),
+    activeBatchTopic = topicCounts.has(batchTopic) ? batchTopic : "",
+    learningBatch = selectLearningBatch(batchPool, today, 10, activeBatchTopic),
+    focusedWords = activeBatchTopic
+      ? Math.min(10, topicCounts.get(activeBatchTopic) || 0)
+      : 0,
+    batchGroupLabel =
+      batchGroups.find((group) => group.id === batchGroup)?.label || "Mixed",
     draftKey = demo
       ? `engls-session:demo:${app.previewScenario}`
       : app.user
@@ -145,6 +182,10 @@ export default function App() {
       setLocalDraft(null);
     }
   }, [draftKey]);
+  useEffect(() => {
+    localStorage.setItem("engls-batch-group", batchGroup);
+    localStorage.setItem("engls-batch-topic", batchTopic);
+  }, [batchGroup, batchTopic]);
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("engls-theme", theme);
@@ -289,9 +330,11 @@ export default function App() {
         : learningBatch;
     if (batch.length !== 10) {
       setNotice(
-        "This batch needs ten published words. Ask the administrator to check the content.",
+        start === "learn"
+          ? "Choose a group with at least ten new words, or switch to Mixed."
+          : "This review needs ten published words. Ask the administrator to check the content.",
       );
-      setStart(null);
+      if (start === "review") setStart(null);
       return;
     }
     const next = createSession(
@@ -702,10 +745,10 @@ export default function App() {
                         <h3>Learn 10 new words</h3>
                         <p>
                           {stats.learned
-                            ? "A new batch, made yours"
+                            ? "Choose another group or topic"
                             : pending.length
                               ? "After your daily review"
-                              : "Your next little discovery"}
+                              : "Choose a group and topic"}
                         </p>
                         <ProgressBar value={stats.learned ? 100 : 0} />
                       </div>
@@ -915,8 +958,10 @@ export default function App() {
                         {previewBatch.length
                           ? resumeDraft?.mode === "learn"
                             ? "The ten words in your saved batch"
-                            : "Useful words and phrases for your next batch"
-                          : "New lessons are on their way"}
+                            : `${batchGroupLabel} · ${activeBatchTopic ? topicLabel(activeBatchTopic) : "All topics"}`
+                          : fresh.length
+                            ? `No new words in ${batchGroupLabel} yet`
+                            : "New lessons are on their way"}
                       </p>
                       <div className="word-chips">
                         {previewBatch.slice(0, 3).map((w) => (
@@ -929,15 +974,17 @@ export default function App() {
                           : pending.length
                             ? "Finish your remaining review to unlock."
                             : learningBatch.length >= 10
-                              ? "Meet all ten words, then practise what you learned."
-                              : "Ask your administrator to publish more vocabulary."}
+                              ? "Choose your group and topic before you begin."
+                              : fresh.length >= 10
+                                ? `Only ${batchPool.length} new words in ${batchGroupLabel}. Choose another group.`
+                                : "Ask your administrator to publish more vocabulary."}
                       </p>
                       <Button
                         disabled={
                           (resumeDraft
                             ? resumeDraft.mode !== "learn"
-                            : pending.length > 0 ||
-                              learningBatch.length < 10) || app.busy
+                            : pending.length > 0 || fresh.length < 10) ||
+                          app.busy
                         }
                         onClick={() => begin("learn")}
                       >
@@ -949,7 +996,7 @@ export default function App() {
                             Batch locked
                           </>
                         ) : (
-                          "Start learning"
+                          "Choose batch"
                         )}
                       </Button>
                     </div>
@@ -1112,25 +1159,88 @@ export default function App() {
               : "10 words · 40 tasks"}
             {" · 1 food ticket"}
           </p>
-          <div className="round-list">
-            {[
-              "Listen & type",
-              "Build sentences · 5 gaps + 5 puzzles",
-              "Choose the meaning",
-              "Recall in English",
-            ].map((t, i) => (
-              <div key={t}>
-                <span>{i + 1}</span>
-                {t}
+          {start === "learn" && (
+            <div className="batch-picker">
+              <h3>Choose a word group</h3>
+              <div
+                className="batch-group-options"
+                role="group"
+                aria-label="Word group"
+              >
+                {batchGroups.map((group) => {
+                  const count =
+                    group.id === "all"
+                      ? fresh.length
+                      : fresh.filter(
+                          (word) => learningGroupOf(word) === group.id,
+                        ).length;
+                  return (
+                    <button
+                      type="button"
+                      key={group.id}
+                      aria-pressed={batchGroup === group.id}
+                      disabled={!count}
+                      onClick={() => {
+                        setBatchGroup(group.id);
+                        setBatchTopic("");
+                      }}
+                    >
+                      <strong>{group.label}</strong>
+                      <span>{count} new</span>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+              <label className="batch-topic-select">
+                Focus topic
+                <select
+                  value={activeBatchTopic}
+                  onChange={(event) => setBatchTopic(event.target.value)}
+                  disabled={!topicOptions.length}
+                >
+                  <option value="">All topics</option>
+                  {topicOptions.map(([key, count]) => (
+                    <option value={key} key={key}>
+                      {topicLabel(key)} · {count} new
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="batch-picker-summary" aria-live="polite">
+                {learningBatch.length < 10
+                  ? `${learningBatch.length} of 10 new words available. Choose another group.`
+                  : activeBatchTopic
+                    ? `${focusedWords} from ${topicLabel(activeBatchTopic)}${focusedWords < 10 ? ` · ${10 - focusedWords} more from ${batchGroupLabel}` : ""}`
+                    : `10 new words from ${batchGroupLabel}`}
+              </p>
+            </div>
+          )}
+          {start === "review" && (
+            <div className="round-list">
+              {[
+                "Listen & type",
+                "Build sentences · 5 gaps + 5 puzzles",
+                "Choose the meaning",
+                "Recall in English",
+              ].map((t, i) => (
+                <div key={t}>
+                  <span>{i + 1}</span>
+                  {t}
+                </div>
+              ))}
+            </div>
+          )}
           <p className="notice">
             {start === "review"
               ? "20 seconds per question. Show the answer any time; the question will return later. Your place is saved if you leave."
               : "Your place is saved as you study. Leave or reopen the app to resume."}
           </p>
-          <Button onClick={startBatch}>
+          <Button
+            onClick={startBatch}
+            disabled={
+              app.busy || (start === "learn" && learningBatch.length < 10)
+            }
+          >
             Start {start === "review" ? "review" : "learning"}
             <ArrowRight size={18} />
           </Button>

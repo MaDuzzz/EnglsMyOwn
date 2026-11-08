@@ -250,6 +250,33 @@ function hash(value: string) {
     result = Math.imul(result ^ character.charCodeAt(0), 16777619);
   return result >>> 0;
 }
+export type LearningGroup =
+  "all" | "verbs" | "adjectives" | "collocations" | "nouns" | "other";
+export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
+  if (/^colloc[-_]/i.test(word.id)) return "collocations";
+  if (/^adj[-_]/i.test(word.id)) return "adjectives";
+  if (/^verb[-_]/i.test(word.id)) return "verbs";
+  if (/^noun[-_]/i.test(word.id)) return "nouns";
+  if (word.itemType && word.itemType !== "word") return "collocations";
+  const part = word.partOfSpeech.toLowerCase();
+  if (/adject|\badj\b/.test(part)) return "adjectives";
+  if (/\bverb\b/.test(part)) return "verbs";
+  if (/\bnoun\b/.test(part)) return "nouns";
+  return "other";
+}
+export function wordTopicKeys(word: Word): string[] {
+  const values = word.topicIds?.length ? word.topicIds : [word.topic];
+  return [
+    ...new Set(
+      values
+        .flatMap((value) => value.split(","))
+        .map((value) =>
+          value.trim().replaceAll("_", " ").replace(/\s+/g, " ").toLowerCase(),
+        )
+        .filter(Boolean),
+    ),
+  ];
+}
 function wordKind(word: Word) {
   if (word.itemType && word.itemType !== "word") return word.itemType;
   const part = word.partOfSpeech.toLowerCase();
@@ -259,7 +286,29 @@ function wordKind(word: Word) {
   if (/\badverb\b/.test(part)) return "adverb";
   return part || "word";
 }
-export function selectLearningBatch(words: Word[], day: string, size = 10) {
+export function selectLearningBatch(
+  words: Word[],
+  day: string,
+  size = 10,
+  topic = "",
+) {
+  const focused = topic
+    ? words.filter((word) => wordTopicKeys(word).includes(topic))
+    : words;
+  const selected = pickLearningBatch(focused, day, size);
+  if (selected.length < size) {
+    const chosen = new Set(selected.map((word) => word.id));
+    selected.push(
+      ...pickLearningBatch(
+        words.filter((word) => !chosen.has(word.id)),
+        day,
+        size - selected.length,
+      ),
+    );
+  }
+  return selected;
+}
+function pickLearningBatch(words: Word[], day: string, size: number) {
   const groups = new Map<string, Word[]>();
   for (const word of words) {
     const kind = wordKind(word);

@@ -3,6 +3,8 @@ import {
   advance,
   createSession,
   selectLearningBatch,
+  learningGroupOf,
+  wordTopicKeys,
   makeSessionDraft,
   restoreSession,
   checkpointSession,
@@ -25,6 +27,38 @@ import { validateImport } from "../src/lib/content";
 import canonicalDraft from "../docs/content/vocabulary.example.json";
 const batch = words.slice(0, 10);
 describe("word sessions", () => {
+  it("keeps imported files in their word groups and fills a chosen topic to ten", () => {
+    const verbs = Array.from({ length: 12 }, (_, index) => ({
+      ...batch[0],
+      id: `verb-${index}`,
+      itemType: "word" as const,
+      partOfSpeech: "verb",
+      topicIds: index < 4 ? ["finance, office_work"] : ["general"],
+    }));
+    const collocation = {
+      ...batch[0],
+      id: "colloc-099",
+      itemType: "idiom" as const,
+      partOfSpeech: "noun",
+    };
+    expect(learningGroupOf(collocation)).toBe("collocations");
+    expect(learningGroupOf(verbs[0])).toBe("verbs");
+    expect(learningGroupOf({ ...collocation, id: "noun-157" })).toBe("nouns");
+    expect(wordTopicKeys(verbs[0])).toEqual(["finance", "office work"]);
+    const selected = selectLearningBatch(verbs, "2026-11-08", 10, "finance");
+    expect(selected).toHaveLength(10);
+    expect(
+      selected
+        .slice(0, 4)
+        .every((word) => wordTopicKeys(word).includes("finance")),
+    ).toBe(true);
+    expect(
+      selected
+        .slice(4)
+        .every((word) => wordTopicKeys(word).includes("general")),
+    ).toBe(true);
+    expect(new Set(selected.map((word) => word.id)).size).toBe(10);
+  });
   it("keeps the second completed review when an older progress snapshot arrives", () => {
     const day = "2026-11-08";
     const wordIds = batch.map((word) => word.id);

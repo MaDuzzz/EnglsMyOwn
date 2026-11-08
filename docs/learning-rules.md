@@ -1,12 +1,13 @@
 # Learning rules — current decisions
 
-Updated: 2026-11-07. Source: approved word-session design and batch-learning changes.
+Updated: 2026-11-08. Source: approved word-session design and batch-learning changes.
 This supersedes the yesterday-only unlock rule in Words v2 and any conflicting older mockup. The batch flow is implemented in the app.
 
 ## Assignment and unlock
 
 - Each new/review batch contains 10 words, with four required tasks per word: listening, one sentence task, English-to-Vietnamese meaning, Vietnamese-to-English recall. Total: 40 unique tasks.
-- A new batch selects from the unlearned published pool by vocabulary type (collocation, phrase, or a word's part of speech). It alternates available types and varies the items within each type using a stable day-based ordering. The selection is independent of Firestore import order. If only one type remains, fill the batch from it. The selected ten IDs stay fixed in the saved session.
+- Before starting a new batch, the learner chooses a word group (Mixed, Verbs, Adjectives, Collocations, Nouns, or Other) and optionally a focus topic. The imported `verb-`, `adj-`, `colloc-`, and `noun-` IDs keep each existing source file in its group, including phrases and idioms in those files. Other entries use item type and part of speech. The choice applies to new learning only; required review follows its saved word IDs.
+- A new batch selects from the unlearned published pool in the chosen group, independent of Firestore import order. Within that pool it alternates available vocabulary types and varies items using a stable day-based ordering. Mixed includes all groups. Focus-topic words come first; if fewer than ten remain, the rest come from the same chosen group. The picker shows this split before starting. If the chosen group has fewer than ten new words, the learner must choose another group or Mixed. The selected ten IDs stay fixed in the saved session.
 - ALL mandatory review must be complete before new learning: yesterday, the selected earlier day, and outstanding review. Finishing yesterday alone is insufficient.
 - Apply the gate at every entry point: Words, Today, topic details, direct links and session creation. Recheck eligibility on entry.
 - Review includes all assigned batches, not just the first ten words. An empty required-review set permits new learning; an empty yesterday set does not bypass other pending review.
