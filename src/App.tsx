@@ -43,7 +43,6 @@ import {
   createSession,
   selectLearningBatch,
   learningGroupOf,
-  wordTopicKeys,
   nextIntroduction,
   makeSessionDraft,
   restoreSession,
@@ -85,8 +84,6 @@ const batchGroups: { id: LearningGroup; label: string }[] = [
   { id: "nouns", label: "Nouns" },
   { id: "other", label: "Other" },
 ];
-const topicLabel = (key: string) =>
-  key === "hr" ? "HR" : key.replace(/\b\w/g, (letter) => letter.toUpperCase());
 export default function App() {
   const app = useApp();
   const [page, setPage] = useState(location.hash.slice(1) || "today"),
@@ -107,9 +104,6 @@ export default function App() {
       const saved = localStorage.getItem("engls-batch-group");
       return batchGroups.find((group) => group.id === saved)?.id || "all";
     }),
-    [batchTopic, setBatchTopic] = useState(
-      () => localStorage.getItem("engls-batch-topic") || "",
-    ),
     [search, setSearch] = useState(""),
     [detail, setDetail] = useState<Word | null>(null),
     [topic, setTopic] = useState<string | null>(null),
@@ -130,19 +124,7 @@ export default function App() {
     batchPool = fresh.filter(
       (word) => batchGroup === "all" || learningGroupOf(word) === batchGroup,
     ),
-    topicCounts = batchPool.reduce((counts, word) => {
-      for (const key of wordTopicKeys(word))
-        counts.set(key, (counts.get(key) || 0) + 1);
-      return counts;
-    }, new Map<string, number>()),
-    topicOptions = [...topicCounts.entries()].sort(
-      ([a, countA], [b, countB]) => countB - countA || a.localeCompare(b),
-    ),
-    activeBatchTopic = topicCounts.has(batchTopic) ? batchTopic : "",
-    learningBatch = selectLearningBatch(batchPool, today, 10, activeBatchTopic),
-    focusedWords = activeBatchTopic
-      ? Math.min(10, topicCounts.get(activeBatchTopic) || 0)
-      : 0,
+    learningBatch = selectLearningBatch(batchPool, today),
     batchGroupLabel =
       batchGroups.find((group) => group.id === batchGroup)?.label || "Mixed",
     draftKey = demo
@@ -184,8 +166,8 @@ export default function App() {
   }, [draftKey]);
   useEffect(() => {
     localStorage.setItem("engls-batch-group", batchGroup);
-    localStorage.setItem("engls-batch-topic", batchTopic);
-  }, [batchGroup, batchTopic]);
+    localStorage.removeItem("engls-batch-topic");
+  }, [batchGroup]);
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme;
     localStorage.setItem("engls-theme", theme);
@@ -748,7 +730,7 @@ export default function App() {
                             ? "Choose another group or topic"
                             : pending.length
                               ? "After your daily review"
-                              : "Choose a group and topic"}
+                              : "Choose a word group"}
                         </p>
                         <ProgressBar value={stats.learned ? 100 : 0} />
                       </div>
@@ -958,7 +940,7 @@ export default function App() {
                         {previewBatch.length
                           ? resumeDraft?.mode === "learn"
                             ? "The ten words in your saved batch"
-                            : `${batchGroupLabel} · ${activeBatchTopic ? topicLabel(activeBatchTopic) : "All topics"}`
+                            : batchGroupLabel
                           : fresh.length
                             ? `No new words in ${batchGroupLabel} yet`
                             : "New lessons are on their way"}
@@ -974,7 +956,7 @@ export default function App() {
                           : pending.length
                             ? "Finish your remaining review to unlock."
                             : learningBatch.length >= 10
-                              ? "Choose your group and topic before you begin."
+                              ? "Choose your word group before you begin."
                               : fresh.length >= 10
                                 ? `Only ${batchPool.length} new words in ${batchGroupLabel}. Choose another group.`
                                 : "Ask your administrator to publish more vocabulary."}
@@ -1180,10 +1162,7 @@ export default function App() {
                       key={group.id}
                       aria-pressed={batchGroup === group.id}
                       disabled={!count}
-                      onClick={() => {
-                        setBatchGroup(group.id);
-                        setBatchTopic("");
-                      }}
+                      onClick={() => setBatchGroup(group.id)}
                     >
                       <strong>{group.label}</strong>
                       <span>{count} new</span>
@@ -1191,28 +1170,12 @@ export default function App() {
                   );
                 })}
               </div>
-              <label className="batch-topic-select">
-                Focus topic
-                <select
-                  value={activeBatchTopic}
-                  onChange={(event) => setBatchTopic(event.target.value)}
-                  disabled={!topicOptions.length}
-                >
-                  <option value="">All topics</option>
-                  {topicOptions.map(([key, count]) => (
-                    <option value={key} key={key}>
-                      {topicLabel(key)} · {count} new
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <p className="batch-picker-summary" aria-live="polite">
-                {learningBatch.length < 10
-                  ? `${learningBatch.length} of 10 new words available. Choose another group.`
-                  : activeBatchTopic
-                    ? `${focusedWords} from ${topicLabel(activeBatchTopic)}${focusedWords < 10 ? ` · ${10 - focusedWords} more from ${batchGroupLabel}` : ""}`
-                    : `10 new words from ${batchGroupLabel}`}
-              </p>
+              {learningBatch.length < 10 && (
+                <p className="batch-picker-summary" aria-live="polite">
+                  {learningBatch.length} of 10 new words available. Choose
+                  another group.
+                </p>
+              )}
             </div>
           )}
           {start === "review" && (

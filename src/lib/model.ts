@@ -264,19 +264,6 @@ export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
   if (/\bnoun\b/.test(part)) return "nouns";
   return "other";
 }
-export function wordTopicKeys(word: Word): string[] {
-  const values = word.topicIds?.length ? word.topicIds : [word.topic];
-  return [
-    ...new Set(
-      values
-        .flatMap((value) => value.split(","))
-        .map((value) =>
-          value.trim().replaceAll("_", " ").replace(/\s+/g, " ").toLowerCase(),
-        )
-        .filter(Boolean),
-    ),
-  ];
-}
 function wordKind(word: Word) {
   if (word.itemType && word.itemType !== "word") return word.itemType;
   const part = word.partOfSpeech.toLowerCase();
@@ -286,29 +273,7 @@ function wordKind(word: Word) {
   if (/\badverb\b/.test(part)) return "adverb";
   return part || "word";
 }
-export function selectLearningBatch(
-  words: Word[],
-  day: string,
-  size = 10,
-  topic = "",
-) {
-  const focused = topic
-    ? words.filter((word) => wordTopicKeys(word).includes(topic))
-    : words;
-  const selected = pickLearningBatch(focused, day, size);
-  if (selected.length < size) {
-    const chosen = new Set(selected.map((word) => word.id));
-    selected.push(
-      ...pickLearningBatch(
-        words.filter((word) => !chosen.has(word.id)),
-        day,
-        size - selected.length,
-      ),
-    );
-  }
-  return selected;
-}
-function pickLearningBatch(words: Word[], day: string, size: number) {
+export function selectLearningBatch(words: Word[], day: string, size = 10) {
   const groups = new Map<string, Word[]>();
   for (const word of words) {
     const kind = wordKind(word);

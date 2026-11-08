@@ -2613,12 +2613,6 @@ th {
   color: var(--muted);
   font-size: 11px;
 }
-.batch-topic-select {
-  margin-top: 16px;
-}
-.batch-topic-select select {
-  margin-top: 7px;
-}
 .batch-picker-summary {
   margin: 12px 0 0;
   color: var(--muted);
