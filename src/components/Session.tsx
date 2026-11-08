@@ -521,6 +521,7 @@ export default function Session({
         <button
           className="icon-btn"
           aria-label="Leave batch"
+          disabled={complete && !saved && !error}
           onClick={() => {
             stopPronunciation();
             setExit(true);
@@ -540,6 +541,7 @@ export default function Session({
         <button
           className="icon-btn"
           aria-label="Close batch"
+          disabled={complete && !saved && !error}
           onClick={() => {
             stopPronunciation();
             setExit(true);

@@ -727,7 +727,9 @@ export default function App() {
                       }
                     >
                       {resumeDraft
-                        ? `Resume ${resumeDraft.mode === "review" ? "review" : "learning"} · ${resumeDraft.completed.length}/40`
+                        ? resumeDraft.completed.length === 40
+                          ? `Finish saving ${resumeDraft.mode === "review" ? "review" : "learning"}`
+                          : `Resume ${resumeDraft.mode === "review" ? "review" : "learning"} · ${resumeDraft.completed.length}/40`
                         : pending.length
                           ? "Continue review"
                           : stats.learned
@@ -812,12 +814,16 @@ export default function App() {
                     <section className="card resume-batch">
                       <div>
                         <span className="eyebrow">
-                          PICK UP WHERE YOU LEFT OFF
+                          {resumeDraft.completed.length === 40
+                            ? "ONE LAST STEP"
+                            : "PICK UP WHERE YOU LEFT OFF"}
                         </span>
                         <h2>
-                          {resumeDraft.mode === "review"
-                            ? "Your review is waiting."
-                            : "Your new words are waiting."}
+                          {resumeDraft.completed.length === 40
+                            ? "Your completed batch is ready to save."
+                            : resumeDraft.mode === "review"
+                              ? "Your review is waiting."
+                              : "Your new words are waiting."}
                         </h2>
                         <p>
                           {resumeDraft.mode === "learn" &&
@@ -828,7 +834,10 @@ export default function App() {
                         </p>
                       </div>
                       <Button onClick={resumeBatch}>
-                        Resume batch <ArrowRight size={18} />
+                        {resumeDraft.completed.length === 40
+                          ? "Finish saving"
+                          : "Resume batch"}{" "}
+                        <ArrowRight size={18} />
                       </Button>
                     </section>
                   )}

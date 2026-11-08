@@ -177,6 +177,17 @@ export function commitBatch(s: Learning, record: BatchRecord): Learning {
     activeSession: s.activeSession?.id === record.id ? null : s.activeSession,
   };
 }
+// Completed batches are append-only. A delayed Firestore snapshot must not
+// replace a batch that this device has already confirmed as saved.
+export function preserveCompletedBatches(
+  current: Learning,
+  incoming: Learning,
+): Learning {
+  const incomingIds = new Set(incoming.records.map((record) => record.id));
+  return current.records.some((record) => !incomingIds.has(record.id))
+    ? current
+    : incoming;
+}
 export const normalize = (s: string) =>
   s
     .normalize("NFC")

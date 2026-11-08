@@ -15,6 +15,7 @@ import {
   emptyLearning,
   dayKey,
   planFor,
+  preserveCompletedBatches,
   type Learning,
   type Word,
   type Lesson,
@@ -49,6 +50,13 @@ export function useApp() {
     [today, setToday] = useState(dayKey());
   const dataRef = useRef(data);
   dataRef.current = data;
+  function applyLearning(incoming: Learning) {
+    setData((current) => {
+      const next = preserveCompletedBatches(current, incoming);
+      dataRef.current = next;
+      return next;
+    });
+  }
   useEffect(() => {
     const timer = setInterval(() => setToday(dayKey()), 1000);
     return () => clearInterval(timer);
@@ -145,7 +153,8 @@ export function useApp() {
     const off = [
       onSnapshot(
         doc(db, "learning", user.uid),
-        (s) => setData(s.exists() ? (s.data() as Learning) : emptyLearning()),
+        (s) =>
+          applyLearning(s.exists() ? (s.data() as Learning) : emptyLearning()),
         fail,
       ),
       onSnapshot(
@@ -176,18 +185,16 @@ export function useApp() {
           throw Error("Your account is not approved.");
         const database = db;
         const uid = user.uid;
-        await runTransaction(database, async (tx) => {
+        const committed = await runTransaction(database, async (tx) => {
           const ref = doc(database, "learning", uid),
             snapshot = await tx.get(ref);
-          tx.set(
-            ref,
-            transform(
-              snapshot.exists()
-                ? (snapshot.data() as Learning)
-                : emptyLearning(),
-            ),
+          const next = transform(
+            snapshot.exists() ? (snapshot.data() as Learning) : emptyLearning(),
           );
+          tx.set(ref, next);
+          return next;
         });
+        applyLearning(committed);
       }
     } catch (e) {
       setError((e as Error).message);

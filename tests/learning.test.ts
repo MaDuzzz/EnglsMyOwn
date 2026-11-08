@@ -14,6 +14,7 @@ import {
   planFor,
   pendingReview,
   commitBatch,
+  preserveCompletedBatches,
   dailyStats,
   tasksFor,
   petGrowth,
@@ -24,6 +25,53 @@ import { validateImport } from "../src/lib/content";
 import canonicalDraft from "../docs/content/vocabulary.example.json";
 const batch = words.slice(0, 10);
 describe("word sessions", () => {
+  it("keeps the second completed review when an older progress snapshot arrives", () => {
+    const day = "2026-11-08";
+    const wordIds = batch.map((word) => word.id);
+    const first = {
+      id: "review:first",
+      mode: "review" as const,
+      day,
+      wordIds,
+      seconds: 180,
+      completedAt: "2026-11-08T08:00:00+07:00",
+    };
+    const second = {
+      ...first,
+      id: "review:second",
+      completedAt: "2026-11-08T09:00:00+07:00",
+    };
+    const finishedDraft = makeSessionDraft(
+      {
+        ...createSession(batch, "review", second.id, day),
+        queue: [],
+        completed: tasksFor(batch).map((task) => task.id),
+        round: 4,
+      },
+      { answer: "", tokens: [], feedback: null, seconds: 180 },
+    );
+    const old = {
+      ...emptyLearning(),
+      records: [first],
+      activeSession: finishedDraft,
+      plans: {
+        [day]: [
+          { id: first.id, sourceId: "learn:first", wordIds },
+          { id: second.id, sourceId: "learn:second", wordIds },
+        ],
+      },
+    };
+    const committed = commitBatch(old, second);
+    expect(committed.activeSession).toBeNull();
+    expect(preserveCompletedBatches(committed, old)).toBe(committed);
+    expect(preserveCompletedBatches(old, committed)).toBe(committed);
+    expect(dailyStats(committed, day)).toMatchObject({
+      reviewed: 20,
+      total: 20,
+      tickets: 2,
+    });
+    expect(pendingReview(committed, day)).toHaveLength(0);
+  });
   it("mixes available word types without depending on import order", () => {
     const pool = ["adjective", "verb", "collocation"].flatMap((kind) =>
       Array.from({ length: 12 }, (_, i) => ({
