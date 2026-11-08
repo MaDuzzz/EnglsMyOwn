@@ -1,17 +1,28 @@
 import type { Word } from "./model";
-import { availableAccents, pronunciationsFor } from "./vocabulary";
+import { playableAccents, pronunciationsFor, type Accent } from "./vocabulary";
 
+type AudioSource = "recording" | "youdao" | "google" | "device";
 type Playback = {
+  key: string;
+  accent: Accent | null;
   url: string;
+  source: AudioSource | null;
   status: "idle" | "loading" | "playing" | "error";
 };
 type PlaybackCallbacks = { onEnded?: () => void; onError?: () => void };
+type Candidate = { url: string; source: Exclude<AudioSource, "device"> };
 
 let player: HTMLAudioElement | undefined;
-let playback: Playback = { url: "", status: "idle" };
+let utterance: SpeechSynthesisUtterance | undefined;
+let playback: Playback = {
+  key: "",
+  accent: null,
+  url: "",
+  source: null,
+  status: "idle",
+};
 let generation = 0;
 let timeout: ReturnType<typeof setTimeout> | undefined;
-let callbacks: PlaybackCallbacks = {};
 const listeners = new Set<() => void>();
 
 function publish(next: Playback) {
@@ -28,66 +39,167 @@ export function subscribePlayback(listener: () => void) {
   return () => listeners.delete(listener);
 }
 
-function clearPlayback() {
-  generation++;
-  callbacks = {};
+function clearTimeoutIfNeeded() {
   if (timeout) clearTimeout(timeout);
   timeout = undefined;
-  player?.pause();
+}
+
+function clearPlayback() {
+  generation++;
+  clearTimeoutIfNeeded();
+  if (player) {
+    player.onerror = null;
+    player.onended = null;
+    player.onplaying = null;
+    player.onwaiting = null;
+    player.onstalled = null;
+    player.pause();
+  }
+  if (utterance && "speechSynthesis" in window) {
+    window.speechSynthesis.cancel();
+    utterance = undefined;
+  }
 }
 
 export function stopPronunciation() {
   clearPlayback();
-  publish({ url: "", status: "idle" });
+  publish({ key: "", accent: null, url: "", source: null, status: "idle" });
 }
 
-export function playPronunciation(
-  url: string,
+export function audioCandidates(word: Word, accent: Accent): Candidate[] {
+  const recorded = pronunciationsFor(word)[accent]?.audioUrl;
+  if (!recorded && word.audioMode !== "on-demand") return [];
+  const result: Candidate[] = [];
+  if (recorded) result.push({ url: recorded, source: "recording" });
+  if (accent === "us" || accent === "uk") {
+    const youdao = new URL("https://dict.youdao.com/dictvoice");
+    youdao.searchParams.set("audio", word.headword);
+    youdao.searchParams.set("type", accent === "us" ? "2" : "1");
+    result.push({ url: youdao.href, source: "youdao" });
+    const google = new URL("https://translate.google.com/translate_tts");
+    google.searchParams.set("ie", "UTF-8");
+    google.searchParams.set("tl", accent === "us" ? "en" : "en-GB");
+    google.searchParams.set("client", "tw-ob");
+    google.searchParams.set("q", word.headword);
+    result.push({ url: google.href, source: "google" });
+  }
+  return result;
+}
+
+export function playWordPronunciation(
+  word: Word,
+  accent: Accent,
   slow = false,
-  onPlayback?: PlaybackCallbacks,
+  callbacks: PlaybackCallbacks = {},
 ) {
-  if (!url) return;
-  if (!player) {
-    player = new Audio();
-    player.preload = "auto";
-    player.addEventListener("ended", () => {
-      const onEnded = callbacks.onEnded;
-      callbacks = {};
-      publish({ url: playback.url, status: "idle" });
-      onEnded?.();
-    });
-    document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stopPronunciation();
-    });
+  const candidates = audioCandidates(word, accent);
+  if (!candidates.length && word.audioMode !== "on-demand") {
+    stopPronunciation();
+    callbacks.onError?.();
+    return;
   }
   clearPlayback();
-  callbacks = onPlayback || {};
   const current = ++generation;
-  const fail = () => {
+  let index = 0;
+  const key = word.id;
+  const state = (
+    status: Playback["status"],
+    source: AudioSource | null,
+    url = "",
+  ): Playback => ({ key, accent, url, source, status });
+  const failed = () => {
     if (generation !== current) return;
-    const onError = callbacks.onError;
     clearPlayback();
-    publish({ url, status: "error" });
-    onError?.();
+    publish(state("error", null));
+    callbacks.onError?.();
   };
-  player.src = url;
-  player.playbackRate = slow ? 0.75 : 1;
-  player.preservesPitch = true;
-  publish({ url, status: "loading" });
-  timeout = setTimeout(fail, 15000);
-  // play() is called directly from the Start/Continue/swipe event on iOS.
-  void player.play().then(() => {
+  const ended = (source: AudioSource, url = "") => {
     if (generation !== current) return;
-    if (timeout) clearTimeout(timeout);
-    timeout = undefined;
-    publish({ url, status: "playing" });
-  }, fail);
+    clearTimeoutIfNeeded();
+    utterance = undefined;
+    publish(state("idle", source, url));
+    callbacks.onEnded?.();
+  };
+  const speakOnDevice = () => {
+    if (!("speechSynthesis" in window)) {
+      failed();
+      return;
+    }
+    try {
+      const speech = window.speechSynthesis;
+      speech.cancel();
+      const next = new SpeechSynthesisUtterance(word.headword);
+      const lang =
+        accent === "uk" ? "en-GB" : accent === "au" ? "en-AU" : "en-US";
+      next.lang = lang;
+      next.rate = slow ? 0.7 : 0.9;
+      const voice = speech
+        .getVoices()
+        .find((v) => v.lang.toLowerCase() === lang.toLowerCase());
+      if (voice) next.voice = voice;
+      utterance = next;
+      next.onstart = () => {
+        if (generation !== current) return;
+        clearTimeoutIfNeeded();
+        publish(state("playing", "device"));
+      };
+      next.onend = () => ended("device");
+      next.onerror = failed;
+      publish(state("loading", "device"));
+      timeout = setTimeout(failed, 12000);
+      speech.speak(next);
+    } catch {
+      failed();
+    }
+  };
+  const tryNext = () => {
+    if (generation !== current) return;
+    clearTimeoutIfNeeded();
+    const candidate = candidates[index++];
+    if (!candidate) {
+      speakOnDevice();
+      return;
+    }
+    if (!player) {
+      player = new Audio();
+      player.preload = "auto";
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) stopPronunciation();
+      });
+    }
+    const audio = player;
+    let settled = false;
+    const nextOnFailure = () => {
+      if (settled || generation !== current) return;
+      settled = true;
+      audio.pause();
+      tryNext();
+    };
+    audio.onerror = nextOnFailure;
+    audio.onended = () => ended(candidate.source, candidate.url);
+    audio.onwaiting = () => {
+      clearTimeoutIfNeeded();
+      timeout = setTimeout(nextOnFailure, 8000);
+    };
+    audio.onstalled = audio.onwaiting;
+    audio.onplaying = () => {
+      if (generation !== current || settled) return;
+      clearTimeoutIfNeeded();
+      publish(state("playing", candidate.source, candidate.url));
+    };
+    audio.src = candidate.url;
+    audio.playbackRate = slow ? 0.75 : 1;
+    audio.preservesPitch = true;
+    publish(state("loading", candidate.source, candidate.url));
+    timeout = setTimeout(nextOnFailure, 8000);
+    void audio.play().catch(nextOnFailure);
+  };
+  tryNext();
 }
 
 export function playWordRecording(word: Word, callbacks?: PlaybackCallbacks) {
-  const accent = availableAccents(word)[0];
-  const url = accent && pronunciationsFor(word)[accent]?.audioUrl;
-  if (url) playPronunciation(url, false, callbacks);
+  const accent = playableAccents(word)[0];
+  if (accent) playWordPronunciation(word, accent, false, callbacks);
   else {
     stopPronunciation();
     callbacks?.onError?.();

@@ -33,7 +33,7 @@ Bộ pilot có 7 bản thu Australia, 2 US, 1 UK (Southern England), lấy từ 
 
 Cả 10 URL được kiểm tra GET Range và trả `206 audio/mpeg`. Đây là kiểm tra tài nguyên, không thay việc thẩm định bằng tai hay kiểm tra trên iPhone thật. `checkMethod` ghi đúng phạm vi kiểm tra. Không đánh dấu là đã được chuyên gia/người dùng nghe duyệt. IPA là phiên âm rộng do biên tập, UI ghi Broad IPA; CEFR là ước lượng học tập, UI ghi estimated. Cần tiếp tục thẩm định trước khi xem bộ này là giáo trình chuẩn hóa chuyên môn.
 
-Publish cần ít nhất một giọng có IPA và audio HTTPS hợp lệ; giọng còn lại tùy chọn. Validator loại link example.com và Drive preview, kiểm tra audioText khớp đáp án nghe, nguồn/giấy phép và thông tin kiểm tra. Kiểm tra cấu trúc không tự chứng minh URL luôn còn hoạt động. Audio player có loading, lỗi/retry, phát chậm giữ cao độ và dừng khi chuyển mục/ẩn app. Màn nghe không hiện từ, IPA, credits chứa tên cụm hoặc nghĩa trước khi chấm.
+Publish cần ít nhất một giọng có IPA và audio HTTPS hợp lệ, hoặc `audioMode: "on-demand"` cùng IPA US. Giọng còn lại tùy chọn. Validator loại link example.com và Drive preview, kiểm tra audioText khớp đáp án nghe, nguồn/giấy phép và thông tin kiểm tra cho các bản thu khai báo trong dữ liệu. Chế độ on-demand tạo URL Youdao rồi Google Translate TTS từ headword lúc phát; nếu cả hai lỗi, app thử giọng thiết bị. Các endpoint này có thể thay đổi hoặc giới hạn truy cập. Kiểm tra cấu trúc không tự chứng minh audio luôn còn hoạt động. Audio player có loading, lỗi/retry, phát chậm giữ cao độ và dừng khi chuyển mục/ẩn app. Màn nghe không hiện từ, IPA, credits chứa tên cụm hoặc nghĩa trước khi chấm.
 
 ## Firestore và tương thích
 

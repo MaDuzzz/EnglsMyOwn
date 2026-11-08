@@ -154,6 +154,8 @@ function validateRichEntry(w: Word) {
     Array.isArray(w.pronunciation)
   )
     fail("pronunciation must be an object keyed by us, uk or au.");
+  if (w.audioMode !== undefined && w.audioMode !== "on-demand")
+    fail("invalid audioMode.");
   for (const [accent, p] of Object.entries(w.pronunciation!)) {
     if (!["us", "uk", "au"].includes(accent) || !p || typeof p !== "object")
       fail("invalid pronunciation accent.");
@@ -309,14 +311,15 @@ export function validateImport(value: unknown): {
       if (w.id.startsWith("demo_") || w.id.startsWith("sample_"))
         throw Error("Sample content cannot be published.");
       const pronunciations = pronunciationsFor(w);
-      if (
-        !availableAccents(w).some(
-          (a) =>
-            https(pronunciations[a]?.audioUrl) && text(pronunciations[a]?.ipa),
-        )
-      )
+      const hasRecording = availableAccents(w).some(
+        (a) =>
+          https(pronunciations[a]?.audioUrl) && text(pronunciations[a]?.ipa),
+      );
+      const hasOnDemandAudio =
+        w.audioMode === "on-demand" && text(pronunciations.us?.ipa);
+      if (!hasRecording && !hasOnDemandAudio)
         throw Error(
-          `${w.id}: provide at least one verified HTTPS audio source with IPA.`,
+          `${w.id}: provide a verified HTTPS audio source with IPA or enable on-demand audio with US IPA.`,
         );
       if (!text(w.sourceRef) || !text(w.cefrSource))
         throw Error(

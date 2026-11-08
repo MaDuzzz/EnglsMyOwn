@@ -60,6 +60,7 @@ export type VocabularyEntry = {
   topicIds: string[];
   topic: string;
   pronunciation: Partial<Record<Accent, Pronunciation>>;
+  audioMode?: "on-demand";
   commonPatterns: string[];
   forms: WordForm[];
   register: "neutral" | "formal" | "informal";
@@ -110,4 +111,13 @@ export function availableAccents(
 ) {
   const sources = pronunciationsFor(word);
   return (["us", "uk", "au"] as const).filter((a) => sources[a]?.audioUrl);
+}
+
+export function playableAccents(
+  word: Parameters<typeof pronunciationsFor>[0] & { audioMode?: string },
+): Accent[] {
+  const recorded = availableAccents(word);
+  return word.audioMode === "on-demand" && !recorded.includes("us")
+    ? [...recorded, "us"]
+    : recorded;
 }

@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
 import pilot from "../content/vocabulary-pilot-v2.json";
 import { projectWord, storedWord, validateImport } from "../src/lib/content";
-import { availableAccents } from "../src/lib/vocabulary";
+import { availableAccents, playableAccents } from "../src/lib/vocabulary";
+import { audioCandidates } from "../src/lib/pronunciationAudio";
 import {
   advance,
   arrangeAnswer,
@@ -46,6 +47,35 @@ describe("vocabulary pilot", () => {
       alter(input.words[0]);
       expect(() => validateImport(input)).toThrow();
     }
+  });
+  it("accepts reviewed entries with on-demand audio and keeps the recorded source first", () => {
+    const input = structuredClone(pilot);
+    const word = input.words[0] as (typeof input.words)[number] & {
+      audioMode?: string;
+    };
+    const recorded = audioCandidates(words[0], "au");
+    expect(recorded[0].source).toBe("recording");
+    const withFallback = { ...words[0], audioMode: "on-demand" as const };
+    expect(playableAccents(withFallback)).toEqual(["au", "us"]);
+
+    delete word.pronunciation.au.audioUrl;
+    expect(() => validateImport(input)).toThrow(/verified HTTPS audio source/);
+    word.audioMode = "on-demand";
+    word.pronunciation.us = { ipa: "/təst/", ipaStatus: "editorial" };
+    const imported = validateImport(input).words[0];
+    expect(availableAccents(imported)).toEqual([]);
+    expect(playableAccents(imported)).toEqual(["us"]);
+    const candidates = audioCandidates(imported, "us");
+    expect(candidates.map((c) => c.source)).toEqual(["youdao", "google"]);
+    expect(new URL(candidates[0].url).searchParams.get("audio")).toBe(
+      imported.headword,
+    );
+    expect(new URL(candidates[0].url).searchParams.get("type")).toBe("2");
+    expect(new URL(candidates[1].url).searchParams.get("q")).toBe(
+      imported.headword,
+    );
+    delete word.pronunciation.us.ipa;
+    expect(() => validateImport(input)).toThrow(/on-demand audio with US IPA/);
   });
   it("grades inflected gaps separately from base-form recall", () => {
     const w = words.find((w) => w.headword === "make a mistake")!;

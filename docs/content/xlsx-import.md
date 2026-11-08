@@ -26,4 +26,6 @@ Một lần nhập tối đa 400 mục, file 5 MB. Ghi bằng transaction: lỗi
 
 Workbook cũ `collocations_b1_plus_100-v3.xlsx` chưa theo chuẩn này và còn mục thiếu dữ liệu. App báo lỗi thay vì tự xuất bản các mục chưa đủ nội dung/audio. Chuyển và biên tập sang mẫu v2 trước khi nhập.
 
+App cũng nhận **file v2 một sheet**: mỗi dòng là một mục từ chuẩn, các cột mảng/đối tượng như `pronunciation`, `examples`, `recall` chứa JSON. Với mục đã được biên tập nhưng thiếu file audio, đặt cột `audioMode` là `on-demand` và cung cấp `pronunciation.us.ipa`. Khi học, app ưu tiên bản thu có sẵn, sau đó thử Youdao, Google Translate TTS và giọng thiết bị. Chế độ này không biến URL thành file audio lưu trong Firestore và không đảm bảo dịch vụ ngoài luôn hoạt động. Mẫu nhiều sheet ở trên vẫn dùng được cho các mục có bản thu trực tiếp.
+
 File mẫu nằm ngoài public/dist. Không đặt giáo trình riêng tư vào public hoặc commit lên repository công khai. JSON vẫn được hỗ trợ cho các công cụ biên tập tự động.

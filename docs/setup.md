@@ -42,7 +42,7 @@ Firestore không bật persistent cache; Auth có thể ghi nhớ đăng nhập.
 - Video dùng Drive file ID; iframe mở `https://drive.google.com/file/d/FILE_ID/preview`.
 - Video để giai đoạn sau. Quyết định hiện tại cho scope nhỏ là Drive **Anyone with the link**; người có link vẫn xem được bên ngoài app, Firebase không thu hồi quyền xem link đó. Không có app-only access với cơ chế này.
 - Firebase session không đảm bảo Google session trong iframe. Dùng **Open in Drive** khi cần đăng nhập/cấp quyền. Play, tua và mute làm trực tiếp trong player; lượt nghe/xem do người học tự xác nhận.
-- Audio từ vựng cần URL phát trực tiếp trong `<audio>` trên Safari. Drive `/preview` không phải audio URL; importer chặn khi publish. Phương thức phát audio Drive vẫn phải kiểm chứng bằng file thật trước khi nhập giáo trình. Code không tự đổi quyền chia sẻ.
+- Từ có bản thu đã kiểm tra sẽ phát bản thu trước. Nếu bản thu lỗi, app thử Youdao DictVoice, Google Translate TTS rồi giọng `speechSynthesis` của thiết bị. Với từ không có bản thu, file v2 một sheet có thể đặt `audioMode: on-demand` và IPA US để publish; app tạo URL theo `headword` khi phát. Các endpoint Youdao/Google này không có cam kết ổn định cho cách dùng trực tiếp, nên cần kết nối mạng và thử trên Safari/iPhone thực tế. Drive `/preview` không phải URL audio trực tiếp.
 
 ## 5. GitHub Pages
 

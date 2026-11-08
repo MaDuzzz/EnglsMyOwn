@@ -3,12 +3,12 @@ import { LoaderCircle, Volume2, Turtle, RotateCcw } from "lucide-react";
 import type { Word } from "../lib/model";
 import {
   accentLabels,
-  availableAccents,
+  playableAccents,
   pronunciationsFor,
   type Accent,
 } from "../lib/vocabulary";
 import {
-  playPronunciation,
+  playWordPronunciation,
   playbackSnapshot,
   subscribePlayback,
 } from "../lib/pronunciationAudio";
@@ -21,7 +21,7 @@ export default function PronunciationControls({
   hideAnswer?: boolean;
 }) {
   const sources = pronunciationsFor(word);
-  const accents = availableAccents(word);
+  const accents = playableAccents(word);
   const [choice, setChoice] = useState<Accent>(accents[0] || "us");
   const accent = accents.includes(choice) ? choice : accents[0];
   const source = accent ? sources[accent] : undefined;
@@ -30,7 +30,20 @@ export default function PronunciationControls({
     playbackSnapshot,
     playbackSnapshot,
   );
-  const state = playback.url === source?.audioUrl ? playback.status : "idle";
+  const active = playback.key === word.id && playback.accent === accent;
+  const state = active ? playback.status : "idle";
+  const voiceLabel =
+    active && playback.source === "youdao"
+      ? "Youdao voice"
+      : active && playback.source === "google"
+        ? "Google voice"
+        : active && playback.source === "device"
+          ? "Device voice"
+          : source?.voiceType === "human"
+            ? "Human recording"
+            : source?.audioUrl
+              ? "Synthetic voice"
+              : "Generated pronunciation";
   return (
     <div
       className={
@@ -48,7 +61,7 @@ export default function PronunciationControls({
                   aria-pressed={accent === a}
                   onClick={() => {
                     setChoice(a);
-                    playPronunciation(sources[a]?.audioUrl || "");
+                    playWordPronunciation(word, a);
                   }}
                 >
                   {a.toUpperCase()}
@@ -56,13 +69,7 @@ export default function PronunciationControls({
                 </button>
               ))}
             </div>
-            <span className="recording-label">
-              {source?.voiceType === "human"
-                ? "Human recording"
-                : source?.voiceType === "tts"
-                  ? "Synthetic voice"
-                  : "Pronunciation"}
-            </span>
+            <span className="recording-label">{voiceLabel}</span>
           </div>
           {!hideAnswer && source?.ipa && (
             <p className="phonetic" lang="en">
@@ -78,8 +85,8 @@ export default function PronunciationControls({
             <button
               type="button"
               className="play-pronunciation"
-              onClick={() => playPronunciation(source?.audioUrl || "")}
-              aria-label={hideAnswer ? "Play recording" : "Play pronunciation"}
+              onClick={() => accent && playWordPronunciation(word, accent)}
+              aria-label="Play pronunciation"
             >
               {state === "loading" ? (
                 <LoaderCircle className="spin" size={20} />
@@ -95,7 +102,9 @@ export default function PronunciationControls({
             <button
               type="button"
               className="slow-pronunciation"
-              onClick={() => playPronunciation(source?.audioUrl || "", true)}
+              onClick={() =>
+                accent && playWordPronunciation(word, accent, true)
+              }
             >
               <Turtle size={20} />
               Slow
@@ -104,11 +113,12 @@ export default function PronunciationControls({
           {state === "error" && (
             <div className="audio-error" role="alert">
               <span>
-                Audio could not load. Check your connection and try again.
+                Pronunciation could not play. Check your connection and try
+                again.
               </span>
               <button
                 type="button"
-                onClick={() => playPronunciation(source?.audioUrl || "")}
+                onClick={() => accent && playWordPronunciation(word, accent)}
               >
                 <RotateCcw size={16} />
                 Retry audio

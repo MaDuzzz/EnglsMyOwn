@@ -52,7 +52,7 @@ import {
   speakWord,
   stopFeedbackVoice,
 } from "../lib/feedbackAudio";
-import { availableAccents, pronunciationsFor } from "../lib/vocabulary";
+import { playableAccents } from "../lib/vocabulary";
 
 function readNextStep(session: SessionType) {
   const introduction = nextIntroduction(session);
@@ -209,12 +209,10 @@ export default function Session({
   useEffect(() => {
     if (s.mode !== "review" || task?.kind !== "listen" || feedback !== null)
       return;
-    const accent = availableAccents(word)[0];
-    const url = accent && pronunciationsFor(word)[accent]?.audioUrl;
-    if (!url) return;
+    if (!playableAccents(word).length) return;
     const playback = playbackSnapshot();
     if (
-      playback.url !== url ||
+      playback.key !== word.id ||
       (playback.status !== "loading" && playback.status !== "playing")
     )
       playWordRecording(word);
@@ -279,8 +277,8 @@ export default function Session({
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
     stopPronunciation();
-    const hasRecording = correct && availableAccents(word).length > 0;
-    if (hasRecording)
+    const hasPronunciation = correct && playableAccents(word).length > 0;
+    if (hasPronunciation)
       playWordRecording(word, {
         onEnded: speakPraise,
         onError: () => speakWord(word.headword, speakPraise),
@@ -865,7 +863,7 @@ export default function Session({
                   <p>
                     {word.meaningVi} · {word.meaningEn}
                   </p>
-                  {availableAccents(word).length > 0 && (
+                  {playableAccents(word).length > 0 && (
                     <button
                       type="button"
                       className="feedback-replay"
