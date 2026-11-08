@@ -251,8 +251,9 @@ function hash(value: string) {
   return result >>> 0;
 }
 export type LearningGroup =
-  "all" | "verbs" | "adjectives" | "collocations" | "nouns" | "other";
+  "all" | "verbs" | "adjectives" | "collocations" | "nouns" | "sales" | "other";
 export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
+  if (/^sales[-_]/i.test(word.id)) return "sales";
   if (/^colloc[-_]/i.test(word.id)) return "collocations";
   if (/^adj[-_]/i.test(word.id)) return "adjectives";
   if (/^verb[-_]/i.test(word.id)) return "verbs";

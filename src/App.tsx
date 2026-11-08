@@ -82,6 +82,7 @@ const batchGroups: { id: LearningGroup; label: string }[] = [
   { id: "adjectives", label: "Adjectives" },
   { id: "collocations", label: "Collocations" },
   { id: "nouns", label: "Nouns" },
+  { id: "sales", label: "Sales & BizDev" },
   { id: "other", label: "Other" },
 ];
 export default function App() {
@@ -1156,6 +1157,8 @@ export default function App() {
                       : fresh.filter(
                           (word) => learningGroupOf(word) === group.id,
                         ).length;
+                  if (!count && group.id !== batchGroup && group.id !== "all")
+                    return null;
                   return (
                     <button
                       type="button"

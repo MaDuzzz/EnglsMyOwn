@@ -42,6 +42,7 @@ describe("word sessions", () => {
     expect(learningGroupOf(collocation)).toBe("collocations");
     expect(learningGroupOf(verbs[0])).toBe("verbs");
     expect(learningGroupOf({ ...collocation, id: "noun-157" })).toBe("nouns");
+    expect(learningGroupOf({ ...collocation, id: "sales-001" })).toBe("sales");
     const pool = [...verbs, collocation];
     const selected = selectLearningBatch(
       pool.filter((word) => learningGroupOf(word) === "verbs"),
