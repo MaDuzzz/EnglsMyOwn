@@ -505,8 +505,11 @@ export default function Session({
   const parts = sentenceParts(word);
   const tokenOrder = shuffledTokens(parts.length, word.id);
   const choices = [word.meaningVi, ...word.meaningDistractorsVi];
-  const offset = word.id.length % 4;
-  const options = [...choices.slice(offset), ...choices.slice(0, offset)];
+  const choiceOrder = shuffledTokens(choices.length, `${s.id}:${task?.id}`);
+  const options = choiceOrder.map(
+    (_, index) =>
+      choices[choiceOrder[(index + (task?.attempt || 0)) % choices.length]],
+  );
   return (
     <main
       className={

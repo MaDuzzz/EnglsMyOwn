@@ -215,6 +215,7 @@ export type Task = {
   kind: "listen" | "gap" | "arrange" | "meaning" | "recall";
   round: number;
   refresher?: boolean;
+  attempt?: number;
 };
 export type Session = {
   id: string;
@@ -251,9 +252,17 @@ function hash(value: string) {
   return result >>> 0;
 }
 export type LearningGroup =
-  "all" | "verbs" | "adjectives" | "collocations" | "nouns" | "sales" | "other";
+  | "all"
+  | "verbs"
+  | "adjectives"
+  | "collocations"
+  | "nouns"
+  | "sales"
+  | "linking"
+  | "other";
 export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
   if (/^sales[-_]/i.test(word.id)) return "sales";
+  if (/^phrase[-_]/i.test(word.id)) return "linking";
   if (/^colloc[-_]/i.test(word.id)) return "collocations";
   if (/^adj[-_]/i.test(word.id)) return "adjectives";
   if (/^verb[-_]/i.test(word.id)) return "verbs";
@@ -345,7 +354,11 @@ export function restoreSession(
         typeof task.id === "string" &&
         typeof task.wordId === "string" &&
         Number.isInteger(task.round) &&
-        (task.refresher === undefined || typeof task.refresher === "boolean"),
+        (task.refresher === undefined || typeof task.refresher === "boolean") &&
+        (task.attempt === undefined ||
+          (Number.isInteger(task.attempt) &&
+            task.attempt >= 0 &&
+            task.attempt <= 1000)),
     ) ||
     !Array.isArray(draft.completed) ||
     draft.completed.length > 40 ||
@@ -502,7 +515,11 @@ export function advance(s: Session, correct: boolean): Session {
     if (!completed.includes(task.id)) completed.push(task.id);
   } else if (!queue.length || queue[0].round === task.round) {
     const index = Math.min(2, queue.length);
-    queue.splice(index, 0, { ...task, refresher: index < 2 });
+    queue.splice(index, 0, {
+      ...task,
+      refresher: index < 2,
+      attempt: (task.attempt || 0) + 1,
+    });
   }
   if (!queue.length && completed.length < 40) {
     const unfinished = tasksFor(s.words).filter(

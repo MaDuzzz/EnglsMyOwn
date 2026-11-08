@@ -83,6 +83,7 @@ const batchGroups: { id: LearningGroup; label: string }[] = [
   { id: "collocations", label: "Collocations" },
   { id: "nouns", label: "Nouns" },
   { id: "sales", label: "Sales & BizDev" },
+  { id: "linking", label: "Linking phrases" },
   { id: "other", label: "Other" },
 ];
 export default function App() {

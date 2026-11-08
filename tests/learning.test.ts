@@ -43,6 +43,9 @@ describe("word sessions", () => {
     expect(learningGroupOf(verbs[0])).toBe("verbs");
     expect(learningGroupOf({ ...collocation, id: "noun-157" })).toBe("nouns");
     expect(learningGroupOf({ ...collocation, id: "sales-001" })).toBe("sales");
+    expect(learningGroupOf({ ...collocation, id: "phrase-001" })).toBe(
+      "linking",
+    );
     const pool = [...verbs, collocation];
     const selected = selectLearningBatch(
       pool.filter((word) => learningGroupOf(word) === "verbs"),
@@ -162,6 +165,18 @@ describe("word sessions", () => {
     expect(order).not.toEqual([0, 1, 2, 3, 4, 5, 6]);
     expect([...order].sort()).toEqual([0, 1, 2, 3, 4, 5, 6]);
   });
+  it("varies the correct meaning's position across same-length word IDs", () => {
+    const positions = Array.from({ length: 10 }, (_, index) =>
+      shuffledTokens(
+        4,
+        `batch:adj-${String(index + 1).padStart(3, "0")}:2`,
+      ).indexOf(0),
+    );
+    expect(new Set(positions).size).toBeGreaterThan(1);
+    expect(positions.every((position) => position >= 0 && position < 4)).toBe(
+      true,
+    );
+  });
   it("assigns 40 distinct tasks and exactly five of each sentence subtype", () => {
     const tasks = tasksFor(batch);
     expect(new Set(tasks.map((t) => t.id)).size).toBe(40);
@@ -174,6 +189,7 @@ describe("word sessions", () => {
     s = advance(s, false);
     expect(s.completed).toHaveLength(0);
     expect(s.queue[2].id).toBe(id);
+    expect(s.queue[2].attempt).toBe(1);
     expect(s.round).toBe(1);
   });
   it("refreshes at the tail instead of advancing rounds or creating tasks", () => {
@@ -182,7 +198,7 @@ describe("word sessions", () => {
     const id = s.queue[0].id;
     s = advance(s, false);
     expect(s.round).toBe(1);
-    expect(s.queue[0]).toMatchObject({ id, refresher: true });
+    expect(s.queue[0]).toMatchObject({ id, refresher: true, attempt: 1 });
     expect(s.completed).toHaveLength(9);
     s = advance(s, true);
     expect(s.round).toBe(2);
