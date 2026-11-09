@@ -47,15 +47,14 @@ export default function PronunciationControls({
         ? "Google voice"
         : active && playback.source === "device"
           ? "Device voice"
-          : active && playback.source === "bundled"
+          : (active && playback.source === "bundled") ||
+              (!active && accent && hasBundledAudio(word, accent))
             ? "App audio"
             : source?.voiceType === "human"
               ? "Human recording"
               : source?.audioUrl
                 ? "Synthetic voice"
-                : accent && hasBundledAudio(word, accent)
-                  ? "App audio"
-                  : "Generated pronunciation";
+                : "Generated pronunciation";
   return (
     <div
       className={
