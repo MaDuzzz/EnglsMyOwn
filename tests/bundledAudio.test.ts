@@ -38,6 +38,18 @@ describe("bundled pronunciation", () => {
     expect(audioCandidates(word, "us")[0].url).toContain(
       "/audio/words/noun-157.m4a",
     );
+    const recorded = {
+      ...word,
+      pronunciation: {
+        us: {
+          ipa: "/kənˈtɪndʒənt ˈwɜːkfɔːrs/",
+          audioUrl: "https://example.com/recording.mp3",
+        },
+      },
+    };
+    expect(audioCandidates(recorded, "us").map(({ source }) => source)).toEqual(
+      ["bundled", "recording", "youdao", "google"],
+    );
     expect(hasBundledAudio({ ...word, headword: "another phrase" }, "us")).toBe(
       false,
     );

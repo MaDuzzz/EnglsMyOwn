@@ -1,6 +1,6 @@
 # Bundled vocabulary audio
 
-Published on-demand vocabulary is rendered to short AAC files in `public/audio/words`. The app checks the word ID and headword against `src/data/bundledAudio.json` before using a file. Recordings attached directly to a word remain first priority; Youdao, Google TTS, and device speech remain fallbacks for entries without bundled audio or when a file cannot play.
+Published on-demand vocabulary is rendered to short AAC files in `public/audio/words`. The app checks the word ID and headword against `src/data/bundledAudio.json` before using a file. Bundled audio has first priority for these entries; existing recordings, Youdao, Google TTS, and device speech remain fallbacks. Vocabulary without bundled audio keeps its existing recording priority.
 
 The current voice is Piper `en_US-joe-medium`. Its [model card](https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/joe/medium/MODEL_CARD) identifies the dataset and base model as CC0. The model itself is only needed to generate assets; it is not served to learners. Generated audio is machine speech, and it should be spot checked for pronunciation, especially names and acronyms.
 

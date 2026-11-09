@@ -79,7 +79,6 @@ export function audioCandidates(word: Word, accent: Accent): Candidate[] {
   const bundled = hasBundledAudio(word, accent);
   if (!recorded && !bundled && word.audioMode !== "on-demand") return [];
   const result: Candidate[] = [];
-  if (recorded) result.push({ url: recorded, source: "recording" });
   if (bundled) {
     const base = import.meta.env.BASE_URL || "/";
     result.push({
@@ -87,6 +86,7 @@ export function audioCandidates(word: Word, accent: Accent): Candidate[] {
       source: "bundled",
     });
   }
+  if (recorded) result.push({ url: recorded, source: "recording" });
   if (accent === "us" || accent === "uk") {
     const youdao = new URL("https://dict.youdao.com/dictvoice");
     youdao.searchParams.set("audio", word.headword);
