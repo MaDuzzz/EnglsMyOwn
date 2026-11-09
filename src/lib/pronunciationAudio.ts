@@ -74,6 +74,13 @@ export function hasBundledAudio(word: Word, accent: Accent): boolean {
   );
 }
 
+export function preferredAccent(word: Word): Accent | undefined {
+  const accents = playableAccents(word);
+  return hasBundledAudio(word, "us") && accents.includes("us")
+    ? "us"
+    : accents[0];
+}
+
 export function audioCandidates(word: Word, accent: Accent): Candidate[] {
   const recorded = pronunciationsFor(word)[accent]?.audioUrl;
   const bundled = hasBundledAudio(word, accent);
@@ -215,7 +222,7 @@ export function playWordPronunciation(
 }
 
 export function playWordRecording(word: Word, callbacks?: PlaybackCallbacks) {
-  const accent = playableAccents(word)[0];
+  const accent = preferredAccent(word);
   if (accent) playWordPronunciation(word, accent, false, callbacks);
   else {
     stopPronunciation();

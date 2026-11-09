@@ -11,6 +11,7 @@ import {
   hasBundledAudio,
   playWordPronunciation,
   playbackSnapshot,
+  preferredAccent,
   subscribePlayback,
 } from "../lib/pronunciationAudio";
 
@@ -23,8 +24,14 @@ export default function PronunciationControls({
 }) {
   const sources = pronunciationsFor(word);
   const accents = playableAccents(word);
-  const [choice, setChoice] = useState<Accent>(accents[0] || "us");
-  const accent = accents.includes(choice) ? choice : accents[0];
+  const [choice, setChoice] = useState<{
+    wordId: string;
+    accent: Accent;
+  } | null>(null);
+  const accent =
+    choice?.wordId === word.id && accents.includes(choice.accent)
+      ? choice.accent
+      : preferredAccent(word);
   const source = accent ? sources[accent] : undefined;
   const playback = useSyncExternalStore(
     subscribePlayback,
@@ -65,7 +72,7 @@ export default function PronunciationControls({
                   key={a}
                   aria-pressed={accent === a}
                   onClick={() => {
-                    setChoice(a);
+                    setChoice({ wordId: word.id, accent: a });
                     playWordPronunciation(word, a);
                   }}
                 >

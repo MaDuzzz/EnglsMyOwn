@@ -7,6 +7,7 @@ import { validateImport } from "../src/lib/content";
 import {
   audioCandidates,
   hasBundledAudio,
+  preferredAccent,
 } from "../src/lib/pronunciationAudio";
 
 const sample = validateImport(pilot).words[0];
@@ -50,6 +51,16 @@ describe("bundled pronunciation", () => {
     expect(audioCandidates(recorded, "us").map(({ source }) => source)).toEqual(
       ["bundled", "recording", "youdao", "google"],
     );
+    const australianRecording = {
+      ...word,
+      pronunciation: {
+        au: {
+          ipa: "/kənˈtɪndʒənt/",
+          audioUrl: "https://example.com/australian.mp3",
+        },
+      },
+    };
+    expect(preferredAccent(australianRecording)).toBe("us");
     expect(hasBundledAudio({ ...word, headword: "another phrase" }, "us")).toBe(
       false,
     );
