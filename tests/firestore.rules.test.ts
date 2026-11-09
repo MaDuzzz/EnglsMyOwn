@@ -101,10 +101,18 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
       ),
     );
   });
-  it("isolates personal data and prevents learner content edits", async () => {
-    await assertFails(
+  it("isolates personal data to its learner and the configured owner", async () => {
+    await assertSucceeds(
       getDoc(
         doc(env.authenticatedContext("owner").firestore(), "learning/approved"),
+      ),
+    );
+    await assertFails(
+      getDoc(
+        doc(
+          env.authenticatedContext("approved").firestore(),
+          "learning/revoked",
+        ),
       ),
     );
     await assertFails(
