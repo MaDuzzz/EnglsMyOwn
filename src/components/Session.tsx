@@ -3,6 +3,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type TouchEvent,
@@ -43,6 +44,7 @@ import PronunciationControls from "./PronunciationControls";
 import {
   playWordRecording,
   playbackSnapshot,
+  subscribePlayback,
   stopPronunciation,
 } from "../lib/pronunciationAudio";
 import {
@@ -98,6 +100,7 @@ export default function Session({
   onComplete,
   onCheckpoint,
   onPause,
+  onDiscard,
   demo,
   tickets,
   required,
@@ -111,6 +114,7 @@ export default function Session({
   onComplete: (record: BatchRecord) => Promise<boolean>;
   onCheckpoint: (draft: SessionDraft) => void;
   onPause: (draft: SessionDraft) => Promise<void>;
+  onDiscard: () => Promise<void>;
   demo: boolean;
   tickets: number;
   required: number;
@@ -123,6 +127,10 @@ export default function Session({
     [tokens, setTokens] = useState<number[]>(draft?.tokens || []),
     [feedback, setFeedback] = useState<boolean | null>(draft?.feedback ?? null),
     [exit, setExit] = useState(false),
+    [discardError, setDiscardError] = useState(""),
+    [textFallbackTasks, setTextFallbackTasks] = useState<Set<string>>(
+      () => new Set(),
+    ),
     [saving, setSaving] = useState(false),
     [saved, setSaved] = useState(false),
     [meal, setMeal] = useState(false),
@@ -163,6 +171,17 @@ export default function Session({
   const intro = Boolean(introWord),
     refresher = !intro && Boolean(task?.refresher),
     complete = s.completed.length === 40;
+  const playback = useSyncExternalStore(
+    subscribePlayback,
+    playbackSnapshot,
+    playbackSnapshot,
+  );
+  const textFallback = Boolean(task && textFallbackTasks.has(task.id));
+  const audioWaiting =
+    task?.kind === "listen" &&
+    !textFallback &&
+    playback.key === word.id &&
+    (playback.status === "loading" || playback.status === "error");
   const timedQuestion =
     s.mode === "review" && !intro && !refresher && !complete && !!task;
   const remaining = timer.taskId === task?.id ? timer.remaining : 20;
@@ -208,7 +227,12 @@ export default function Session({
     return () => window.removeEventListener("pagehide", persist);
   }, [s, answer, tokens, feedback, saved]);
   useEffect(() => {
-    if (s.mode !== "review" || task?.kind !== "listen" || feedback !== null)
+    if (
+      s.mode !== "review" ||
+      task?.kind !== "listen" ||
+      feedback !== null ||
+      textFallback
+    )
       return;
     if (!playableAccents(word).length) return;
     const playback = playbackSnapshot();
@@ -217,7 +241,7 @@ export default function Session({
       (playback.status !== "loading" && playback.status !== "playing")
     )
       playWordRecording(word);
-  }, [s.mode, task?.id, feedback, word]);
+  }, [s.mode, task?.id, feedback, word, textFallback]);
   useEffect(() => {
     if (feedback === null) return;
     feedbackRef.current?.scrollIntoView({
@@ -228,7 +252,14 @@ export default function Session({
     });
   }, [feedback]);
   useEffect(() => {
-    if (!timedQuestion || !task || feedback !== null || exit || remaining === 0)
+    if (
+      !timedQuestion ||
+      !task ||
+      feedback !== null ||
+      exit ||
+      remaining === 0 ||
+      audioWaiting
+    )
       return;
     const interval = window.setInterval(() => {
       if (document.hidden) return;
@@ -241,7 +272,7 @@ export default function Session({
       }));
     }, 1000);
     return () => window.clearInterval(interval);
-  }, [timedQuestion, task?.id, feedback, exit, remaining === 0]);
+  }, [timedQuestion, task?.id, feedback, exit, remaining === 0, audioWaiting]);
   useEffect(() => {
     if (timedQuestion && !exit && remaining === 0 && feedback === null)
       revealAnswer("timeout");
@@ -271,6 +302,18 @@ export default function Session({
     await onPause(snapshot());
     onClose();
   }
+  async function discard() {
+    setSaving(true);
+    setDiscardError("");
+    try {
+      await onDiscard();
+    } catch (error) {
+      setDiscardError(
+        (error as Error).message || "Could not remove the batch.",
+      );
+      setSaving(false);
+    }
+  }
   function submit() {
     if (feedback !== null || gradedRef.current || !task) return;
     gradedRef.current = true;
@@ -278,7 +321,8 @@ export default function Session({
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
     stopPronunciation();
-    const hasPronunciation = correct && playableAccents(word).length > 0;
+    const hasPronunciation =
+      correct && !textFallback && playableAccents(word).length > 0;
     if (hasPronunciation)
       playWordRecording(word, {
         onEnded: speakPraise,
@@ -307,7 +351,9 @@ export default function Session({
     if (feedback === null) return;
     const following = advance(s, feedback);
     stopFeedbackVoice();
-    readNextStep(following);
+    if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
+      stopPronunciation();
+    else readNextStep(following);
     if (following.completed.length === 40) celebrateCompletion();
     gradedRef.current = false;
     setS(following);
@@ -652,7 +698,9 @@ export default function Session({
               >
                 <div className="question-timer-label">
                   <Timer size={16} />
-                  <span>Time to answer</span>
+                  <span>
+                    {audioWaiting ? "Waiting for audio" : "Time to answer"}
+                  </span>
                   <strong>{remaining}s</strong>
                 </div>
                 <div className="question-timer-track" aria-hidden="true">
@@ -712,15 +760,46 @@ export default function Session({
               <div className="card exercise-card">
                 {task.kind === "listen" ? (
                   <>
-                    <h2>What did you hear?</h2>
-                    <p className="muted">
-                      Listen closely, then type the word or phrase.
-                    </p>
-                    <PronunciationControls
-                      key={word.id}
-                      word={word}
-                      hideAnswer
-                    />
+                    {textFallback ? (
+                      <div className="audio-fallback">
+                        <h2>Recall the word instead</h2>
+                        <p className="muted">
+                          Audio is unavailable. Type the English word or phrase
+                          that matches this meaning.
+                        </p>
+                        <p lang="vi">{word.meaningVi}</p>
+                        <p className="muted">{word.meaningEn}</p>
+                        <small className="pill">
+                          {word.partOfSpeech} · Starts with {word.headword[0]}
+                        </small>
+                      </div>
+                    ) : (
+                      <>
+                        <h2>What did you hear?</h2>
+                        <p className="muted">
+                          Listen closely, then type the word or phrase.
+                        </p>
+                        <PronunciationControls
+                          key={word.id}
+                          word={word}
+                          hideAnswer
+                        />
+                        {feedback === null && (
+                          <button
+                            type="button"
+                            className="audio-fallback-button"
+                            onClick={() => {
+                              stopPronunciation();
+                              setTextFallbackTasks((current) =>
+                                new Set(current).add(task.id),
+                              );
+                            }}
+                          >
+                            Can’t hear it? Use the meaning instead
+                          </button>
+                        )}
+                      </>
+                    )}
                   </>
                 ) : task.kind === "gap" ? (
                   <>
@@ -981,7 +1060,7 @@ export default function Session({
       {exit && (
         <Modal
           title={saved ? "Leave this result?" : "Save your place?"}
-          onClose={() => setExit(false)}
+          onClose={() => !saving && setExit(false)}
         >
           <p>
             {saved
@@ -991,10 +1070,32 @@ export default function Session({
           <p className="muted">
             You can resume from Words on this or another signed-in device.
           </p>
-          <Button onClick={() => setExit(false)}>Keep learning</Button>
+          {discardError && (
+            <p className="error" role="alert">
+              {discardError}
+            </p>
+          )}
+          <Button disabled={saving} onClick={() => setExit(false)}>
+            Keep learning
+          </Button>
           <Button secondary disabled={saving} onClick={() => void leave()}>
             {saving ? "Saving…" : "Save & leave"}
           </Button>
+          {!saved && !complete && (
+            <button
+              type="button"
+              className="discard-batch-link"
+              disabled={saving}
+              onClick={() => void discard()}
+            >
+              Remove this unfinished batch
+            </button>
+          )}
+          {!saved && !complete && (
+            <p className="muted small">
+              Removes your saved place. Completed batches and tickets stay safe.
+            </p>
+          )}
         </Modal>
       )}
     </main>

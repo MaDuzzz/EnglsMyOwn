@@ -891,6 +891,37 @@ blockquote span {
   width: auto;
   min-width: 170px;
 }
+.resume-batch-actions {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+}
+.discard-batch-link,
+.audio-fallback-button {
+  min-height: 44px;
+  padding: 8px 12px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.discard-batch-link:disabled {
+  opacity: 0.5;
+}
+.audio-fallback-button {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  color: var(--accent);
+  text-align: center;
+}
+.audio-fallback p[lang="vi"] {
+  font-family: "Nunito", sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+}
 .words-layout .meal-card {
   margin: 0;
 }
@@ -2693,7 +2724,13 @@ th {
   margin-top: 6px;
 }
 .user-row .button {
-  max-width: 110px;
+  width: auto;
+  min-width: 100px;
+}
+.user-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 .json-editor {
   font-family: monospace;

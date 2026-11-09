@@ -113,12 +113,17 @@ export default function App() {
     [video, setVideo] = useState<string | null>(null),
     [customize, setCustomize] = useState(false),
     [account, setAccount] = useState(false),
+    [discardPrompt, setDiscardPrompt] = useState(false),
+    [discardBusy, setDiscardBusy] = useState(false),
+    [discardError, setDiscardError] = useState(""),
     [notice, setNotice] = useState("");
   const [petDraft, setPetDraft] = useState(app.data.pet);
   const [previewStage, setPreviewStage] = useState(0);
   const themeTransition = useRef<ViewTransition | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestDraft = useRef<SessionDraft | null>(null);
+  const checkpointWrites = useRef<Set<Promise<void>>>(new Set());
+  const discardingBatch = useRef(false);
   const recoveredCompletion = useRef<string | null>(null);
   const { data, words, lessons, profile, demo, today } = app,
     stats = dailyStats(data, today),
@@ -139,7 +144,11 @@ export default function App() {
     savedLocal = localDraft?.key === draftKey ? localDraft.draft : null,
     resumeDraft = [savedLocal, data.activeSession]
       .filter((draft): draft is SessionDraft =>
-        Boolean(draft && restoreSession(draft, words)),
+        Boolean(
+          draft &&
+          data.blockedSessionId !== (draft.attemptId || draft.id) &&
+          restoreSession(draft, words),
+        ),
       )
       .sort((a, b) => b.updatedAt - a.updatedAt)
       .find((draft) => !data.records.some((record) => record.id === draft.id)),
@@ -168,6 +177,25 @@ export default function App() {
       setLocalDraft(null);
     }
   }, [draftKey]);
+  useEffect(() => {
+    if (discardingBatch.current) return;
+    if (!data.blockedSessionId) return;
+    if (
+      savedLocal &&
+      (savedLocal.attemptId || savedLocal.id) === data.blockedSessionId
+    ) {
+      if (draftKey) localStorage.removeItem(draftKey);
+      latestDraft.current = null;
+      setLocalDraft(null);
+    }
+    if (session?.attemptId === data.blockedSessionId) {
+      cancelDraftTimer();
+      stopPronunciation();
+      setSession(null);
+      setSessionDraft(null);
+      setNotice("This unfinished batch was cleared. You can start again.");
+    }
+  }, [data.blockedSessionId, savedLocal, session?.attemptId, draftKey]);
   useEffect(() => {
     const draft = savedLocal;
     const record = draft && completedRecordFromDraft(draft);
@@ -268,6 +296,7 @@ export default function App() {
     draftTimer.current = null;
   }
   function checkpoint(draft: SessionDraft) {
+    if (discardingBatch.current) return;
     const previous = latestDraft.current;
     const stageChanged =
       !previous ||
@@ -280,13 +309,15 @@ export default function App() {
     cancelDraftTimer();
     const sync = () => {
       draftTimer.current = null;
-      void app
+      const write = app
         .save((old) => checkpointSession(old, draft), true)
         .catch(() => {
           setNotice(
             "Your place is saved here. Cloud sync will retry when you return.",
           );
         });
+      checkpointWrites.current.add(write);
+      void write.finally(() => checkpointWrites.current.delete(write));
     };
     if (stageChanged) sync();
     else draftTimer.current = setTimeout(sync, 700);
@@ -300,6 +331,37 @@ export default function App() {
       setNotice(
         "Your place is saved on this device. Cloud sync is unavailable right now.",
       );
+    }
+  }
+  async function discardBatch() {
+    if (!resumeDraft) throw Error("No unfinished batch was found.");
+    if (resumeDraft.completed.length === 40)
+      throw Error("Save your completed batch to keep its ticket.");
+    if (discardingBatch.current) return;
+    discardingBatch.current = true;
+    setDiscardBusy(true);
+    setDiscardError("");
+    cancelDraftTimer();
+    try {
+      await Promise.allSettled([...checkpointWrites.current]);
+      await app.clearActiveSession(resumeDraft.attemptId || resumeDraft.id);
+      if (draftKey) localStorage.removeItem(draftKey);
+      latestDraft.current = null;
+      setLocalDraft(null);
+      setSession(null);
+      setSessionDraft(null);
+      setDiscardPrompt(false);
+      stopPronunciation();
+      go("words");
+      setNotice("Unfinished batch removed. You can start a new batch.");
+    } catch (error) {
+      setDiscardError(
+        (error as Error).message || "Could not remove the batch.",
+      );
+      throw error;
+    } finally {
+      discardingBatch.current = false;
+      setDiscardBusy(false);
     }
   }
   function resumeBatch() {
@@ -498,6 +560,7 @@ export default function App() {
         onComplete={complete}
         onCheckpoint={checkpoint}
         onPause={pauseBatch}
+        onDiscard={discardBatch}
         demo={demo}
         tickets={stats.tickets}
         required={stats.required}
@@ -884,12 +947,26 @@ export default function App() {
                           {resumeDraft.answer ? " · Your answer is saved" : ""}
                         </p>
                       </div>
-                      <Button onClick={resumeBatch}>
-                        {resumeDraft.completed.length === 40
-                          ? "Finish saving"
-                          : "Resume batch"}{" "}
-                        <ArrowRight size={18} />
-                      </Button>
+                      <div className="resume-batch-actions">
+                        <Button onClick={resumeBatch}>
+                          {resumeDraft.completed.length === 40
+                            ? "Finish saving"
+                            : "Resume batch"}{" "}
+                          <ArrowRight size={18} />
+                        </Button>
+                        {resumeDraft.completed.length < 40 && (
+                          <button
+                            type="button"
+                            className="discard-batch-link"
+                            onClick={() => {
+                              setDiscardError("");
+                              setDiscardPrompt(true);
+                            }}
+                          >
+                            Remove unfinished batch
+                          </button>
+                        )}
+                      </div>
                     </section>
                   )}
                   <div className="words-layout">
@@ -1156,6 +1233,39 @@ export default function App() {
           </button>
         ))}
       </nav>
+      {discardPrompt && resumeDraft && (
+        <Modal
+          title="Remove unfinished batch?"
+          onClose={() => !discardBusy && setDiscardPrompt(false)}
+        >
+          <p>
+            This removes your saved place in this batch. You can start the batch
+            again from the beginning.
+          </p>
+          <p className="muted">
+            Completed batches and food tickets stay safe. This unfinished batch
+            has not earned a ticket.
+          </p>
+          {discardError && (
+            <p className="error" role="alert">
+              {discardError}
+            </p>
+          )}
+          <Button
+            onClick={() => setDiscardPrompt(false)}
+            disabled={discardBusy}
+          >
+            Keep batch
+          </Button>
+          <Button
+            secondary
+            disabled={discardBusy}
+            onClick={() => void discardBatch().catch(() => {})}
+          >
+            {discardBusy ? "Removing…" : "Remove batch"}
+          </Button>
+        </Modal>
+      )}
       {start && (
         <Modal
           title={

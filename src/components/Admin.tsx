@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   collection,
+  getDoc,
   onSnapshot,
   doc,
   updateDoc,
@@ -10,7 +11,7 @@ import { Upload, UserCheck } from "lucide-react";
 import { db } from "../lib/firebase";
 import { validateImport, storedWord } from "../lib/content";
 import { type Profile } from "../lib/useApp";
-import { Button } from "./ui";
+import { Button, Modal } from "./ui";
 export default function Admin({
   demo,
   uid,
@@ -30,6 +31,8 @@ export default function Admin({
     [reading, setReading] = useState(false),
     [fileName, setFileName] = useState(""),
     [replaceExisting, setReplaceExisting] = useState(false);
+  const [resetTarget, setResetTarget] = useState<Profile | null>(null);
+  const [resetError, setResetError] = useState("");
   const readVersion = useRef(0);
   useEffect(
     () => () => {
@@ -90,6 +93,33 @@ export default function Admin({
       );
     } catch (e) {
       setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function resetBatch() {
+    if (!db || !resetTarget || busy) return;
+    setBusy(true);
+    setResetError("");
+    try {
+      const ref = doc(db, "learning", resetTarget.uid);
+      const snapshot = await getDoc(ref);
+      const draft = snapshot.data()?.activeSession;
+      if (!draft) throw Error("This learner has no saved batch to clear.");
+      if (draft.completed?.length === 40)
+        throw Error(
+          "This batch is complete. Ask the learner to retry saving it.",
+        );
+      await updateDoc(ref, {
+        activeSession: null,
+        blockedSessionId: draft.attemptId || draft.id,
+      });
+      setMessage(
+        `${resetTarget.displayName}'s unfinished batch was cleared. Their completed progress and tickets were kept.`,
+      );
+      setResetTarget(null);
+    } catch (error) {
+      setResetError((error as Error).message);
     } finally {
       setBusy(false);
     }
@@ -170,18 +200,32 @@ export default function Admin({
                   {p.email} · {p.status}
                 </small>
               </div>
-              <Button
-                secondary
-                disabled={busy}
-                onClick={() =>
-                  void status(
-                    p,
-                    p.status === "approved" ? "revoked" : "approved",
-                  )
-                }
-              >
-                {p.status === "approved" ? "Revoke" : "Approve"}
-              </Button>
+              <div className="user-actions">
+                {p.status === "approved" && (
+                  <Button
+                    secondary
+                    disabled={busy}
+                    onClick={() => {
+                      setResetTarget(p);
+                      setResetError("");
+                    }}
+                  >
+                    Clear batch
+                  </Button>
+                )}
+                <Button
+                  secondary
+                  disabled={busy}
+                  onClick={() =>
+                    void status(
+                      p,
+                      p.status === "approved" ? "revoked" : "approved",
+                    )
+                  }
+                >
+                  {p.status === "approved" ? "Revoke" : "Approve"}
+                </Button>
+              </div>
             </div>
           ))}
         {!users.filter((p) => p.uid !== uid).length && (
@@ -192,6 +236,29 @@ export default function Admin({
           </p>
         )}
       </section>
+      {resetTarget && (
+        <Modal
+          title={`Clear ${resetTarget.displayName}'s batch?`}
+          onClose={() => !busy && setResetTarget(null)}
+        >
+          <p>
+            This removes only their unfinished batch. They can start it again
+            after reopening the app. Completed batches and food tickets stay
+            safe.
+          </p>
+          {resetError && (
+            <p className="error" role="alert">
+              {resetError}
+            </p>
+          )}
+          <Button disabled={busy} onClick={() => setResetTarget(null)}>
+            Keep batch
+          </Button>
+          <Button secondary disabled={busy} onClick={() => void resetBatch()}>
+            {busy ? "Clearing…" : "Clear unfinished batch"}
+          </Button>
+        </Modal>
+      )}
       <section className="card admin-section">
         <h2>
           <Upload />

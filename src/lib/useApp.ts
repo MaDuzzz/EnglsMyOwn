@@ -255,6 +255,41 @@ export function useApp() {
       setBusy(false);
     }
   }
+  async function clearActiveSession(attemptId: string) {
+    if (demo) {
+      await save(
+        (old) => ({
+          ...old,
+          activeSession: null,
+          blockedSessionId: attemptId,
+        }),
+        true,
+      );
+      return;
+    }
+    if (!db || !user || phase !== "ready")
+      throw Error("Your account is not approved.");
+    const ref = doc(db, "learning", user.uid);
+    try {
+      await updateDoc(ref, {
+        activeSession: null,
+        blockedSessionId: attemptId,
+      });
+    } catch (error) {
+      if ((error as { code?: string }).code !== "not-found") throw error;
+      await setDoc(ref, {
+        ...dataRef.current,
+        activeSession: null,
+        blockedSessionId: attemptId,
+      });
+    }
+    applyLearning({
+      ...dataRef.current,
+      activeSession: null,
+      blockedSessionId: attemptId,
+    });
+    setError("");
+  }
   useEffect(() => {
     if (phase === "ready" && !data.plans[today])
       void save((old) =>
@@ -288,6 +323,7 @@ export function useApp() {
     busy,
     save,
     saveCompletedBatch,
+    clearActiveSession,
     refreshContent: () => setContentRevision((value) => value + 1),
     resetPreview,
     previewScenario,

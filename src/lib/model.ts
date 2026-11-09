@@ -73,6 +73,7 @@ export type Learning = {
     species?: PetSpecies;
   };
   activeSession?: SessionDraft | null;
+  blockedSessionId?: string;
 };
 export const emptyLearning = (): Learning => ({
   records: [],
@@ -219,6 +220,7 @@ export type Task = {
 };
 export type Session = {
   id: string;
+  attemptId: string;
   mode: Mode;
   day: string;
   words: Word[];
@@ -231,6 +233,7 @@ export type Session = {
 export type SessionDraft = {
   version: 1;
   id: string;
+  attemptId?: string;
   mode: Mode;
   day: string;
   wordIds: string[];
@@ -350,6 +353,7 @@ export function makeSessionDraft(
   return {
     version: 1,
     id: session.id,
+    attemptId: session.attemptId,
     mode: session.mode,
     day: session.day,
     wordIds: session.words.map((word) => word.id),
@@ -370,6 +374,8 @@ export function restoreSession(
     draft?.version !== 1 ||
     typeof draft.id !== "string" ||
     !draft.id ||
+    (draft.attemptId !== undefined &&
+      (typeof draft.attemptId !== "string" || !draft.attemptId)) ||
     !["learn", "review"].includes(draft.mode) ||
     !/^\d{4}-\d{2}-\d{2}$/.test(draft.day) ||
     !Array.isArray(draft.wordIds) ||
@@ -452,6 +458,7 @@ export function restoreSession(
   }
   return {
     id: draft.id,
+    attemptId: draft.attemptId || draft.id,
     mode: draft.mode,
     day: draft.day,
     words: sessionWords,
@@ -467,6 +474,8 @@ export function checkpointSession(
   draft: SessionDraft,
 ): Learning {
   if (learning.records.some((record) => record.id === draft.id))
+    return learning;
+  if (learning.blockedSessionId === (draft.attemptId || draft.id))
     return learning;
   if ((learning.activeSession?.updatedAt || 0) > draft.updatedAt)
     return learning;
@@ -494,6 +503,7 @@ export function createSession(
   const all = tasksFor(words);
   return {
     id,
+    attemptId: crypto.randomUUID(),
     mode,
     day,
     words,

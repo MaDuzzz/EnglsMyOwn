@@ -173,6 +173,23 @@ describe("word sessions", () => {
     const saved = checkpointSession(emptyLearning(), draft);
     expect(checkpointSession(saved, { ...draft, updatedAt: 1200 })).toBe(saved);
     expect(
+      checkpointSession(
+        { ...emptyLearning(), blockedSessionId: draft.attemptId },
+        { ...draft, updatedAt: 9999 },
+      ).activeSession,
+    ).toBeNull();
+    expect(
+      checkpointSession(
+        { ...emptyLearning(), blockedSessionId: draft.attemptId },
+        makeSessionDraft(createSession(batch, "learn", "unfinished"), {
+          answer: "",
+          tokens: [],
+          feedback: null,
+          seconds: 0,
+        }),
+      ).activeSession,
+    ).not.toBeNull();
+    expect(
       commitBatch(saved, {
         id: "unfinished",
         mode: "learn",

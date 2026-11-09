@@ -231,6 +231,68 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertSucceeds(setDoc(ref, { ...own, activeSession: null }));
   });
+  it("lets only the owner clear another learner's unfinished batch", async () => {
+    const learnerDb = env.authenticatedContext("approved").firestore();
+    const ownerDb = env.authenticatedContext("owner").firestore();
+    const learnerRef = doc(learnerDb, "learning/approved");
+    const ownerRef = doc(ownerDb, "learning/approved");
+    const own = (await getDoc(learnerRef)).data()!;
+    const draft = {
+      version: 1,
+      id: "review:today",
+      attemptId: "attempt-one",
+      mode: "review",
+      day: "2026-11-09",
+      wordIds: Array.from({ length: 10 }, (_, i) => `word-${i}`),
+      queue: [],
+      completed: ["word-0:0"],
+      introduced: [],
+      round: 1,
+      answer: "",
+      tokens: [],
+      feedback: null,
+      seconds: 20,
+      updatedAt: 1794000000000,
+    };
+    await assertSucceeds(setDoc(learnerRef, { ...own, activeSession: draft }));
+    await assertSucceeds(getDoc(ownerRef));
+    await assertFails(
+      updateDoc(ownerRef, { records: [], activeSession: null }),
+    );
+    await assertFails(
+      updateDoc(ownerRef, {
+        activeSession: null,
+        blockedSessionId: "different-attempt",
+      }),
+    );
+    await assertSucceeds(
+      updateDoc(ownerRef, {
+        activeSession: null,
+        blockedSessionId: draft.attemptId,
+      }),
+    );
+    expect((await getDoc(learnerRef)).data()).toMatchObject({
+      activeSession: null,
+      blockedSessionId: draft.attemptId,
+    });
+    await assertSucceeds(
+      setDoc(learnerRef, {
+        ...own,
+        activeSession: {
+          ...draft,
+          attemptId: "attempt-two",
+          completed: Array(40).fill("x"),
+        },
+      }),
+    );
+    await assertFails(
+      updateDoc(ownerRef, {
+        activeSession: null,
+        blockedSessionId: "attempt-two",
+      }),
+    );
+    await assertSucceeds(setDoc(learnerRef, { ...own, activeSession: null }));
+  });
   it("revocation immediately denies new protected reads", async () => {
     const owner = env.authenticatedContext("owner").firestore();
     const learner = env.authenticatedContext("new").firestore();

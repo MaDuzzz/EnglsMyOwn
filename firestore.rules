@@ -30,8 +30,9 @@ service cloud.firestore {
   }
   match /learning/{uid} {
    allow read: if approved() && request.auth.uid == uid;
+   allow get: if owner();
    allow create, update: if approved() && request.auth.uid == uid
-    && request.resource.data.keys().hasOnly(['records','plans','videos','savedVideos','pet','activeSession'])
+    && request.resource.data.keys().hasOnly(['records','plans','videos','savedVideos','pet','activeSession','blockedSessionId'])
     && request.resource.data.records is list && request.resource.data.records.size() <= 2000
     && request.resource.data.plans is map && request.resource.data.videos is map
     && request.resource.data.savedVideos is list && request.resource.data.pet is map
@@ -41,9 +42,12 @@ service cloud.firestore {
     && (!('activeSession' in request.resource.data)
       || request.resource.data.activeSession == null
       || (request.resource.data.activeSession is map
-        && request.resource.data.activeSession.keys().hasOnly(['version','id','mode','day','wordIds','queue','completed','introduced','round','answer','tokens','feedback','seconds','updatedAt'])
+        && request.resource.data.activeSession.keys().hasOnly(['version','id','attemptId','mode','day','wordIds','queue','completed','introduced','round','answer','tokens','feedback','seconds','updatedAt'])
         && request.resource.data.activeSession.version == 1
         && request.resource.data.activeSession.id is string && request.resource.data.activeSession.id.size() <= 200
+        && (!('attemptId' in request.resource.data.activeSession)
+          || (request.resource.data.activeSession.attemptId is string
+            && request.resource.data.activeSession.attemptId.size() <= 200))
         && request.resource.data.activeSession.mode in ['learn','review']
         && request.resource.data.activeSession.day is string && request.resource.data.activeSession.day.size() == 10
         && request.resource.data.activeSession.wordIds is list && request.resource.data.activeSession.wordIds.size() == 10
@@ -55,7 +59,19 @@ service cloud.firestore {
         && request.resource.data.activeSession.tokens is list && request.resource.data.activeSession.tokens.size() <= 50
         && (request.resource.data.activeSession.feedback == null || request.resource.data.activeSession.feedback is bool)
         && request.resource.data.activeSession.seconds is number && request.resource.data.activeSession.seconds >= 0
-        && request.resource.data.activeSession.updatedAt is int));
+        && request.resource.data.activeSession.updatedAt is int))
+    && (!('blockedSessionId' in request.resource.data)
+      || (request.resource.data.blockedSessionId is string
+        && request.resource.data.blockedSessionId.size() <= 200));
+   allow update: if owner() && uid != request.auth.uid
+    && resource.data.activeSession is map
+    && resource.data.activeSession.completed.size() < 40
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['activeSession','blockedSessionId'])
+    && request.resource.data.activeSession == null
+    && request.resource.data.blockedSessionId ==
+      ('attemptId' in resource.data.activeSession
+        ? resource.data.activeSession.attemptId
+        : resource.data.activeSession.id);
    allow delete: if false;
   }
   match /{document=**} { allow read, write: if false; }

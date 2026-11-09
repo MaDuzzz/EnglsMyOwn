@@ -1,6 +1,6 @@
 # Learning rules — current decisions
 
-Updated: 2026-11-08. Source: approved word-session design and batch-learning changes.
+Updated: 2026-11-09. Source: approved word-session design and batch-learning changes.
 This supersedes the yesterday-only unlock rule in Words v2 and any conflicting older mockup. The batch flow is implemented in the app.
 
 ## Assignment and unlock
@@ -44,7 +44,8 @@ Only completing all 40 unique tasks commits the 10 newly learned words and award
 - Typing, selecting an option or arranging tokens does not grade or advance automatically.
 - Check answer grades an explicit submission. Empty input, no selection or an incomplete arrangement keeps it disabled.
 - Show feedback until Continue is pressed.
-- Every active review question has 20 seconds. The timer pauses while the app is hidden or the leave dialog is open, and restarts at 20 seconds when a saved question is reopened. A visible Show answer button reveals the answer early. Timeout and reveal both use incorrect feedback, award no progress, and return the task later in the same round. New-word practice remains untimed.
+- Every active review question has 20 seconds. The timer pauses while the app is hidden, the leave dialog is open, or listening audio is loading or has failed. It restarts at 20 seconds when a saved question is reopened. A visible Show answer button reveals the answer early. Timeout and reveal both use incorrect feedback, award no progress, and return the task later in the same round. New-word practice remains untimed.
+- A listening question offers “Can’t hear it? Use the meaning instead.” This switches that task to a spelling recall prompt with English/Vietnamese meaning and a first-letter hint. The learner must still type and check the accepted English spelling to earn the task's one step. The fallback remains available if the same task is retried in that session; it does not depend on an audio service being reachable.
 - Correct feedback has a rising chime, a visible confetti burst, automatic replay of the word's verified recording where available, then short spoken encouragement where browser speech is available. Incorrect feedback has a descending three-note cue. The graded card retains a manual audio replay control. Reduced-motion mode shows still confetti instead of an animation.
 - All correct question types use viewport-wide confetti so it stays visible when the feedback card is scrolled into view; a synthesized English reading is the fallback when a verified recording is missing or fails. Completing a review or new-word batch triggers a distinct fanfare and celebration on the result screen.
 - During the ten new-word introductions, dragging the word card left moves it with the gesture; a long enough swipe slides it out and brings in the next card, while a short swipe springs back. The former fixed bottom swipe bar is hidden here. A small Next word/Start practice button below the card is the tap and keyboard alternative. Refresher and graded-answer screens retain their swipe/Continue action; no swipe can submit an ungraded answer. Reduced-motion mode changes cards without animation.
@@ -72,16 +73,21 @@ This scope does not redefine growth balancing, extra-learning rewards or ticket 
 
 ## Leaving and restoring a batch
 
-| Event                                 | Current unfinished word batch                                                                                |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| Open exit confirmation                | Pause; retain the current question and answer                                                                |
-| Keep learning / dismiss confirmation  | Continue the same question                                                                                   |
-| Confirm Save & leave                  | Save the checkpoint and return to Words                                                                      |
-| Close app or reload                   | Restore the latest valid checkpoint and offer Resume batch                                                   |
-| Cross 00:00 Vietnam time              | Keep the original batch and its learning day; the new day's assignment is evaluated when the learner returns |
-| Switch app or lock screen temporarily | Pause; resume the same session                                                                               |
+| Event                                 | Current unfinished word batch                                                                                                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Open exit confirmation                | Pause; retain the current question and answer                                                                                                                                       |
+| Keep learning / dismiss confirmation  | Continue the same question                                                                                                                                                          |
+| Confirm Save & leave                  | Save the checkpoint and return to Words                                                                                                                                             |
+| Confirm Remove unfinished batch       | Clear this learner's cloud checkpoint and local draft, then allow a new batch. Completed records and tickets remain intact. A 40/40 batch awaiting save cannot be removed this way. |
+| Close app or reload                   | Restore the latest valid checkpoint and offer Resume batch                                                                                                                          |
+| Cross 00:00 Vietnam time              | Keep the original batch and its learning day; the new day's assignment is evaluated when the learner returns                                                                        |
+| Switch app or lock screen temporarily | Pause; resume the same session                                                                                                                                                      |
 
 A checkpoint includes the chosen word IDs, introduction position, task queue including retries, completed task IDs, round, answer, arranged tokens, feedback, and study seconds. Save it immediately on this device and sync it to the learner's own Firestore learning document. Stage changes sync at once; typing is debounced. On another device, the most recent synced checkpoint is available. If the network is interrupted, the same device can still resume from its local checkpoint.
+
+The learner can remove an unfinished batch from Words or the exit dialog. Ask for confirmation and explain that its task progress will be lost. Wait for outstanding checkpoint writes before clearing the cloud checkpoint; clear the local draft only after the cloud write succeeds, so a failed removal cannot silently reappear or erase the only copy. If cloud clearing fails, keep the draft and show the error. The required-review gate still applies after removal.
+
+The sole administrator can clear an approved learner's unfinished batch from Learner access. Firestore Rules allow the owner to read that learner's learning document and update only `activeSession` to null plus `blockedSessionId` to the exact attempt ID being cleared. A completed 40/40 draft cannot be reset this way. The learner's next snapshot ejects that attempt, removes its local draft, and allows a new attempt. Each new attempt has a distinct ID even when review uses the same daily requirement ID, so clearing one attempt does not block a fresh review. The blocked attempt cannot recreate the cloud checkpoint through a delayed write.
 
 At 40/40, append the completed record and clear the cloud checkpoint without a client transaction read. Firestore Security Rules still read the learner's approval document, so a fully exhausted read allowance can block this write until the daily reset. Keep the completed local checkpoint until the cloud write succeeds. Retry on the result screen or when the app reopens, even if the word catalog cannot be loaded. Fetch the protected word catalog once per app load instead of keeping a collection-wide live listener that rereads every word after mobile reconnects; refresh it immediately after an admin import.
 
