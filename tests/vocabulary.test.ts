@@ -66,12 +66,16 @@ describe("vocabulary pilot", () => {
     expect(availableAccents(imported)).toEqual([]);
     expect(playableAccents(imported)).toEqual(["us"]);
     const candidates = audioCandidates(imported, "us");
-    expect(candidates.map((c) => c.source)).toEqual(["youdao", "google"]);
-    expect(new URL(candidates[0].url).searchParams.get("audio")).toBe(
+    expect(candidates.map((c) => c.source)).toEqual([
+      "bundled",
+      "youdao",
+      "google",
+    ]);
+    expect(new URL(candidates[1].url).searchParams.get("audio")).toBe(
       imported.headword,
     );
-    expect(new URL(candidates[0].url).searchParams.get("type")).toBe("2");
-    expect(new URL(candidates[1].url).searchParams.get("q")).toBe(
+    expect(new URL(candidates[1].url).searchParams.get("type")).toBe("2");
+    expect(new URL(candidates[2].url).searchParams.get("q")).toBe(
       imported.headword,
     );
     delete word.pronunciation.us.ipa;

@@ -8,6 +8,7 @@ import {
   type Accent,
 } from "../lib/vocabulary";
 import {
+  hasBundledAudio,
   playWordPronunciation,
   playbackSnapshot,
   subscribePlayback,
@@ -39,11 +40,15 @@ export default function PronunciationControls({
         ? "Google voice"
         : active && playback.source === "device"
           ? "Device voice"
-          : source?.voiceType === "human"
-            ? "Human recording"
-            : source?.audioUrl
-              ? "Synthetic voice"
-              : "Generated pronunciation";
+          : active && playback.source === "bundled"
+            ? "App audio"
+            : source?.voiceType === "human"
+              ? "Human recording"
+              : source?.audioUrl
+                ? "Synthetic voice"
+                : accent && hasBundledAudio(word, accent)
+                  ? "App audio"
+                  : "Generated pronunciation";
   return (
     <div
       className={
