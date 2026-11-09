@@ -244,6 +244,37 @@ export type SessionDraft = {
   seconds: number;
   updatedAt: number;
 };
+export function completedRecordFromDraft(
+  draft: SessionDraft,
+): BatchRecord | null {
+  if (
+    draft.version !== 1 ||
+    !draft.id ||
+    !["review", "learn"].includes(draft.mode) ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(draft.day) ||
+    !Array.isArray(draft.wordIds) ||
+    draft.wordIds.length !== 10 ||
+    new Set(draft.wordIds).size !== 10 ||
+    !draft.wordIds.every((id) => typeof id === "string" && Boolean(id)) ||
+    !Array.isArray(draft.completed) ||
+    draft.completed.length !== 40 ||
+    new Set(draft.completed).size !== 40 ||
+    !draft.completed.every((id) => typeof id === "string") ||
+    !Number.isFinite(draft.seconds) ||
+    draft.seconds < 0 ||
+    !Number.isSafeInteger(draft.updatedAt) ||
+    draft.updatedAt < 0
+  )
+    return null;
+  return {
+    id: draft.id,
+    mode: draft.mode,
+    day: draft.day,
+    wordIds: draft.wordIds,
+    seconds: draft.seconds,
+    completedAt: new Date(draft.updatedAt).toISOString(),
+  };
+}
 
 function hash(value: string) {
   let result = 2166136261;

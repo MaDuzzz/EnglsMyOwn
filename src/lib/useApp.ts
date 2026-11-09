@@ -4,6 +4,9 @@ import {
   doc,
   onSnapshot,
   setDoc,
+  updateDoc,
+  arrayUnion,
+  getDocs,
   collection,
   query,
   where,
@@ -16,6 +19,8 @@ import {
   dayKey,
   planFor,
   preserveCompletedBatches,
+  commitBatch,
+  type BatchRecord,
   type Learning,
   type Word,
   type Lesson,
@@ -47,7 +52,8 @@ export function useApp() {
     [lessons, setLessons] = useState<Lesson[]>([]),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
-    [today, setToday] = useState(dayKey());
+    [today, setToday] = useState(dayKey()),
+    [contentRevision, setContentRevision] = useState(0);
   const dataRef = useRef(data);
   dataRef.current = data;
   function applyLearning(incoming: Learning) {
@@ -148,30 +154,38 @@ export function useApp() {
       }
       return;
     }
+    let active = true;
     const fail = (e: Error) =>
       setError("Could not load protected data: " + e.message);
-    const off = [
-      onSnapshot(
-        doc(db, "learning", user.uid),
-        (s) =>
-          applyLearning(s.exists() ? (s.data() as Learning) : emptyLearning()),
-        fail,
-      ),
-      onSnapshot(
-        query(collection(db, "words"), where("status", "==", "published")),
-        (s) =>
-          setWords(s.docs.map((d) => projectWord({ ...d.data(), id: d.id }))),
-        fail,
-      ),
-      onSnapshot(
-        query(collection(db, "lessons"), where("status", "==", "published")),
-        (s) =>
-          setLessons(s.docs.map((d) => ({ ...d.data(), id: d.id }) as Lesson)),
-        fail,
-      ),
-    ];
-    return () => off.forEach((f) => f());
-  }, [user, phase, demo]);
+    const off = onSnapshot(
+      doc(db, "learning", user.uid),
+      (s) =>
+        applyLearning(s.exists() ? (s.data() as Learning) : emptyLearning()),
+      fail,
+    );
+    // A listener over the whole catalog re-reads every word after iPhone
+    // background/reconnect cycles. One fetch per app load avoids that burst.
+    void getDocs(
+      query(collection(db, "words"), where("status", "==", "published")),
+    )
+      .then((s) => {
+        if (active)
+          setWords(s.docs.map((d) => projectWord({ ...d.data(), id: d.id })));
+      })
+      .catch(fail);
+    void getDocs(
+      query(collection(db, "lessons"), where("status", "==", "published")),
+    )
+      .then((s) => {
+        if (active)
+          setLessons(s.docs.map((d) => ({ ...d.data(), id: d.id }) as Lesson));
+      })
+      .catch(fail);
+    return () => {
+      active = false;
+      off();
+    };
+  }, [user, phase, demo, contentRevision]);
   async function save(transform: (old: Learning) => Learning, quiet = false) {
     if (!quiet) setBusy(true);
     try {
@@ -201,6 +215,44 @@ export function useApp() {
       throw e;
     } finally {
       if (!quiet) setBusy(false);
+    }
+  }
+  async function saveCompletedBatch(record: BatchRecord) {
+    setBusy(true);
+    try {
+      if (demo) {
+        await save((old) => commitBatch(old, record), true);
+        setError("");
+        return;
+      }
+      if (!db || !user || phase !== "ready")
+        throw Error("Your account is not approved.");
+      const current = dataRef.current;
+      const next = commitBatch(current, record);
+      if (next === current) {
+        setError("");
+        return;
+      }
+      const ref = doc(db, "learning", user.uid);
+      // Avoid an extra transaction read for the completed batch. Security
+      // rules still read the approval document, so quota exhaustion may
+      // require the local completed draft to wait until the daily reset.
+      try {
+        await updateDoc(ref, {
+          records: arrayUnion(record),
+          activeSession: null,
+        });
+      } catch (error) {
+        if ((error as { code?: string }).code !== "not-found") throw error;
+        await setDoc(ref, next);
+      }
+      applyLearning(next);
+      setError("");
+    } catch (error) {
+      setError((error as Error).message);
+      throw error;
+    } finally {
+      setBusy(false);
     }
   }
   useEffect(() => {
@@ -235,6 +287,8 @@ export function useApp() {
     setError,
     busy,
     save,
+    saveCompletedBatch,
+    refreshContent: () => setContentRevision((value) => value + 1),
     resetPreview,
     previewScenario,
     choosePreviewScenario,

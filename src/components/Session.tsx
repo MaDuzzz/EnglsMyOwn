@@ -151,6 +151,7 @@ export default function Session({
     enterNextWord = useRef(false),
     feedbackRef = useRef<HTMLDivElement>(null),
     completionPlayed = useRef(false),
+    completionRecord = useRef<BatchRecord | null>(null),
     gradedRef = useRef(
       draft?.feedback !== null && draft?.feedback !== undefined,
     );
@@ -478,14 +479,15 @@ export default function Session({
     setSaving(true);
     setError("");
     try {
-      const fed = await onComplete({
+      completionRecord.current ??= {
         id: s.id,
         mode: s.mode,
         day: s.day,
         wordIds: s.words.map((w) => w.id),
         seconds: seconds.current,
         completedAt: new Date().toISOString(),
-      });
+      };
+      const fed = await onComplete(completionRecord.current);
       setMeal(fed);
       setSaved(true);
       celebrateCompletion();
@@ -584,7 +586,9 @@ export default function Session({
             <p>
               {saved
                 ? `${Math.min(tickets, required)} / ${required} tickets earned`
-                : "Saving your completed batch and food ticket…"}
+                : error
+                  ? "Completed on this device. Cloud save needs another try."
+                  : "Saving your completed batch and food ticket…"}
             </p>
             <ProgressBar value={saved ? (tickets / required) * 100 : 100} />
             {saved && (
@@ -610,7 +614,9 @@ export default function Session({
             </Button>
           )}
           <p className="muted small">
-            Completed batches stay safe when you leave.
+            {saved
+              ? "Completed batches stay safe when you leave."
+              : "Keep this app installed until your completed batch is saved."}
           </p>
         </div>
       ) : (

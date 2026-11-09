@@ -50,6 +50,7 @@ import {
   pendingReview,
   dailyStats,
   commitBatch,
+  completedRecordFromDraft,
   learnedIds,
   emptyVideo,
   streak,
@@ -118,6 +119,7 @@ export default function App() {
   const themeTransition = useRef<ViewTransition | null>(null);
   const draftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const latestDraft = useRef<SessionDraft | null>(null);
+  const recoveredCompletion = useRef<string | null>(null);
   const { data, words, lessons, profile, demo, today } = app,
     stats = dailyStats(data, today),
     pending = pendingReview(data, today),
@@ -166,6 +168,32 @@ export default function App() {
       setLocalDraft(null);
     }
   }, [draftKey]);
+  useEffect(() => {
+    const draft = savedLocal;
+    const record = draft && completedRecordFromDraft(draft);
+    if (
+      app.phase !== "ready" ||
+      session ||
+      !draftKey ||
+      !record ||
+      data.records.some((saved) => saved.id === record.id) ||
+      recoveredCompletion.current === record.id
+    )
+      return;
+    recoveredCompletion.current = record.id;
+    void app
+      .saveCompletedBatch(record)
+      .then(() => {
+        localStorage.removeItem(draftKey);
+        setLocalDraft(null);
+        setNotice("Your completed batch and food ticket were saved.");
+      })
+      .catch(() => {
+        setNotice(
+          "Your completed batch is still on this device. Try reopening the app to sync it.",
+        );
+      });
+  }, [app.phase, session, draftKey, savedLocal, data.records]);
   useEffect(() => {
     localStorage.setItem("engls-batch-group", batchGroup);
     localStorage.removeItem("engls-batch-topic");
@@ -344,17 +372,13 @@ export default function App() {
     window.scrollTo(0, 0);
   }
   async function complete(record: BatchRecord) {
-    let meal = false;
     cancelDraftTimer();
-    await app.save((old) => {
-      const next = commitBatch(old, record);
-      meal = dailyStats(next, today).meal;
-      return next;
-    });
+    const next = commitBatch(app.data, record);
+    await app.saveCompletedBatch(record);
     if (draftKey) localStorage.removeItem(draftKey);
     latestDraft.current = null;
     setLocalDraft(null);
-    return meal;
+    return dailyStats(next, record.day).meal;
   }
   const save = (f: Parameters<typeof app.save>[0]) => {
     void app.save(f).catch(() => {});
@@ -1088,7 +1112,11 @@ export default function App() {
           ) : page === "progress" ? (
             <Progress data={data} />
           ) : profile?.role === "admin" ? (
-            <Admin demo={demo} uid={profile.uid} />
+            <Admin
+              demo={demo}
+              uid={profile.uid}
+              onContentImported={app.refreshContent}
+            />
           ) : (
             <Empty title="This is your administrator’s space">
               Return to your learning tabs below.

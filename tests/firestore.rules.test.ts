@@ -10,12 +10,13 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  arrayUnion,
   collection,
   getDocs,
   query,
   where,
 } from "firebase/firestore";
-import { beforeAll, afterAll, describe, it } from "vitest";
+import { beforeAll, afterAll, describe, expect, it } from "vitest";
 const emulator = Boolean(process.env.FIRESTORE_EMULATOR_HOST);
 describe.skipIf(!emulator)("Firestore access boundaries", () => {
   let env: RulesTestEnvironment;
@@ -154,6 +155,26 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
       ),
     );
     await assertFails(getDocs(collection(db, "users")));
+  });
+  it("accepts a completed batch with a write-only progress update", async () => {
+    const db = env.authenticatedContext("approved").firestore();
+    const ref = doc(db, "learning/approved");
+    const record = {
+      id: "review:2026-11-09:test",
+      mode: "review",
+      day: "2026-11-09",
+      wordIds: Array.from({ length: 10 }, (_, i) => `word-${i}`),
+      seconds: 135,
+      completedAt: "2026-11-09T12:53:00+07:00",
+    };
+    await assertSucceeds(
+      updateDoc(ref, {
+        records: arrayUnion(record),
+        activeSession: null,
+      }),
+    );
+    const saved = (await getDoc(ref)).data()!;
+    expect(saved.records).toContainEqual(record);
   });
   it("accepts supported companion species but rejects invalid or extra fields", async () => {
     const db = env.authenticatedContext("approved").firestore();

@@ -15,6 +15,7 @@ import {
   planFor,
   pendingReview,
   commitBatch,
+  completedRecordFromDraft,
   preserveCompletedBatches,
   dailyStats,
   tasksFor,
@@ -26,6 +27,28 @@ import { validateImport } from "../src/lib/content";
 import canonicalDraft from "../docs/content/vocabulary.example.json";
 const batch = words.slice(0, 10);
 describe("word sessions", () => {
+  it("recovers a 40/40 batch from its local draft without loading words", () => {
+    const draft = makeSessionDraft(
+      {
+        ...createSession(batch, "review", "review:recover", "2026-11-09"),
+        queue: [],
+        completed: tasksFor(batch).map((task) => task.id),
+        round: 4,
+      },
+      { answer: "", tokens: [], feedback: null, seconds: 230 },
+    );
+    expect(completedRecordFromDraft(draft)).toMatchObject({
+      id: "review:recover",
+      wordIds: batch.map((word) => word.id),
+      seconds: 230,
+    });
+    expect(
+      completedRecordFromDraft({
+        ...draft,
+        completed: draft.completed.slice(1),
+      }),
+    ).toBeNull();
+  });
   it("keeps imported files in their word groups for a new batch", () => {
     const verbs = Array.from({ length: 12 }, (_, index) => ({
       ...batch[0],

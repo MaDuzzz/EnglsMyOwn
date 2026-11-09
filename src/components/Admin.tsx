@@ -11,7 +11,15 @@ import { db } from "../lib/firebase";
 import { validateImport, storedWord } from "../lib/content";
 import { type Profile } from "../lib/useApp";
 import { Button } from "./ui";
-export default function Admin({ demo, uid }: { demo: boolean; uid: string }) {
+export default function Admin({
+  demo,
+  uid,
+  onContentImported,
+}: {
+  demo: boolean;
+  uid: string;
+  onContentImported: () => void;
+}) {
   const [users, setUsers] = useState<Profile[]>([]),
     [source, setSource] = useState(""),
     [preview, setPreview] = useState<ReturnType<typeof validateImport> | null>(
@@ -126,6 +134,7 @@ export default function Admin({ demo, uid }: { demo: boolean; uid: string }) {
       setMessage(
         "Import complete. Published content is now available to approved learners.",
       );
+      onContentImported();
       setPreview(null);
       setSource("");
       setFileName("");
