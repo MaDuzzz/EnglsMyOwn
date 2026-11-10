@@ -2,6 +2,9 @@ import type { Word } from "./model";
 import { playableAccents, pronunciationsFor, type Accent } from "./vocabulary";
 import bundledAudio from "../data/bundledAudio.json";
 
+// Change this when the bundled recordings are regenerated to bypass browser caches.
+const bundledAudioVersion = "kokoro-heart-v1";
+
 type AudioSource = "recording" | "bundled" | "youdao" | "google" | "device";
 type Playback = {
   key: string;
@@ -89,7 +92,7 @@ export function audioCandidates(word: Word, accent: Accent): Candidate[] {
   if (bundled) {
     const base = import.meta.env.BASE_URL || "/";
     result.push({
-      url: `${base}audio/words/${encodeURIComponent(word.id)}.m4a`,
+      url: `${base}audio/words/${encodeURIComponent(word.id)}.m4a?v=${bundledAudioVersion}`,
       source: "bundled",
     });
   }

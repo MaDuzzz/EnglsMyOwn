@@ -39,6 +39,7 @@ describe("bundled pronunciation", () => {
     expect(audioCandidates(word, "us")[0].url).toContain(
       "/audio/words/noun-157.m4a",
     );
+    expect(audioCandidates(word, "us")[0].url).toContain("v=kokoro-heart-v1");
     const recorded = {
       ...word,
       pronunciation: {
