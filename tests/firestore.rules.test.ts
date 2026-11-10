@@ -34,6 +34,7 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
         ["owner", "approved"],
         ["approved", "approved"],
         ["pending", "pending"],
+        ["waiting", "pending"],
         ["revoked", "revoked"],
       ])
         await setDoc(doc(db, "users", uid), {
@@ -191,7 +192,7 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertFails(
       getDocs(
-        collection(env.authenticatedContext("pending").firestore(), "rankings"),
+        collection(env.authenticatedContext("waiting").firestore(), "rankings"),
       ),
     );
     await assertFails(
@@ -211,10 +212,10 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     await assertFails(
       setDoc(
         doc(
-          env.authenticatedContext("pending").firestore(),
-          "rankings/pending",
+          env.authenticatedContext("waiting").firestore(),
+          "rankings/waiting",
         ),
-        { ...summary, uid: "pending" },
+        { ...summary, uid: "waiting" },
       ),
     );
     await assertFails(updateDoc(ref, { uid: "another" }));
