@@ -3750,6 +3750,325 @@ textarea {
     height: 200px;
   }
 }
+
+/* Ranking: a shared, compact league without exposing learning records. */
+.ranking-page {
+  max-width: 960px;
+  margin: 0 auto;
+}
+.ranking-intro {
+  padding-bottom: 20px;
+}
+.ranking-intro h1 {
+  font-size: clamp(38px, 5vw, 56px);
+  margin-top: 7px;
+}
+.ranking-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  min-height: 220px;
+  padding: 25px 30px;
+  overflow: hidden;
+  background: linear-gradient(115deg, var(--softest), var(--surface));
+}
+.ranking-hero > div {
+  width: min(100%, 430px);
+  position: relative;
+  z-index: 1;
+}
+.ranking-period {
+  display: inline-flex;
+  max-width: 100%;
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+}
+.ranking-hero-label,
+.ranking-gap {
+  display: block;
+  color: var(--muted);
+}
+.ranking-hero-label {
+  margin-top: 15px;
+  font-size: 15px;
+  font-weight: 700;
+}
+.ranking-hero strong {
+  display: block;
+  color: var(--accent);
+  font-family: "Nunito", sans-serif;
+  font-size: 52px;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+}
+.ranking-hero strong small {
+  font-size: 0.56em;
+  font-weight: 800;
+}
+.ranking-hero .progress-track {
+  margin: 13px 0 9px;
+  height: 8px;
+}
+.ranking-gap {
+  font-size: 13px;
+}
+.ranking-personal-goal {
+  display: block;
+  margin-top: 6px;
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+.ranking-hero-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  background: var(--soft);
+  color: #d4a04f;
+  transform: rotate(-8deg);
+  box-shadow: inset 0 2px 20px #ffffff50;
+}
+.ranking-hero-icon svg {
+  width: 84px;
+  height: 84px;
+  stroke-width: 1.35;
+  filter: drop-shadow(0 8px 8px #432b231a);
+}
+.ranking-hero-streak .ranking-hero-icon {
+  color: #e8904b;
+}
+.ranking-hero-words .ranking-hero-icon {
+  color: var(--accent);
+}
+.ranking-board {
+  margin-top: 26px;
+}
+.ranking-board h2 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+.ranking-switch {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--softest);
+  box-shadow: var(--shadow);
+}
+.ranking-switch button {
+  min-height: 45px;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 15px;
+  font-weight: 650;
+  transition: background-color 280ms ease, color 280ms ease, transform 280ms ease;
+}
+.ranking-switch button.selected {
+  background: var(--accent);
+  color: var(--button-text);
+  box-shadow: 0 4px 12px #35202e18;
+}
+.ranking-switch button:active {
+  transform: scale(0.97);
+}
+.ranking-helper {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 9px 4px 14px;
+}
+.ranking-list {
+  display: grid;
+  gap: 10px;
+}
+.ranking-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  min-width: 0;
+  min-height: 78px;
+  padding: 9px 16px;
+  transition: background-color 300ms ease, transform 300ms ease;
+}
+.ranking-row.is-you {
+  background: var(--softest);
+  border-color: var(--soft);
+}
+.ranking-medal {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-family: "Nunito", sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  color: #664822;
+  background: #f5d080;
+  box-shadow: 0 3px 0 #cc9b45;
+}
+.ranking-medal.rank-2 {
+  background: #dde2e9;
+  color: #344554;
+  box-shadow: 0 3px 0 #aab7c5;
+}
+.ranking-medal.rank-3 {
+  background: #e8ae83;
+  color: #623d2d;
+  box-shadow: 0 3px 0 #ba7954;
+}
+.ranking-pet {
+  display: grid;
+  place-items: center;
+  flex: 0 0 58px;
+  width: 58px;
+  height: 58px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--accent);
+}
+.ranking-pet canvas {
+  display: block;
+  width: 64px;
+  height: 64px;
+}
+.ranking-person {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ranking-person strong,
+.ranking-value {
+  font-family: "Nunito", sans-serif;
+  font-size: 19px;
+  font-weight: 850;
+  letter-spacing: -0.03em;
+}
+.ranking-person strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ranking-person small {
+  color: var(--muted);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.ranking-value {
+  flex: 0 0 auto;
+  color: var(--text);
+  white-space: nowrap;
+  font-size: 21px;
+}
+.ranking-row.is-you .ranking-value {
+  color: var(--accent);
+}
+.ranking-value small {
+  font-size: 0.75em;
+}
+.ranking-together {
+  position: relative;
+  margin-top: 18px;
+  padding: 20px 24px;
+  background: linear-gradient(110deg, var(--surface), var(--softest));
+}
+.ranking-together h2 {
+  font-size: 21px;
+}
+.ranking-together p {
+  margin: 4px 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.ranking-together .progress-track {
+  position: relative;
+  z-index: 1;
+}
+.ranking-sparkle {
+  position: absolute;
+  right: 25px;
+  top: 19px;
+  color: var(--accent);
+  font-size: 27px;
+  opacity: 0.65;
+}
+.ranking-note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 16px 4px 26px;
+}
+.ranking-loading,
+.ranking-error {
+  color: var(--muted);
+  font-size: 12px;
+}
+.ranking-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 14px;
+  background: var(--softest);
+}
+.ranking-error button {
+  color: var(--accent);
+  background: transparent;
+  font-weight: 750;
+  text-decoration: underline;
+}
+@media (max-width: 800px) {
+  .ranking-intro { padding: 10px 0 18px; }
+  .ranking-intro h1 { font-size: 39px; }
+  .ranking-intro p { margin-top: 4px; }
+  .ranking-hero { min-height: 180px; padding: 18px 20px; }
+  .ranking-hero-icon { width: 98px; height: 98px; flex: 0 0 98px; }
+  .ranking-hero-icon svg { width: 58px; height: 58px; }
+  .ranking-hero strong { font-size: 42px; }
+  .ranking-hero-label { margin-top: 11px; font-size: 13px; }
+  .ranking-period { font-size: 9px; }
+  .ranking-board { margin-top: 20px; }
+  .ranking-board h2 { font-size: 25px; margin-bottom: 9px; }
+  .ranking-row { gap: 9px; padding: 8px 11px; min-height: 69px; }
+  .ranking-medal { flex-basis: 30px; width: 30px; height: 30px; font-size: 11px; }
+  .ranking-pet { flex-basis: 50px; width: 50px; height: 50px; }
+  .ranking-pet canvas { width: 56px; height: 56px; }
+  .ranking-person strong { font-size: 15px; }
+  .ranking-person small { font-size: 10px; }
+  .ranking-value { font-size: 16px; }
+  .ranking-together { padding: 17px 18px; }
+  .ranking-together h2 { font-size: 18px; }
+}
+@media (max-width: 370px) {
+  .ranking-hero { gap: 8px; padding: 16px; }
+  .ranking-hero-icon { width: 72px; height: 72px; flex-basis: 72px; }
+  .ranking-hero-icon svg { width: 46px; height: 46px; }
+  .ranking-hero strong { font-size: 36px; }
+  .ranking-person strong { font-size: 13px; }
+  .ranking-value { font-size: 14px; }
+  .ranking-row { gap: 6px; }
+  .ranking-pet { flex-basis: 42px; width: 42px; height: 42px; }
+}
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

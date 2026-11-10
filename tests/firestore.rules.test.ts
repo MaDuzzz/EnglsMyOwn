@@ -10,6 +10,8 @@ import {
   setDoc,
   getDoc,
   updateDoc,
+  deleteDoc,
+  writeBatch,
   arrayUnion,
   collection,
   getDocs,
@@ -164,6 +166,64 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertFails(getDocs(collection(db, "users")));
   });
+  it("shares only bounded ranking summaries with approved learners", async () => {
+    const approved = env.authenticatedContext("approved").firestore();
+    const owner = env.authenticatedContext("owner").firestore();
+    const summary = {
+      uid: "approved",
+      displayName: "Learner",
+      appearance: "cat",
+      petStage: 1,
+      weekKey: "2026-11-09",
+      weekPoints: 30,
+      weekDays: 1,
+      weekWords: 10,
+      monthKey: "2026-11",
+      monthWords: 20,
+      bestStreak: 5,
+      currentStreak: 2,
+      lastGoalDay: "2026-11-09",
+      updatedDay: "2026-11-10",
+    };
+    const ref = doc(approved, "rankings/approved");
+    await assertFails(
+      getDocs(collection(env.unauthenticatedContext().firestore(), "rankings")),
+    );
+    await assertFails(
+      getDocs(
+        collection(env.authenticatedContext("pending").firestore(), "rankings"),
+      ),
+    );
+    await assertFails(
+      getDocs(
+        collection(env.authenticatedContext("revoked").firestore(), "rankings"),
+      ),
+    );
+    await assertSucceeds(setDoc(ref, summary));
+    await assertSucceeds(getDocs(collection(approved, "rankings")));
+    await assertFails(
+      setDoc(doc(approved, "rankings/owner"), { ...summary, uid: "owner" }),
+    );
+    await assertFails(
+      setDoc(ref, { ...summary, email: "private@example.test" }),
+    );
+    await assertFails(setDoc(ref, { ...summary, bestStreak: 1 }));
+    await assertFails(
+      setDoc(
+        doc(
+          env.authenticatedContext("pending").firestore(),
+          "rankings/pending",
+        ),
+        { ...summary, uid: "pending" },
+      ),
+    );
+    await assertFails(updateDoc(ref, { uid: "another" }));
+    await assertSucceeds(updateDoc(ref, { weekPoints: 40 }));
+    await assertFails(
+      updateDoc(doc(owner, "rankings/approved"), { weekPoints: 1000 }),
+    );
+    await assertSucceeds(deleteDoc(doc(owner, "rankings/approved")));
+  });
   it("accepts a completed batch with a write-only progress update", async () => {
     const db = env.authenticatedContext("approved").firestore();
     const ref = doc(db, "learning/approved");
@@ -308,9 +368,11 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
       updateDoc(doc(owner, "users/new"), { status: "approved" }),
     );
     await assertSucceeds(getDoc(doc(learner, "words/published")));
-    await assertSucceeds(
-      updateDoc(doc(owner, "users/new"), { status: "revoked" }),
-    );
+    const batch = writeBatch(owner);
+    batch.update(doc(owner, "users/new"), { status: "revoked" });
+    batch.delete(doc(owner, "rankings/new"));
+    await assertSucceeds(batch.commit());
     await assertFails(getDoc(doc(learner, "words/published")));
+    await assertFails(getDocs(collection(learner, "rankings")));
   });
 });

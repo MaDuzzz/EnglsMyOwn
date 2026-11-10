@@ -10,7 +10,7 @@ import { flushSync } from "react-dom";
 import {
   Home,
   BookOpen,
-  Play,
+  Trophy,
   BarChart3,
   Sun,
   Moon,
@@ -66,15 +66,17 @@ import {
 import Session from "./components/Session";
 import { Library, VideoSession } from "./components/Library";
 import Progress from "./components/Progress";
+import Ranking from "./components/Ranking";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
 import { growthStage, petSpecies, petStages, speciesOf } from "./lib/pets";
 import { playWordRecording, stopPronunciation } from "./lib/pronunciationAudio";
+import { useRanking } from "./lib/useRanking";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
-  { id: "videos", label: "Videos", icon: Play },
+  { id: "ranking", label: "Ranking", icon: Trophy },
   { id: "progress", label: "Progress", icon: BarChart3 },
 ];
 const batchGroups: { id: LearningGroup; label: string }[] = [
@@ -163,6 +165,15 @@ export default function App() {
     completedDays = Object.keys(data.plans).filter(
       (d) => dailyStats(data, d).meal,
     ).length;
+  const ranking = useRanking({
+    uid: profile?.uid,
+    displayName: profile?.displayName,
+    data,
+    today,
+    ready: app.phase === "ready" && app.learningReady,
+    visible: page === "ranking",
+    demo,
+  });
   useEffect(() => {
     cancelDraftTimer();
     latestDraft.current = null;
@@ -698,7 +709,9 @@ export default function App() {
         )}
         <div className="page-scene" key={page}>
           {page === "today" ||
-          !["words", "videos", "progress", "admin"].includes(page) ? (
+          !["words", "ranking", "videos", "progress", "admin"].includes(
+            page,
+          ) ? (
             <>
               <div className="page-intro today-intro">
                 <span className="eyebrow">
@@ -1169,6 +1182,15 @@ export default function App() {
                 </>
               )}
             </>
+          ) : page === "ranking" ? (
+            <Ranking
+              entries={ranking.entries}
+              uid={profile?.uid || ""}
+              today={today}
+              loading={ranking.loading}
+              error={ranking.error}
+              onRetry={ranking.retry}
+            />
           ) : page === "videos" ? (
             <Library
               lessons={lessons}

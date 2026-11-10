@@ -6,6 +6,7 @@ import {
   doc,
   updateDoc,
   runTransaction,
+  writeBatch,
 } from "firebase/firestore";
 import { Upload, UserCheck } from "lucide-react";
 import { db } from "../lib/firebase";
@@ -85,7 +86,14 @@ export default function Admin({
     if (!db) return;
     setBusy(true);
     try {
-      await updateDoc(doc(db, "users", p.uid), { status });
+      if (status === "revoked") {
+        const batch = writeBatch(db);
+        batch.update(doc(db, "users", p.uid), { status });
+        batch.delete(doc(db, "rankings", p.uid));
+        await batch.commit();
+      } else {
+        await updateDoc(doc(db, "users", p.uid), { status });
+      }
       setMessage(
         status === "approved"
           ? "Learner approved. They can now access published vocabulary."

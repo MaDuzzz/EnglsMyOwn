@@ -48,6 +48,7 @@ export function useApp() {
       "loading" | "login" | "pending" | "ready" | "setup"
     >("loading");
   const [data, setData] = useState<Learning>(emptyLearning),
+    [learningReady, setLearningReady] = useState(false),
     [words, setWords] = useState<Word[]>([]),
     [lessons, setLessons] = useState<Lesson[]>([]),
     [error, setError] = useState(""),
@@ -81,6 +82,7 @@ export function useApp() {
           saved = m.pilotLearning(previewScenario);
         }
         setData(saved);
+        setLearningReady(true);
         setWords(m.words);
         setLessons(m.lessons);
         setProfile({
@@ -106,6 +108,7 @@ export function useApp() {
       setWords([]);
       setLessons([]);
       setData(emptyLearning());
+      setLearningReady(false);
       setPhase(u ? "loading" : "login");
       setError("");
     });
@@ -159,8 +162,10 @@ export function useApp() {
       setError("Could not load protected data: " + e.message);
     const off = onSnapshot(
       doc(db, "learning", user.uid),
-      (s) =>
-        applyLearning(s.exists() ? (s.data() as Learning) : emptyLearning()),
+      (s) => {
+        applyLearning(s.exists() ? (s.data() as Learning) : emptyLearning());
+        setLearningReady(true);
+      },
       fail,
     );
     // A listener over the whole catalog re-reads every word after iPhone
@@ -316,6 +321,7 @@ export function useApp() {
     profile,
     phase,
     data,
+    learningReady,
     words,
     lessons,
     error,

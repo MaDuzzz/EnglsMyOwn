@@ -74,6 +74,29 @@ service cloud.firestore {
         : resource.data.activeSession.id);
    allow delete: if false;
   }
+  // A small public summary for approved learners. Detailed learning records
+  // remain private in /learning. Scores are self-reported by the web client.
+  match /rankings/{uid} {
+   allow read: if approved();
+   allow create, update: if approved() && request.auth.uid == uid
+    && request.resource.data.keys().hasAll(['uid','displayName','appearance','petStage','weekKey','weekPoints','weekDays','weekWords','monthKey','monthWords','bestStreak','currentStreak','lastGoalDay','updatedDay'])
+    && request.resource.data.keys().hasOnly(['uid','displayName','appearance','petStage','weekKey','weekPoints','weekDays','weekWords','monthKey','monthWords','bestStreak','currentStreak','lastGoalDay','updatedDay'])
+    && request.resource.data.uid == uid
+    && request.resource.data.displayName is string && request.resource.data.displayName.size() > 0 && request.resource.data.displayName.size() <= 40
+    && request.resource.data.appearance in ['cat','dog','lion','lioness','tiger']
+    && request.resource.data.petStage is int && request.resource.data.petStage >= 0 && request.resource.data.petStage <= 4
+    && request.resource.data.weekKey is string && request.resource.data.weekKey.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+    && request.resource.data.monthKey is string && request.resource.data.monthKey.matches('^[0-9]{4}-[0-9]{2}$')
+    && request.resource.data.lastGoalDay is string && (request.resource.data.lastGoalDay == '' || request.resource.data.lastGoalDay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$'))
+    && request.resource.data.updatedDay is string && request.resource.data.updatedDay.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+    && request.resource.data.weekPoints is int && request.resource.data.weekPoints >= 0 && request.resource.data.weekPoints <= 100000
+    && request.resource.data.weekDays is int && request.resource.data.weekDays >= 0 && request.resource.data.weekDays <= 7
+    && request.resource.data.weekWords is int && request.resource.data.weekWords >= 0 && request.resource.data.weekWords <= 20000
+    && request.resource.data.monthWords is int && request.resource.data.monthWords >= 0 && request.resource.data.monthWords <= 20000
+    && request.resource.data.bestStreak is int && request.resource.data.bestStreak >= 0 && request.resource.data.bestStreak <= 10000
+    && request.resource.data.currentStreak is int && request.resource.data.currentStreak >= 0 && request.resource.data.currentStreak <= request.resource.data.bestStreak;
+   allow delete: if owner();
+  }
   match /{document=**} { allow read, write: if false; }
  }
 }
