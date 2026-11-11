@@ -1359,7 +1359,7 @@ export default function App() {
           )}
           <p className="notice">
             {start === "review"
-              ? "20 seconds per question. Show the answer any time; the question will return later. Your place is saved if you leave."
+              ? "20 seconds to listen or choose a meaning, 45 seconds to fill in or recall a word, and 60 seconds to build a sentence. Show the answer any time; the question will return later. Your place is saved if you leave."
               : "Your place is saved as you study. Leave or reopen the app to resume."}
           </p>
           <Button

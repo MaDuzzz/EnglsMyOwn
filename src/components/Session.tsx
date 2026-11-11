@@ -55,6 +55,7 @@ import {
   stopFeedbackVoice,
 } from "../lib/feedbackAudio";
 import { playableAccents } from "../lib/vocabulary";
+import { reviewQuestionSeconds } from "../lib/reviewTimer";
 
 function readNextStep(session: SessionType) {
   const introduction = nextIntroduction(session);
@@ -137,7 +138,9 @@ export default function Session({
     [error, setError] = useState("");
   const [timer, setTimer] = useState({
       taskId: initial.queue[0]?.id || "",
-      remaining: 20,
+      remaining: initial.queue[0]
+        ? reviewQuestionSeconds(initial.queue[0].kind)
+        : 0,
     }),
     [revealReason, setRevealReason] = useState<"wrong" | "skip" | "timeout">(
       draft?.feedback === false && !normalize(draft.answer) ? "skip" : "wrong",
@@ -184,7 +187,9 @@ export default function Session({
     (playback.status === "loading" || playback.status === "error");
   const timedQuestion =
     s.mode === "review" && !intro && !refresher && !complete && !!task;
-  const remaining = timer.taskId === task?.id ? timer.remaining : 20;
+  const questionSeconds = task ? reviewQuestionSeconds(task.kind) : 0;
+  const remaining =
+    timer.taskId === task?.id ? timer.remaining : questionSeconds;
   const advanceReady = Boolean(intro || refresher || feedback !== null);
   checkpointRef.current = onCheckpoint;
   function snapshot() {
@@ -267,7 +272,9 @@ export default function Session({
         taskId: task.id,
         remaining: Math.max(
           0,
-          (current.taskId === task.id ? current.remaining : 20) - 1,
+          (current.taskId === task.id
+            ? current.remaining
+            : reviewQuestionSeconds(task.kind)) - 1,
         ),
       }));
     }, 1000);
@@ -356,6 +363,12 @@ export default function Session({
     else readNextStep(following);
     if (following.completed.length === 40) celebrateCompletion();
     gradedRef.current = false;
+    setTimer({
+      taskId: following.queue[0]?.id || "",
+      remaining: following.queue[0]
+        ? reviewQuestionSeconds(following.queue[0].kind)
+        : 0,
+    });
     setS(following);
     setFeedback(null);
     setAnswer("");
@@ -373,7 +386,8 @@ export default function Session({
           ),
         };
     readNextStep(following);
-    if (refresher && task) setTimer({ taskId: task.id, remaining: 20 });
+    if (refresher && task)
+      setTimer({ taskId: task.id, remaining: questionSeconds });
     setS(following);
     setAnswer("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -673,7 +687,7 @@ export default function Session({
                 ? `MEET WORD ${s.introduced.length + 1} OF 10`
                 : refresher
                   ? "A QUICK REFRESH"
-                  : `QUESTION ${s.completed.length + 1} OF 40${timedQuestion ? " · 20 SECONDS" : ""}`}
+                  : `QUESTION ${s.completed.length + 1} OF 40${timedQuestion ? ` · ${questionSeconds} SECONDS` : ""}`}
             </span>
             <h1>
               {intro
@@ -704,7 +718,9 @@ export default function Session({
                   <strong>{remaining}s</strong>
                 </div>
                 <div className="question-timer-track" aria-hidden="true">
-                  <span style={{ width: `${(remaining / 20) * 100}%` }} />
+                  <span
+                    style={{ width: `${(remaining / questionSeconds) * 100}%` }}
+                  />
                 </div>
               </div>
             )}
@@ -1052,7 +1068,7 @@ export default function Session({
           <p className="session-note">
             <Info size={14} />
             {s.mode === "review"
-              ? "Each review question has 20 seconds. You can reveal an answer and try it again later."
+              ? `${questionSeconds} seconds for this question. You can reveal an answer and try it again later.`
               : "Little steps count. There’s no time limit."}
           </p>
         </>
