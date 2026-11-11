@@ -105,6 +105,24 @@ describe("vocabulary pilot", () => {
       grade(w, { id: "a", wordId: w.id, kind: "arrange", round: 2 }, answer),
     ).toBe(true);
   });
+  it("keeps punctuation between two sentences in an arrangement", () => {
+    const exampleEn =
+      "I met Sarah in the lobby today. That reminds me, she asked for a copy of the report.";
+    const w = {
+      ...words[0],
+      exampleEn,
+      sentenceTokens: exampleEn.split(" "),
+      arrangementAnswers: [exampleEn],
+    };
+    const parts = sentenceParts(w);
+    expect(parts).toContain("today.");
+    expect(parts.at(-1)).toBe("report");
+    const answer = arrangeAnswer(w, parts);
+    expect(answer).toBe(exampleEn);
+    expect(
+      grade(w, { id: "a", wordId: w.id, kind: "arrange", round: 2 }, answer),
+    ).toBe(true);
+  });
   it("completes all four exercise types, retries errors, then reviews the learned batch next day", () => {
     let learning = emptyLearning();
     for (const mode of ["learn", "review"] as const) {

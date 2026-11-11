@@ -540,7 +540,9 @@ export function sentenceParts(word: Word): string[] {
   const tokens = word.sentenceTokens?.length
     ? word.sentenceTokens
     : word.exampleEn.split(/\s+/);
-  return tokens.map((t) => t.replace(/[.!?]+$/, ""));
+  return tokens.map((token, index) =>
+    index === tokens.length - 1 ? token.replace(/[.!?]+$/, "") : token,
+  );
 }
 export function arrangeAnswer(word: Word, parts: string[]): string {
   if (!parts.length) return "";
