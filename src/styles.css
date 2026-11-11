@@ -1833,6 +1833,10 @@ th {
   touch-action: pan-y;
   will-change: transform, opacity;
 }
+.session-slide.is-swipeable {
+  touch-action: pan-y;
+  will-change: transform, opacity;
+}
 .word-card-hint {
   display: none;
   align-items: center;

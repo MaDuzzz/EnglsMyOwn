@@ -6,7 +6,6 @@ import {
   useSyncExternalStore,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent,
-  type TouchEvent,
 } from "react";
 import {
   X,
@@ -149,7 +148,6 @@ export default function Session({
     lastActivity = useRef(Date.now()),
     checkpointRef = useRef(onCheckpoint),
     finishBusy = useRef(false),
-    swipeStart = useRef<{ x: number; y: number } | null>(null),
     transitioning = useRef(false),
     wordCard = useRef<HTMLDivElement>(null),
     wordDrag = useRef<{
@@ -160,6 +158,15 @@ export default function Session({
     } | null>(null),
     wordAnimation = useRef<Animation | null>(null),
     enterNextWord = useRef(false),
+    slidePanel = useRef<HTMLElement | null>(null),
+    panelDrag = useRef<{
+      id: number;
+      x: number;
+      y: number;
+      offset: number;
+    } | null>(null),
+    panelAnimation = useRef<Animation | null>(null),
+    enterNextPanel = useRef(false),
     feedbackRef = useRef<HTMLDivElement>(null),
     completionPlayed = useRef(false),
     completionRecord = useRef<BatchRecord | null>(null),
@@ -297,7 +304,27 @@ export default function Session({
       { duration: 340, easing: "cubic-bezier(.2,.8,.2,1)" },
     );
   }, [introWord?.id]);
-  useEffect(() => () => wordAnimation.current?.cancel(), []);
+  useLayoutEffect(() => {
+    if (!enterNextPanel.current) return;
+    enterNextPanel.current = false;
+    const panel = slidePanel.current;
+    if (!panel || matchMedia("(prefers-reduced-motion: reduce)").matches)
+      return;
+    panel.animate(
+      [
+        { transform: "translate3d(48px, 0, 0)", opacity: 0 },
+        { transform: "translate3d(0, 0, 0)", opacity: 1 },
+      ],
+      { duration: 340, easing: "cubic-bezier(.2,.8,.2,1)" },
+    );
+  }, [s]);
+  useEffect(
+    () => () => {
+      wordAnimation.current?.cancel();
+      panelAnimation.current?.cancel();
+    },
+    [],
+  );
   async function leave() {
     stopPronunciation();
     stopFeedbackVoice();
@@ -321,10 +348,10 @@ export default function Session({
       setSaving(false);
     }
   }
-  function submit() {
+  function submit(selectedAnswer = answer) {
     if (feedback !== null || gradedRef.current || !task) return;
     gradedRef.current = true;
-    const correct = grade(word, task, answer);
+    const correct = grade(word, task, selectedAnswer);
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
     stopPronunciation();
@@ -354,13 +381,15 @@ export default function Session({
     completionPlayed.current = true;
     playCompletionFanfare();
   }
-  function next() {
+  function next(audioStarted = false) {
     if (feedback === null) return;
     const following = advance(s, feedback);
-    stopFeedbackVoice();
-    if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
-      stopPronunciation();
-    else readNextStep(following);
+    if (!audioStarted) {
+      stopFeedbackVoice();
+      if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
+        stopPronunciation();
+      else readNextStep(following);
+    }
     if (following.completed.length === 40) celebrateCompletion();
     gradedRef.current = false;
     setTimer({
@@ -375,7 +404,7 @@ export default function Session({
     setTokens([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-  function continueWord() {
+  function continueWord(audioStarted = false) {
     if (!intro && !refresher) return;
     const following = intro
       ? introduceWord(s)
@@ -385,7 +414,7 @@ export default function Session({
             i === 0 ? { ...item, refresher: false } : item,
           ),
         };
-    readNextStep(following);
+    if (!audioStarted) readNextStep(following);
     if (refresher && task)
       setTimer({ taskId: task.id, remaining: questionSeconds });
     setS(following);
@@ -507,31 +536,142 @@ export default function Session({
         { duration: 190, easing: "ease-out" },
       );
   }
+  function advanceStep(audioStarted = false) {
+    if (intro || refresher) continueWord(audioStarted);
+    else next(audioStarted);
+  }
   function continueStep() {
     if (transitioning.current) return;
     transitioning.current = true;
-    if (intro || refresher) continueWord();
-    else next();
+    advanceStep();
     requestAnimationFrame(() => {
       transitioning.current = false;
     });
   }
-  function onTouchStart(event: TouchEvent<HTMLElement>) {
-    if (event.touches.length !== 1) return;
-    swipeStart.current = {
-      x: event.touches[0].clientX,
-      y: event.touches[0].clientY,
+  function slideToNextPanel() {
+    if (!advanceReady || intro || transitioning.current) return;
+    const panel = slidePanel.current;
+    const offset = panelDrag.current?.offset || 0;
+    panelDrag.current = null;
+    if (
+      !panel ||
+      matchMedia("(prefers-reduced-motion: reduce)").matches ||
+      !panel.animate
+    ) {
+      continueStep();
+      return;
+    }
+    // Play the next listening prompt during the gesture for iPhone Safari.
+    const following = refresher
+      ? {
+          ...s,
+          queue: s.queue.map((item, i) =>
+            i === 0 ? { ...item, refresher: false } : item,
+          ),
+        }
+      : advance(s, feedback!);
+    stopFeedbackVoice();
+    if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
+      stopPronunciation();
+    else readNextStep(following);
+    transitioning.current = true;
+    const animation = panel.animate(
+      [
+        {
+          transform: `translate3d(${offset}px, 0, 0) rotate(${offset * 0.008}deg)`,
+          opacity: Math.max(0.68, 1 + offset / 450),
+        },
+        {
+          transform: `translate3d(${-panel.clientWidth - 55}px, 0, 0) rotate(-4deg)`,
+          opacity: 0,
+        },
+      ],
+      { duration: 280, easing: "cubic-bezier(.3,.7,.2,1)", fill: "forwards" },
+    );
+    panelAnimation.current = animation;
+    void animation.finished
+      .then(() => {
+        if (panelAnimation.current !== animation) return;
+        panel.style.visibility = "hidden";
+        panelAnimation.current = null;
+        animation.cancel();
+        enterNextPanel.current = true;
+        advanceStep(true);
+        requestAnimationFrame(() => {
+          transitioning.current = false;
+        });
+      })
+      .catch(() => {
+        panel.style.transform = "";
+        panel.style.opacity = "";
+        transitioning.current = false;
+      });
+  }
+  function onPanelPointerDown(event: ReactPointerEvent<HTMLElement>) {
+    if (
+      !advanceReady ||
+      intro ||
+      exit ||
+      transitioning.current ||
+      (event.pointerType === "mouse" && event.button !== 0) ||
+      (event.target as HTMLElement).closest("button, a, input, select")
+    )
+      return;
+    panelDrag.current = {
+      id: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+      offset: 0,
     };
   }
-  function onTouchEnd(event: TouchEvent<HTMLElement>) {
-    const start = swipeStart.current;
-    swipeStart.current = null;
-    if (!start || !advanceReady || exit || complete) return;
-    const dx = start.x - event.changedTouches[0].clientX;
-    const dy = start.y - event.changedTouches[0].clientY;
-    if (dx < 72 || dx < Math.abs(dy) * 1.4) return;
-    event.preventDefault();
-    continueStep();
+  function onPanelPointerMove(event: ReactPointerEvent<HTMLElement>) {
+    const drag = panelDrag.current;
+    const panel = slidePanel.current;
+    if (!drag || !panel || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (Math.abs(dy) > Math.abs(dx) * 1.2 && drag.offset === 0) {
+      panelDrag.current = null;
+      return;
+    }
+    if (dx >= -8 || Math.abs(dx) < Math.abs(dy) * 1.15) return;
+    if (!panel.hasPointerCapture(event.pointerId))
+      panel.setPointerCapture(event.pointerId);
+    drag.offset = Math.max(-panel.clientWidth, dx);
+    panel.style.userSelect = "none";
+    panel.style.transform = `translate3d(${drag.offset}px, 0, 0) rotate(${drag.offset * 0.008}deg)`;
+    panel.style.opacity = String(Math.max(0.68, 1 + drag.offset / 450));
+  }
+  function onPanelPointerUp(
+    event: ReactPointerEvent<HTMLElement>,
+    cancelled = false,
+  ) {
+    const drag = panelDrag.current;
+    const panel = slidePanel.current;
+    if (!drag || !panel || drag.id !== event.pointerId) return;
+    const dx = event.clientX - drag.x;
+    const dy = event.clientY - drag.y;
+    if (panel.hasPointerCapture(event.pointerId))
+      panel.releasePointerCapture(event.pointerId);
+    panel.style.userSelect = "";
+    if (!cancelled && dx < -80 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      event.preventDefault();
+      slideToNextPanel();
+      return;
+    }
+    panelDrag.current = null;
+    const from = panel.style.transform;
+    const opacity = panel.style.opacity || "1";
+    panel.style.transform = "";
+    panel.style.opacity = "";
+    if (from && !matchMedia("(prefers-reduced-motion: reduce)").matches)
+      panel.animate(
+        [
+          { transform: from, opacity },
+          { transform: "translate3d(0, 0, 0)", opacity: 1 },
+        ],
+        { duration: 190, easing: "ease-out" },
+      );
   }
   async function finish() {
     if (finishBusy.current || saved) return;
@@ -579,8 +719,6 @@ export default function Session({
         (advanceReady && !intro ? " can-advance" : "") +
         (intro ? " is-word-intro" : "")
       }
-      onTouchStart={intro ? undefined : onTouchStart}
-      onTouchEnd={intro ? undefined : onTouchEnd}
     >
       <header className="session-header">
         <button
@@ -719,7 +857,9 @@ export default function Session({
                 </div>
                 <div className="question-timer-track" aria-hidden="true">
                   <span
-                    style={{ width: `${(remaining / questionSeconds) * 100}%` }}
+                    style={{
+                      width: `${(remaining / questionSeconds) * 100}%`,
+                    }}
                   />
                 </div>
               </div>
@@ -737,14 +877,24 @@ export default function Session({
                 </div>
               )}
               <div
-                ref={intro ? wordCard : undefined}
-                key={intro ? word.id : "refresher"}
-                className={"card word-intro" + (intro ? " is-swipeable" : "")}
-                onPointerDown={intro ? onWordPointerDown : undefined}
-                onPointerMove={intro ? onWordPointerMove : undefined}
-                onPointerUp={intro ? onWordPointerUp : undefined}
-                onPointerCancel={
-                  intro ? (event) => onWordPointerUp(event, true) : undefined
+                ref={(node) => {
+                  if (intro) wordCard.current = node;
+                  else slidePanel.current = node;
+                }}
+                key={
+                  intro ? word.id : `refresher:${task.id}:${task.attempt || 0}`
+                }
+                className={
+                  "card word-intro" +
+                  (intro ? " is-swipeable" : " session-slide is-swipeable")
+                }
+                onPointerDown={intro ? onWordPointerDown : onPanelPointerDown}
+                onPointerMove={intro ? onWordPointerMove : onPanelPointerMove}
+                onPointerUp={intro ? onWordPointerUp : onPanelPointerUp}
+                onPointerCancel={(event) =>
+                  intro
+                    ? onWordPointerUp(event, true)
+                    : onPanelPointerUp(event, true)
                 }
               >
                 <WordDetails key={word.id} word={word} />
@@ -768,6 +918,21 @@ export default function Session({
             </>
           ) : (
             <form
+              ref={(node) => {
+                slidePanel.current = node;
+              }}
+              key={`${task.id}:${task.attempt || 0}`}
+              className={
+                "session-slide" + (advanceReady ? " is-swipeable" : "")
+              }
+              onPointerDown={advanceReady ? onPanelPointerDown : undefined}
+              onPointerMove={advanceReady ? onPanelPointerMove : undefined}
+              onPointerUp={advanceReady ? onPanelPointerUp : undefined}
+              onPointerCancel={
+                advanceReady
+                  ? (event) => onPanelPointerUp(event, true)
+                  : undefined
+              }
               onSubmit={(e) => {
                 e.preventDefault();
                 submit();
@@ -901,7 +1066,10 @@ export default function Session({
                           aria-pressed={answer === o}
                           disabled={feedback !== null}
                           className={answer === o ? "selected" : ""}
-                          onClick={() => setAnswer(o)}
+                          onClick={() => {
+                            setAnswer(o);
+                            submit(o);
+                          }}
                         >
                           <span>{String.fromCharCode(65 + i)}</span>
                           {o}
@@ -1012,16 +1180,18 @@ export default function Session({
               )}
               {feedback === null ? (
                 <div className="question-actions">
-                  <Button
-                    type="submit"
-                    disabled={
-                      !normalize(answer) ||
-                      (task.kind === "arrange" &&
-                        tokens.length !== parts.length)
-                    }
-                  >
-                    Check answer
-                  </Button>
+                  {task.kind !== "meaning" && (
+                    <Button
+                      type="submit"
+                      disabled={
+                        !normalize(answer) ||
+                        (task.kind === "arrange" &&
+                          tokens.length !== parts.length)
+                      }
+                    >
+                      Check answer
+                    </Button>
+                  )}
                   {s.mode === "review" && (
                     <Button secondary onClick={() => revealAnswer("skip")}>
                       <Eye size={17} /> Show answer
