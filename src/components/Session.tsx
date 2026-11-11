@@ -128,9 +128,7 @@ export default function Session({
     [feedback, setFeedback] = useState<boolean | null>(draft?.feedback ?? null),
     [exit, setExit] = useState(false),
     [discardError, setDiscardError] = useState(""),
-    [textFallbackTasks, setTextFallbackTasks] = useState<Set<string>>(
-      () => new Set(),
-    ),
+    [meaningForThisAttempt, setMeaningForThisAttempt] = useState(false),
     [saving, setSaving] = useState(false),
     [saved, setSaved] = useState(false),
     [meal, setMeal] = useState(false),
@@ -186,7 +184,7 @@ export default function Session({
     playbackSnapshot,
     playbackSnapshot,
   );
-  const textFallback = Boolean(task && textFallbackTasks.has(task.id));
+  const textFallback = task?.kind === "listen" && meaningForThisAttempt;
   const audioWaiting =
     task?.kind === "listen" &&
     !textFallback &&
@@ -386,9 +384,7 @@ export default function Session({
     const following = advance(s, feedback);
     if (!audioStarted) {
       stopFeedbackVoice();
-      if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
-        stopPronunciation();
-      else readNextStep(following);
+      readNextStep(following);
     }
     if (following.completed.length === 40) celebrateCompletion();
     gradedRef.current = false;
@@ -400,6 +396,7 @@ export default function Session({
     });
     setS(following);
     setFeedback(null);
+    setMeaningForThisAttempt(false);
     setAnswer("");
     setTokens([]);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -418,6 +415,7 @@ export default function Session({
     if (refresher && task)
       setTimer({ taskId: task.id, remaining: questionSeconds });
     setS(following);
+    setMeaningForThisAttempt(false);
     setAnswer("");
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -571,9 +569,7 @@ export default function Session({
         }
       : advance(s, feedback!);
     stopFeedbackVoice();
-    if (following.queue[0] && textFallbackTasks.has(following.queue[0].id))
-      stopPronunciation();
-    else readNextStep(following);
+    readNextStep(following);
     transitioning.current = true;
     const animation = panel.animate(
       [
@@ -945,8 +941,8 @@ export default function Session({
                       <div className="audio-fallback">
                         <h2>Recall the word instead</h2>
                         <p className="muted">
-                          Audio is unavailable. Type the English word or phrase
-                          that matches this meaning.
+                          Type the English word or phrase that matches this
+                          meaning. Audio will return on your next attempt.
                         </p>
                         <p lang="vi">{word.meaningVi}</p>
                         <p className="muted">{word.meaningEn}</p>
@@ -971,9 +967,7 @@ export default function Session({
                             className="audio-fallback-button"
                             onClick={() => {
                               stopPronunciation();
-                              setTextFallbackTasks((current) =>
-                                new Set(current).add(task.id),
-                              );
+                              setMeaningForThisAttempt(true);
                             }}
                           >
                             Can’t hear it? Use the meaning instead
