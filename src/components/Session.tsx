@@ -713,9 +713,7 @@ export default function Session({
       choices[choiceOrder[(index + (task?.attempt || 0)) % choices.length]],
   );
   return (
-    <main
-      className={"session-page" + (intro ? " is-word-intro" : "")}
-    >
+    <main className={"session-page" + (intro ? " is-word-intro" : "")}>
       <header className="session-header">
         <button
           className="icon-btn"
@@ -841,15 +839,27 @@ export default function Session({
                 className={
                   "question-timer" + (remaining <= 5 ? " is-urgent" : "")
                 }
-                role="timer"
-                aria-label={`${remaining} seconds remaining`}
               >
                 <div className="question-timer-label">
-                  <Timer size={16} />
+                  <Timer size={16} aria-hidden="true" />
                   <span>
                     {audioWaiting ? "Waiting for audio" : "Time to answer"}
                   </span>
-                  <strong>{remaining}s</strong>
+                  <strong
+                    role="timer"
+                    aria-label={`${remaining} seconds remaining`}
+                  >
+                    {remaining}s
+                  </strong>
+                  <button
+                    type="button"
+                    className="question-reveal"
+                    aria-label="Show answer"
+                    title="Show answer"
+                    onClick={() => revealAnswer("skip")}
+                  >
+                    <Eye size={19} aria-hidden="true" />
+                  </button>
                 </div>
                 <div className="question-timer-track" aria-hidden="true">
                   <span
@@ -1168,31 +1178,24 @@ export default function Session({
                   {error}
                 </p>
               )}
-              {feedback === null ? (
+              {feedback === null && task.kind !== "meaning" ? (
                 <div className="question-actions">
-                  {task.kind !== "meaning" && (
-                    <Button
-                      type="submit"
-                      disabled={
-                        !normalize(answer) ||
-                        (task.kind === "arrange" &&
-                          tokens.length !== parts.length)
-                      }
-                    >
-                      Check answer
-                    </Button>
-                  )}
-                  {s.mode === "review" && (
-                    <Button secondary onClick={() => revealAnswer("skip")}>
-                      <Eye size={17} /> Show answer
-                    </Button>
-                  )}
+                  <Button
+                    type="submit"
+                    disabled={
+                      !normalize(answer) ||
+                      (task.kind === "arrange" &&
+                        tokens.length !== parts.length)
+                    }
+                  >
+                    Check answer
+                  </Button>
                 </div>
-              ) : (
+              ) : feedback !== null ? (
                 <div className="session-feedback-next">
                   <Button onClick={continueStep}>Continue</Button>
                 </div>
-              )}
+              ) : null}
             </form>
           )}
           <p className="session-note">
