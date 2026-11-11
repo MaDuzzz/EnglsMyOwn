@@ -714,11 +714,7 @@ export default function Session({
   );
   return (
     <main
-      className={
-        "session-page" +
-        (advanceReady && !intro ? " can-advance" : "") +
-        (intro ? " is-word-intro" : "")
-      }
+      className={"session-page" + (intro ? " is-word-intro" : "")}
     >
       <header className="session-header">
         <button
@@ -898,12 +894,6 @@ export default function Session({
                 }
               >
                 <WordDetails key={word.id} word={word} />
-                {intro && (
-                  <p className="word-card-hint">
-                    <ArrowLeft size={15} /> Swipe this card left for the next
-                    word
-                  </p>
-                )}
               </div>
               <div className="word-practice-action">
                 <Button onClick={intro ? slideToNextWord : continueStep}>
@@ -1204,36 +1194,6 @@ export default function Session({
                 </div>
               )}
             </form>
-          )}
-          {advanceReady && !intro && (
-            <button
-              type="button"
-              className="swipe-next"
-              onClick={continueStep}
-              aria-label={
-                intro
-                  ? s.introduced.length === 9
-                    ? "Start practice"
-                    : "Next word"
-                  : refresher
-                    ? "Try again"
-                    : "Continue to next question"
-              }
-            >
-              <span>
-                <ArrowLeft size={17} /> Swipe left to continue
-              </span>
-              <strong>
-                {intro
-                  ? s.introduced.length === 9
-                    ? "Start practice"
-                    : "Next word"
-                  : refresher
-                    ? "Try again"
-                    : "Continue"}
-              </strong>
-              <ArrowRight size={18} />
-            </button>
           )}
           <p className="session-note">
             <Info size={14} />
