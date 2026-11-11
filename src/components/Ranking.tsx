@@ -55,14 +55,20 @@ function PetAvatar({ entry }: { entry: RankingEntry }) {
         const stage = Math.max(0, Math.min(4, entry.petStage));
         const cellWidth = image.naturalWidth / 5;
         const cellHeight = image.naturalHeight / 5;
+        const cropRatio = stage === 0 ? 0.72 : stage === 1 ? 0.84 : 0.9;
+        const cropWidth = cellWidth * cropRatio;
+        const cropHeight = cellHeight * cropRatio;
+        const cropX = (cellWidth - cropWidth) / 2;
+        const cropY =
+          stage === 0 ? cellHeight - cropHeight : (cellHeight - cropHeight) / 2;
         context.imageSmoothingEnabled = true;
         context.imageSmoothingQuality = "high";
         context.drawImage(
           image,
-          stage * cellWidth,
-          portraitRows[entry.appearance] * cellHeight,
-          cellWidth,
-          cellHeight,
+          stage * cellWidth + cropX,
+          portraitRows[entry.appearance] * cellHeight + cropY,
+          cropWidth,
+          cropHeight,
           0,
           0,
           128,
