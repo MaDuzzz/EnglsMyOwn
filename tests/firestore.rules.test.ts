@@ -175,6 +175,8 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
       displayName: "Learner",
       appearance: "cat",
       petStage: 1,
+      petName: "Mochi",
+      petAgeDays: 12,
       weekKey: "2026-11-09",
       weekPoints: 30,
       weekDays: 1,
@@ -201,6 +203,10 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
       ),
     );
     await assertSucceeds(setDoc(ref, summary));
+    await assertSucceeds(
+      setDoc(ref, (({ petName, petAgeDays, ...legacy }) => legacy)(summary)),
+    );
+    await assertSucceeds(setDoc(ref, summary));
     await assertSucceeds(getDocs(collection(approved, "rankings")));
     await assertFails(
       setDoc(doc(approved, "rankings/owner"), { ...summary, uid: "owner" }),
@@ -208,6 +214,9 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     await assertFails(
       setDoc(ref, { ...summary, email: "private@example.test" }),
     );
+    await assertFails(setDoc(ref, { ...summary, petName: "" }));
+    await assertFails(setDoc(ref, { ...summary, petAgeDays: -1 }));
+    await assertFails(setDoc(ref, { ...summary, petAgeDays: "12" }));
     await assertFails(setDoc(ref, { ...summary, bestStreak: 1 }));
     await assertFails(
       setDoc(

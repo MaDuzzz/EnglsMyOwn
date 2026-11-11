@@ -38,6 +38,9 @@ describe("ranking summaries", () => {
     const entry = rankingEntry("learner", "Dung", learning, "2026-11-05");
     expect(weekStart("2026-11-01")).toBe("2026-10-26");
     expect(entry).toMatchObject({
+      petName: "Mochi",
+      petAgeDays: 6,
+      petStage: 0,
       weekKey: "2026-11-02",
       weekPoints: 50,
       weekDays: 2,
@@ -54,6 +57,18 @@ describe("ranking summaries", () => {
     expect(metricValue(entry, "streak", "2026-12-01")).toBe(3);
     expect(weeklyWordsOf(entry, "2026-11-09")).toBe(0);
     expect(currentStreakOf(entry, "2026-11-06")).toBe(0);
+  });
+
+  it("publishes pet identity and calendar age independently of streak", () => {
+    const learning = emptyLearning();
+    learning.pet = { name: "  Zu zù  ", gender: "female", species: "lion" };
+    learning.records = [completed("2026-01-01", "learn")];
+    const entry = rankingEntry("learner", "Dung", learning, "2026-11-11");
+    expect(entry.appearance).toBe("lioness");
+    expect(entry.petName).toBe("Zu zù");
+    expect(entry.petAgeDays).toBe(315);
+    expect(entry.bestStreak).toBe(1);
+    expect(entry.currentStreak).toBe(0);
   });
 
   it("keeps best streak after a break and gives equal scores the same rank", () => {

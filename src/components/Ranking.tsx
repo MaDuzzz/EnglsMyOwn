@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { BookOpen, Flame, Info, PawPrint, Trophy } from "lucide-react";
 import {
   addDays,
-  currentStreakOf,
   metricValue,
   rankedEntries,
   weekStart,
@@ -10,7 +9,7 @@ import {
   type RankingEntry,
   type RankingMetric,
 } from "../lib/ranking";
-import { loadPetArt } from "./petArt";
+import { petStages } from "../lib/pets";
 import { ProgressBar } from "./ui";
 
 const choices: { id: RankingMetric; label: string }[] = [
@@ -19,6 +18,25 @@ const choices: { id: RankingMetric; label: string }[] = [
   { id: "words", label: "Words" },
 ];
 const GOAL = 50;
+const portraitRows: Record<RankingEntry["appearance"], number> = {
+  cat: 0,
+  dog: 1,
+  tiger: 2,
+  lion: 3,
+  lioness: 4,
+};
+const portraitUrl = `${import.meta.env.BASE_URL}assets/pets/ranking-avatars-v1.jpg`;
+let portraitPromise: Promise<HTMLImageElement> | undefined;
+
+function loadPortraits() {
+  portraitPromise ??= new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Ranking portraits could not load"));
+    image.src = portraitUrl;
+  });
+  return portraitPromise;
+}
 
 function PetAvatar({ entry }: { entry: RankingEntry }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -26,18 +44,29 @@ function PetAvatar({ entry }: { entry: RankingEntry }) {
   useEffect(() => {
     let active = true;
     setFailed(false);
-    void loadPetArt(entry.appearance)
-      .then((art) => {
+    const canvas = ref.current;
+    const context = canvas?.getContext("2d");
+    context?.clearRect(0, 0, 128, 128);
+    void loadPortraits()
+      .then((image) => {
         if (!active || !ref.current) return;
         const context = ref.current.getContext("2d");
         if (!context) return;
-        context.clearRect(0, 0, 80, 80);
+        const stage = Math.max(0, Math.min(4, entry.petStage));
+        const cellWidth = image.naturalWidth / 5;
+        const cellHeight = image.naturalHeight / 5;
+        context.imageSmoothingEnabled = true;
+        context.imageSmoothingQuality = "high";
         context.drawImage(
-          art.frames[Math.max(1, entry.petStage)][0],
+          image,
+          stage * cellWidth,
+          portraitRows[entry.appearance] * cellHeight,
+          cellWidth,
+          cellHeight,
           0,
           0,
-          80,
-          80,
+          128,
+          128,
         );
       })
       .catch(() => {
@@ -47,13 +76,25 @@ function PetAvatar({ entry }: { entry: RankingEntry }) {
       active = false;
     };
   }, [entry.appearance, entry.petStage]);
+  const level = Math.max(1, Math.min(5, entry.petStage + 1));
   return (
-    <span className="ranking-pet" aria-hidden="true">
-      {failed ? (
-        <PawPrint size={26} />
-      ) : (
-        <canvas ref={ref} width={80} height={80} />
-      )}
+    <span
+      className="ranking-avatar"
+      aria-label={`${entry.appearance} companion, level ${level}`}
+    >
+      <span className="ranking-pet">
+        <canvas ref={ref} width={128} height={128} aria-hidden="true" />
+        {failed && (
+          <PawPrint
+            className="ranking-pet-fallback"
+            size={26}
+            aria-hidden="true"
+          />
+        )}
+      </span>
+      <span className="ranking-level" aria-hidden="true">
+        LV {level}
+      </span>
     </span>
   );
 }
@@ -87,8 +128,6 @@ export default function Ranking({
   const ownValue = mine ? metricValue(mine, metric, today) : 0;
   const leadValue = leader ? metricValue(leader, metric, today) : 0;
   const difference = Math.max(0, leadValue - ownValue);
-  const ownCurrent = mine ? currentStreakOf(mine, today) : 0;
-  const daysToPersonalBest = Math.max(1, ownValue - ownCurrent + 1);
   const allZero = leadValue === 0;
   const weekKey = weekStart(today);
   const weekEnd = addDays(weekKey, 6);
@@ -153,12 +192,6 @@ export default function Ranking({
             label={`Your ${metric} compared with first place`}
           />
           <span className="ranking-gap">{gap}</span>
-          {metric === "streak" && (
-            <span className="ranking-personal-goal">
-              Current {ownCurrent} days · {daysToPersonalBest}{" "}
-              {daysToPersonalBest === 1 ? "day" : "days"} to a new personal best
-            </span>
-          )}
         </div>
         <span className="ranking-hero-icon" aria-hidden="true">
           {metric === "points" ? (
@@ -189,16 +222,21 @@ export default function Ranking({
             </button>
           ))}
         </div>
-        <p className="ranking-helper" aria-live="polite">{helper}</p>
+        <p className="ranking-helper" aria-live="polite">
+          {helper}
+        </p>
         <div className="ranking-list">
           {ranked.map((entry) => {
             const value = metricValue(entry, metric, today);
-            const secondary =
-              metric === "points"
-                ? `${entry.weekKey === weekKey ? entry.weekDays : 0} learning days`
-                : metric === "words"
-                  ? `${value / 10} batches completed`
-                  : `Current ${currentStreakOf(entry, today)} days`;
+            const petDetails = [
+              entry.petName || "Companion",
+              petStages[Math.max(0, Math.min(4, entry.petStage))],
+              typeof entry.petAgeDays === "number"
+                ? `${entry.petAgeDays} ${entry.petAgeDays === 1 ? "day" : "days"}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(" · ");
             return (
               <div
                 className={`ranking-row card${entry.uid === uid ? " is-you" : ""}`}
@@ -217,7 +255,7 @@ export default function Ranking({
                       ? `You · ${entry.displayName}`
                       : entry.displayName}
                   </strong>
-                  <small>{secondary}</small>
+                  <small title={petDetails}>{petDetails}</small>
                 </span>
                 <strong className="ranking-value">
                   {value}{" "}

@@ -594,7 +594,12 @@ export function petGrowth(s: Learning, today = dayKey()) {
   );
   const points = Math.min(effort, age * 25);
   const milestone = Math.floor(points / 500) + 1;
-  return { points: Math.floor(points), percent: (points % 500) / 5, milestone };
+  return {
+    points: Math.floor(points),
+    percent: (points % 500) / 5,
+    milestone,
+    ageDays: age,
+  };
 }
 export function streak(s: Learning, day = dayKey()) {
   let count = 0;

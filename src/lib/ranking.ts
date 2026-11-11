@@ -13,6 +13,8 @@ export type RankingEntry = {
   displayName: string;
   appearance: "cat" | "dog" | "lion" | "lioness" | "tiger";
   petStage: number;
+  petName?: string;
+  petAgeDays?: number;
   weekKey: string;
   weekPoints: number;
   weekDays: number;
@@ -80,11 +82,14 @@ export function rankingEntry(
     (record) => record.day.startsWith(monthKey) && record.day <= today,
   );
   const { best, lastGoalDay } = bestStreakOf(data);
+  const growth = petGrowth(data, today);
   return {
     uid,
     displayName: displayName.trim().slice(0, 40) || "Learner",
     appearance: appearanceOf(data.pet),
-    petStage: growthStage(petGrowth(data, today).points).index,
+    petStage: growthStage(growth.points).index,
+    petName: data.pet.name.trim().slice(0, 24) || "Mochi",
+    petAgeDays: growth.ageDays,
     weekKey,
     weekPoints: weekly.reduce(
       (sum, record) => sum + (record.mode === "learn" ? 20 : 10),

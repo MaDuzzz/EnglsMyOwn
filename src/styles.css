@@ -3825,14 +3825,6 @@ textarea {
 .ranking-gap {
   font-size: 13px;
 }
-.ranking-personal-goal {
-  display: block;
-  margin-top: 6px;
-  color: var(--accent);
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1.35;
-}
 .ranking-hero-icon {
   display: flex;
   align-items: center;
@@ -3880,7 +3872,10 @@ textarea {
   color: var(--muted);
   font-size: 15px;
   font-weight: 650;
-  transition: background-color 280ms ease, color 280ms ease, transform 280ms ease;
+  transition:
+    background-color 280ms ease,
+    color 280ms ease,
+    transform 280ms ease;
 }
 .ranking-switch button.selected {
   background: var(--accent);
@@ -3906,7 +3901,9 @@ textarea {
   min-width: 0;
   min-height: 78px;
   padding: 9px 16px;
-  transition: background-color 300ms ease, transform 300ms ease;
+  transition:
+    background-color 300ms ease,
+    transform 300ms ease;
 }
 .ranking-row.is-you {
   background: var(--softest);
@@ -3936,21 +3933,49 @@ textarea {
   color: #623d2d;
   box-shadow: 0 3px 0 #ba7954;
 }
+.ranking-avatar {
+  position: relative;
+  display: block;
+  flex: 0 0 66px;
+  width: 66px;
+  height: 66px;
+}
 .ranking-pet {
   display: grid;
   place-items: center;
-  flex: 0 0 58px;
-  width: 58px;
-  height: 58px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
   border-radius: 50%;
   background: var(--soft);
   color: var(--accent);
+  border: 2px solid var(--soft);
+  box-shadow: 0 2px 8px #1e142016;
 }
 .ranking-pet canvas {
   display: block;
-  width: 64px;
-  height: 64px;
+  width: 100%;
+  height: 100%;
+}
+.ranking-pet-fallback {
+  position: absolute;
+}
+.ranking-level {
+  position: absolute;
+  right: -4px;
+  bottom: -3px;
+  min-width: 38px;
+  padding: 3px 5px 2px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--button-text);
+  font-family: "Nunito", sans-serif;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  box-shadow: 0 2px 5px #1e142023;
 }
 .ranking-person {
   display: flex;
@@ -3974,7 +3999,11 @@ textarea {
 .ranking-person small {
   color: var(--muted);
   font-size: 11px;
-  white-space: nowrap;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 .ranking-value {
   flex: 0 0 auto;
@@ -4042,36 +4071,112 @@ textarea {
   text-decoration: underline;
 }
 @media (max-width: 800px) {
-  .ranking-intro { padding: 10px 0 18px; }
-  .ranking-intro h1 { font-size: 39px; }
-  .ranking-intro p { margin-top: 4px; }
-  .ranking-hero { min-height: 180px; padding: 18px 20px; }
-  .ranking-hero-icon { width: 98px; height: 98px; flex: 0 0 98px; }
-  .ranking-hero-icon svg { width: 58px; height: 58px; }
-  .ranking-hero strong { font-size: 42px; }
-  .ranking-hero-label { margin-top: 11px; font-size: 13px; }
-  .ranking-period { font-size: 9px; }
-  .ranking-board { margin-top: 20px; }
-  .ranking-board h2 { font-size: 25px; margin-bottom: 9px; }
-  .ranking-row { gap: 9px; padding: 8px 11px; min-height: 69px; }
-  .ranking-medal { flex-basis: 30px; width: 30px; height: 30px; font-size: 11px; }
-  .ranking-pet { flex-basis: 50px; width: 50px; height: 50px; }
-  .ranking-pet canvas { width: 56px; height: 56px; }
-  .ranking-person strong { font-size: 15px; }
-  .ranking-person small { font-size: 10px; }
-  .ranking-value { font-size: 16px; }
-  .ranking-together { padding: 17px 18px; }
-  .ranking-together h2 { font-size: 18px; }
+  .ranking-intro {
+    padding: 10px 0 18px;
+  }
+  .ranking-intro h1 {
+    font-size: 39px;
+  }
+  .ranking-intro p {
+    margin-top: 4px;
+  }
+  .ranking-hero {
+    min-height: 180px;
+    padding: 18px 20px;
+  }
+  .ranking-hero-icon {
+    width: 98px;
+    height: 98px;
+    flex: 0 0 98px;
+  }
+  .ranking-hero-icon svg {
+    width: 58px;
+    height: 58px;
+  }
+  .ranking-hero strong {
+    font-size: 42px;
+  }
+  .ranking-hero-label {
+    margin-top: 11px;
+    font-size: 13px;
+  }
+  .ranking-period {
+    font-size: 9px;
+  }
+  .ranking-board {
+    margin-top: 20px;
+  }
+  .ranking-board h2 {
+    font-size: 25px;
+    margin-bottom: 9px;
+  }
+  .ranking-row {
+    gap: 9px;
+    padding: 8px 11px;
+    min-height: 69px;
+  }
+  .ranking-medal {
+    flex-basis: 30px;
+    width: 30px;
+    height: 30px;
+    font-size: 11px;
+  }
+  .ranking-avatar {
+    flex-basis: 56px;
+    width: 56px;
+    height: 56px;
+  }
+  .ranking-person strong {
+    font-size: 15px;
+  }
+  .ranking-person small {
+    font-size: 10px;
+  }
+  .ranking-value {
+    font-size: 16px;
+  }
+  .ranking-together {
+    padding: 17px 18px;
+  }
+  .ranking-together h2 {
+    font-size: 18px;
+  }
 }
 @media (max-width: 370px) {
-  .ranking-hero { gap: 8px; padding: 16px; }
-  .ranking-hero-icon { width: 72px; height: 72px; flex-basis: 72px; }
-  .ranking-hero-icon svg { width: 46px; height: 46px; }
-  .ranking-hero strong { font-size: 36px; }
-  .ranking-person strong { font-size: 13px; }
-  .ranking-value { font-size: 14px; }
-  .ranking-row { gap: 6px; }
-  .ranking-pet { flex-basis: 42px; width: 42px; height: 42px; }
+  .ranking-hero {
+    gap: 8px;
+    padding: 16px;
+  }
+  .ranking-hero-icon {
+    width: 72px;
+    height: 72px;
+    flex-basis: 72px;
+  }
+  .ranking-hero-icon svg {
+    width: 46px;
+    height: 46px;
+  }
+  .ranking-hero strong {
+    font-size: 36px;
+  }
+  .ranking-person strong {
+    font-size: 13px;
+  }
+  .ranking-value {
+    font-size: 14px;
+  }
+  .ranking-row {
+    gap: 6px;
+  }
+  .ranking-avatar {
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+  }
+  .ranking-level {
+    font-size: 8px;
+    min-width: 34px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   *,
