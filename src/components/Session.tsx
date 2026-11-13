@@ -1066,7 +1066,7 @@ export default function Session({
                           }}
                         >
                           <span>{String.fromCharCode(65 + i)}</span>
-                          {o}
+                          {o.toLocaleLowerCase("vi-VN")}
                           <span className="radio-dot" />
                         </button>
                       ))}
