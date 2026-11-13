@@ -1,4 +1,13 @@
 let context: AudioContext | undefined;
+let completionClip: HTMLAudioElement | undefined;
+
+function fanfareClip() {
+  completionClip ||= new Audio(
+    `${import.meta.env.BASE_URL}audio/celebration-fanfare.wav`,
+  );
+  completionClip.preload = "auto";
+  return completionClip;
+}
 
 function note(
   audioContext: AudioContext,
@@ -68,7 +77,27 @@ export function playAnswerFeedback(correct: boolean, spokenPraise = true) {
   if (correct && spokenPraise) speakPraise();
 }
 
+export function prepareCompletionAudio() {
+  try {
+    fanfareClip().load();
+  } catch {
+    // The completion screen remains usable when audio is unavailable.
+  }
+}
+
 export function playCompletionFanfare() {
+  try {
+    const clip = fanfareClip();
+    clip.pause();
+    if (clip.readyState > 0) clip.currentTime = 0;
+    clip.volume = 0.8;
+    void clip.play().catch(playCompletionFanfareWebAudio);
+  } catch {
+    playCompletionFanfareWebAudio();
+  }
+}
+
+function playCompletionFanfareWebAudio() {
   try {
     context ||= new AudioContext();
     const audioContext = context;
@@ -88,7 +117,7 @@ export function playCompletionFanfare() {
           filter.type = "lowpass";
           filter.frequency.setValueAtTime(1450, begins);
           gain.gain.setValueAtTime(0.0001, begins);
-          gain.gain.exponentialRampToValueAtTime(0.045, begins + 0.035);
+          gain.gain.exponentialRampToValueAtTime(0.11, begins + 0.035);
           gain.gain.exponentialRampToValueAtTime(0.0001, begins + duration);
           oscillator
             .connect(filter)

@@ -49,6 +49,7 @@ import {
 import {
   playAnswerFeedback,
   playCompletionFanfare,
+  prepareCompletionAudio,
   speakPraise,
   speakWord,
   stopFeedbackVoice,
@@ -350,6 +351,7 @@ export default function Session({
     if (feedback !== null || gradedRef.current || !task) return;
     gradedRef.current = true;
     const correct = grade(word, task, selectedAnswer);
+    if (correct && s.completed.length === 39) prepareCompletionAudio();
     if (document.activeElement instanceof HTMLElement)
       document.activeElement.blur();
     stopPronunciation();
@@ -585,6 +587,7 @@ export default function Session({
       { duration: 280, easing: "cubic-bezier(.3,.7,.2,1)", fill: "forwards" },
     );
     panelAnimation.current = animation;
+    if (following.completed.length === 40) celebrateCompletion();
     void animation.finished
       .then(() => {
         if (panelAnimation.current !== animation) return;
@@ -696,6 +699,9 @@ export default function Session({
   }
   useEffect(() => {
     if (complete) void finish();
+  }, [complete]);
+  useEffect(() => {
+    if (complete) celebrateCompletion();
   }, [complete]);
   const displayed =
     s.completed.length +
