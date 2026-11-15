@@ -106,6 +106,8 @@
   color: var(--text);
   font-size: 12px;
 }
+.shadow-library-repeat { margin-top: 20px; }
+.shadow-library-repeat > b { font-size: 14px; }
 .shadow-resume-note { font-size: 13px; color: var(--accent) !important; }
 .shadow-how h2 { margin-bottom: 12px; }
 .shadow-how p { display: flex; gap: 12px; align-items: center; margin: 4px 0; }
@@ -139,6 +141,12 @@
 .shadow-setup, .shadow-audio-card, .shadow-line-card, .shadow-transcript { padding: 20px; margin: 12px 0; }
 .shadow-setup h2 { margin-top: 8px; }
 .shadow-setup p { font-size: 14px; }
+.shadow-setup-compact { padding-top: 14px; padding-bottom: 14px; }
+.shadow-setup-compact h2 { margin: 0; font-size: 15px; }
+.shadow-setup-compact p { margin-bottom: 0; font-size: 12px; }
+.shadow-setup-compact .shadow-repeat-options { margin-top: 10px; }
+.shadow-setup-compact .shadow-repeat-options button { min-height: 51px; }
+.shadow-setup-compact .shadow-repeat-options b { font-size: 16px; }
 .shadow-repeat-options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 16px; }
 .shadow-repeat-options button {
   min-height: 66px; border-radius: 14px; background: var(--softest);

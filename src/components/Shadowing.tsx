@@ -31,6 +31,21 @@ function formatEstimate(repeats: RepeatCount) {
   return `About ${Math.round(programDuration(repeats) / 60)} min`;
 }
 
+function RepeatOptions({ value, onChange }: {
+  value: RepeatCount;
+  onChange: (choice: RepeatCount) => void;
+}) {
+  return <div className="shadow-repeat-options" role="group" aria-label="Practice rounds">
+    {repeatChoices.map((choice) => <button
+      key={choice}
+      type="button"
+      className={value === choice ? "selected" : ""}
+      aria-pressed={value === choice}
+      onClick={() => onChange(choice)}
+    ><b>{choice}×</b><small>{formatEstimate(choice)}</small></button>)}
+  </div>;
+}
+
 function Waveform({ active = false }: { active?: boolean }) {
   const heights = [8, 12, 18, 27, 38, 29, 22, 42, 62, 78, 55, 39, 28, 20, 31, 46, 27, 18, 12, 8];
   return <div className={`shadow-wave ${active ? "active" : ""}`} aria-hidden="true">
@@ -52,6 +67,7 @@ export default function Shadowing({
   const [open, setOpen] = useState(false);
   const key = `engls-shadowing:v1:${uid}:${shadowingLessonId}`;
   const [saved, setSaved] = useState<SavedPlace | null>(() => savedPlace(key));
+  const [selectedRepeats, setSelectedRepeats] = useState<RepeatCount>(() => savedPlace(key)?.repeats || 1);
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -94,9 +110,16 @@ export default function Shadowing({
               <span>1 · Listen once · {formatAudioTime(lesson.warmupDuration)}</span>
               <span>2 · Shadow together · {formatAudioTime(lesson.shadowingDuration)}</span>
             </div>
-            {saved && <p className="shadow-resume-note">Your place is saved · {formatAudioTime(saved.time)} into {saved.repeats}×</p>}
+            <div className="shadow-library-repeat">
+              <b>Choose your practice rounds</b>
+              <RepeatOptions value={selectedRepeats} onChange={setSelectedRepeats} />
+            </div>
+            {saved && selectedRepeats === saved.repeats &&
+              <p className="shadow-resume-note">Your place is saved · {formatAudioTime(saved.time)} into {saved.repeats}×</p>}
+            {saved && selectedRepeats !== saved.repeats &&
+              <p className="shadow-resume-note">This choice starts a new session from the beginning.</p>}
             <Button onClick={() => setOpen(true)}>
-              {saved ? "Continue listening" : "Start listening"}<ArrowRight size={18} />
+              {saved && selectedRepeats === saved.repeats ? "Continue listening" : `Start ${selectedRepeats}× practice`}<ArrowRight size={18} />
             </Button>
           </section>
           <section className="card shadow-how">
@@ -114,6 +137,8 @@ export default function Shadowing({
       storageKey={key}
       saved={saved}
       onSaved={setSaved}
+      initialRepeats={selectedRepeats}
+      onRepeatsChange={setSelectedRepeats}
       onClose={() => setOpen(false)}
       theme={theme}
       onToggleTheme={onToggleTheme}
@@ -122,24 +147,27 @@ export default function Shadowing({
 }
 
 function ShadowingPlayer({
-  lesson, demo, storageKey, saved, onSaved, onClose, theme, onToggleTheme,
+  lesson, demo, storageKey, saved, onSaved, initialRepeats, onRepeatsChange,
+  onClose, theme, onToggleTheme,
 }: {
   lesson: ShadowingLesson;
   demo: boolean;
   storageKey: string;
   saved: SavedPlace | null;
   onSaved: (place: SavedPlace | null) => void;
+  initialRepeats: RepeatCount;
+  onRepeatsChange: (choice: RepeatCount) => void;
   onClose: () => void;
   theme: string;
   onToggleTheme: () => void;
 }) {
-  const [repeats, setRepeats] = useState<RepeatCount>(saved?.repeats || 1);
+  const [repeats, setRepeats] = useState<RepeatCount>(initialRepeats);
   const [started, setStarted] = useState(false);
   const [source, setSource] = useState("");
   const [preparing, setPreparing] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [error, setError] = useState("");
-  const [time, setTime] = useState(saved?.time || 0);
+  const [time, setTime] = useState(saved?.repeats === initialRepeats ? saved.time : 0);
   const [playing, setPlaying] = useState(false);
   const [ready, setReady] = useState(false);
   const [complete, setComplete] = useState(false);
@@ -246,6 +274,18 @@ function ShadowingPlayer({
     setTime(0);
     if (audioRef.current) audioRef.current.currentTime = 0;
   }
+  function changeRepeats(choice: RepeatCount) {
+    if (choice === repeats) return;
+    audioRef.current?.pause();
+    setStarted(false);
+    setPlaying(false);
+    setComplete(false);
+    setRepeats(choice);
+    onRepeatsChange(choice);
+    setTime(saved?.repeats === choice ? saved.time : 0);
+    savedSecond.current = -1;
+    retryTime.current = null;
+  }
 
   return <div className="shadow-player">
     <header className="shadow-player-header">
@@ -289,23 +329,13 @@ function ShadowingPlayer({
         <h1>{lesson.title}</h1>
         <p>{lesson.level} · {lesson.lines.length} lines · {formatAudioTime(totalDuration)}</p>
       </div>
-      {!started && <section className="card shadow-setup">
-        <span className="eyebrow">MAKE THE RIDE YOURS</span>
-        <h2>How many rounds today?</h2>
-        <p className="muted">Listen to the whole story once, then shadow every line. Practice repeats automatically.</p>
-        <div className="shadow-repeat-options" role="group" aria-label="Practice rounds">
-          {repeatChoices.map((choice) => <button
-            key={choice}
-            className={repeats === choice ? "selected" : ""}
-            aria-pressed={repeats === choice}
-            onClick={() => {
-              setRepeats(choice);
-              setTime(saved?.repeats === choice ? saved.time : 0);
-            }}
-          ><b>{choice}×</b><small>{formatEstimate(choice)}</small></button>)}
-        </div>
-        {initialTime > 0 && <p className="shadow-resume-note">Continue from {formatAudioTime(initialTime)}, or choose another length to start over.</p>}
-      </section>}
+      <section className={`card shadow-setup ${started ? "shadow-setup-compact" : ""}`}>
+        <h2>Practice rounds</h2>
+        {!started && <p className="muted">Listen to the whole story once, then shadow every line. Practice repeats automatically.</p>}
+        <RepeatOptions value={repeats} onChange={changeRepeats} />
+        {started && <p className="muted">Changing rounds stops this session and starts the new length from the beginning.</p>}
+        {!started && initialTime > 0 && <p className="shadow-resume-note">Continue from {formatAudioTime(initialTime)}, or choose another length to start over.</p>}
+      </section>
       <div className="shadow-phase-switch" aria-label="Listening phase">
         <span className={position.phase === "warmup" ? "selected" : ""}>1 · Listen once</span>
         <span className={position.phase === "practice" ? "selected" : ""}>2 · Shadow together</span>
