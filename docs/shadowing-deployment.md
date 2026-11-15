@@ -6,13 +6,28 @@ The four continuous audio programs live in the **private** R2 bucket
 learner's approved status before issuing a one-hour streaming link. The Worker
 supports byte ranges for iPhone media playback. Do not enable R2 public access.
 
+## Live pilot (15 November 2026)
+
+- App: <https://maduzzz.github.io/EnglsMyOwn/#shadowing>
+- Worker: <https://englsmyown-shadowing.englsmyown.workers.dev>
+- All four `pilot-01/program-{1,3,5,7}x.m4a` files were uploaded to private R2.
+  `MEDIA_SIGNING_SECRET` is configured in Cloudflare.
+- The `shadowingLessons` Firestore Rules are published, and `pilot-01` is
+  published through **Your studio**. The GitHub Actions variable
+  `VITE_SHADOWING_API_BASE` points to the Worker.
+- [Pages deployment](https://github.com/MaDuzzz/EnglsMyOwn/actions/runs/43714521622)
+  passed. Authenticated playback was checked on the public site with 1× and
+  3× programs. Full playback with an iPhone screen locked still needs a device
+  check.
+
 ## Files prepared in this repository
 
 - `design/shadowing/pilot-01-audio/cues.json`: the 20 approved lines, Vietnamese
-  meanings, and timestamps; upload through **Your studio** in the app. This
+  meanings, and timestamps; already published through **Your studio**. This
   private local file is ignored by Git.
-- `design/shadowing/pilot-01-audio/program-{1,3,5,7}x.m4a`: ready to upload into
-  R2 under the `pilot-01/` prefix. Audio files are ignored by Git.
+- `design/shadowing/pilot-01-audio/program-{1,3,5,7}x.m4a`: local source files
+  for the programs uploaded under the R2 `pilot-01/` prefix. Audio files are
+  ignored by Git.
 - `scripts/build-shadowing-programs.py`: rebuilds the four files from the local
   `warmup.m4a` and `shadowing.m4a`. It needs Python `imageio-ffmpeg`.
 
@@ -21,7 +36,10 @@ practice rounds, with five seconds between rounds. Each practice line plays at
 0.75×, pauses eight seconds, replays at 1×, then pauses five seconds before the
 next line. The final line has no extra silence.
 
-## Connect the private bucket
+## Re-deploy or replace the pilot
+
+The initial setup is complete. Use these steps when changing the audio,
+transcript, Worker, or project configuration.
 
 1. Upload the four `program-*.m4a` files to **R2 → englsmyown-shadowing →
    pilot-01**. Keep the two existing source files if desired; the app reads
