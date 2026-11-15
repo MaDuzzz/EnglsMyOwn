@@ -44,6 +44,8 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
         });
       await setDoc(doc(db, "words/published"), { status: "published" });
       await setDoc(doc(db, "words/draft"), { status: "draft" });
+      await setDoc(doc(db, "shadowingLessons/pilot-01"), { status: "published" });
+      await setDoc(doc(db, "shadowingLessons/draft"), { status: "draft" });
       await setDoc(doc(db, "learning/approved"), {
         records: [],
         plans: {},
@@ -81,6 +83,28 @@ describe.skipIf(!emulator)("Firestore access boundaries", () => {
     );
     await assertFails(getDoc(doc(db, "words/draft")));
     await assertFails(getDocs(collection(db, "words")));
+  });
+  it("restricts shadowing scripts to approved learners and the owner", async () => {
+    await assertSucceeds(getDoc(doc(
+      env.authenticatedContext("approved").firestore(),
+      "shadowingLessons/pilot-01",
+    )));
+    await assertFails(getDoc(doc(
+      env.authenticatedContext("pending").firestore(),
+      "shadowingLessons/pilot-01",
+    )));
+    await assertFails(getDoc(doc(
+      env.authenticatedContext("approved").firestore(),
+      "shadowingLessons/draft",
+    )));
+    await assertFails(setDoc(doc(
+      env.authenticatedContext("approved").firestore(),
+      "shadowingLessons/other",
+    ), { status: "published" }));
+    await assertSucceeds(getDoc(doc(
+      env.authenticatedContext("owner").firestore(),
+      "shadowingLessons/draft",
+    )));
   });
   it("prevents self approval, role escalation and owner config access", async () => {
     const db = env.authenticatedContext("pending").firestore();

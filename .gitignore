@@ -6,3 +6,7 @@ dist/
 *-debug.log
 .firebase/
 test-results/
+design/shadowing/pilot-01-audio/*.m4a
+design/shadowing/pilot-01-audio/cues.json
+workers/shadowing/.dev.vars*
+workers/shadowing/.wrangler/

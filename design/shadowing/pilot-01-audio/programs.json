@@ -1,0 +1,21 @@
+{
+  "gapSeconds": 5,
+  "programs": {
+    "1": {
+      "file": "program-1x.m4a",
+      "duration": 428.32
+    },
+    "3": {
+      "file": "program-3x.m4a",
+      "duration": 1176.46
+    },
+    "5": {
+      "file": "program-5x.m4a",
+      "duration": 1924.6
+    },
+    "7": {
+      "file": "program-7x.m4a",
+      "duration": 2672.74
+    }
+  }
+}

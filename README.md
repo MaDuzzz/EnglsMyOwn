@@ -1,6 +1,6 @@
 # EnglsMyOwn
 
-App học tiếng Anh cá nhân: từ vựng theo batch, video sáu bước, báo cáo và bạn mèo Mochi. React + TypeScript + Vite, Firebase Auth/Firestore, GitHub Pages.
+App học tiếng Anh cá nhân: từ vựng theo batch, Shadowing nghe và nhại câu, báo cáo và thú cưng. React + TypeScript + Vite, Firebase Auth/Firestore, GitHub Pages.
 
 ## Chạy preview
 
@@ -21,12 +21,14 @@ Mở URL Vite in ra (mặc định `http://127.0.0.1:5173/EnglsMyOwn/`). Khi ch�
 
 Theo [hướng dẫn Firebase và GitHub Pages](docs/setup.md). Project đích: `english-app-6ca48`. Không cần VPS hay service-account key trong frontend. Xem [hướng dẫn nhập XLSX](docs/content/xlsx-import.md) và file mẫu trong `outputs/firebase-xlsx/`.
 
+Shadowing dùng R2 bucket riêng tư qua Cloudflare Worker, Firestore cho transcript và bốn file audio liên tục cho lựa chọn 1×/3×/5×/7×. Xem [các bước triển khai Shadowing](docs/shadowing-deployment.md). Ranking nằm ở nút cúp cạnh streak; tab dưới dành cho Shadowing.
+
 ## Có trong bản đầu
 
-- Today, Words/Learn/My words, Videos, Progress, tài khoản và studio; hai theme, mobile và sidebar laptop.
+- Today, Words/Learn/My words, Shadowing, Progress, Ranking, tài khoản và studio; hai theme, mobile và sidebar laptop.
 - Google sign-in, chờ duyệt, thu hồi quyền; Firestore Rules bảo vệ nội dung và dữ liệu cá nhân.
 - Batch 10 từ × 4 dạng, review theo vòng, thử lại câu sai, khóa học mới theo toàn bộ review, vé và bữa ăn tự ghi nhận khi hoàn thành.
-- Video search/filter/save, sáu bước, chọn câu, bản dịch và quiz câu. Drive iframe điều khiển thủ công.
+- Shadowing pilot 20 câu với warmup một lượt, nhại từng câu và tự phát lại 1×/3×/5×/7×; video chưa ở thanh điều hướng chính.
 - Biểu đồ cột/đường, lịch tháng; số từ và thời gian hoạt động trong batch đã hoàn thành.
 - Mèo có hiệu ứng thở, đổi tên/tông màu/giới tính; lửa streak mỗi 8 giây, hỗ trợ Reduce Motion.
 - Manifest/icon cho Home Screen; phiên bản online, chưa có offline/service worker.

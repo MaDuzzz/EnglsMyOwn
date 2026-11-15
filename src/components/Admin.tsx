@@ -5,6 +5,7 @@ import {
   onSnapshot,
   doc,
   updateDoc,
+  setDoc,
   runTransaction,
   writeBatch,
 } from "firebase/firestore";
@@ -13,6 +14,7 @@ import { db } from "../lib/firebase";
 import { validateImport, storedWord } from "../lib/content";
 import { type Profile } from "../lib/useApp";
 import { Button, Modal } from "./ui";
+import { validateShadowingImport, type ShadowingLesson } from "../lib/shadowing";
 export default function Admin({
   demo,
   uid,
@@ -34,6 +36,8 @@ export default function Admin({
     [replaceExisting, setReplaceExisting] = useState(false);
   const [resetTarget, setResetTarget] = useState<Profile | null>(null);
   const [resetError, setResetError] = useState("");
+  const [shadowingPreview, setShadowingPreview] = useState<ShadowingLesson | null>(null);
+  const [shadowingMessage, setShadowingMessage] = useState("");
   const readVersion = useRef(0);
   useEffect(
     () => () => {
@@ -179,6 +183,33 @@ export default function Admin({
       setReplaceExisting(false);
     } catch (e) {
       setMessage((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function readShadowing(file?: File) {
+    setShadowingPreview(null);
+    setShadowingMessage("");
+    if (!file) return;
+    try {
+      if (file.name !== "cues.json" || file.size > 100_000)
+        throw Error("Choose the pilot cues.json file (under 100 KB).");
+      const content = validateShadowingImport(JSON.parse(await file.text()));
+      setShadowingPreview(content);
+      setShadowingMessage("Twenty lines and both timing maps passed validation.");
+    } catch (error) {
+      setShadowingMessage((error as Error).message);
+    }
+  }
+  async function publishShadowing() {
+    if (!db || demo || !shadowingPreview || busy) return;
+    setBusy(true);
+    try {
+      await setDoc(doc(db, "shadowingLessons", shadowingPreview.id), shadowingPreview);
+      setShadowingPreview(null);
+      setShadowingMessage("The Interview Detour is published for approved learners.");
+    } catch (error) {
+      setShadowingMessage((error as Error).message);
     } finally {
       setBusy(false);
     }
@@ -380,6 +411,35 @@ export default function Admin({
             </Button>
           </div>
         )}
+      </section>
+      <section className="card admin-section">
+        <h2><Upload /> Publish Shadowing pilot</h2>
+        <p className="muted">
+          Upload the approved cues.json. It contains the transcript and sentence
+          timing; audio stays in the private R2 bucket.
+        </p>
+        <label className="file-input">
+          Choose pilot cues.json
+          <input
+            type="file"
+            accept=".json,application/json"
+            disabled={busy}
+            onChange={(event) => {
+              void readShadowing(event.target.files?.[0]);
+              event.target.value = "";
+            }}
+          />
+        </label>
+        {shadowingPreview && (
+          <div className="import-preview">
+            <h3>{shadowingPreview.title}</h3>
+            <p className="muted">{shadowingPreview.lines.length} lines · B1 · Published</p>
+            <Button disabled={busy || demo} onClick={() => void publishShadowing()}>
+              {busy ? "Publishing…" : "Publish Shadowing lesson"}
+            </Button>
+          </div>
+        )}
+        {shadowingMessage && <p role="status" className="muted">{shadowingMessage}</p>}
       </section>
       {message && (
         <div role="status" className="notice import-message">

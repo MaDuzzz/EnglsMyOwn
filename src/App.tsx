@@ -11,6 +11,7 @@ import {
   Home,
   BookOpen,
   Trophy,
+  Headphones,
   BarChart3,
   Sun,
   Moon,
@@ -67,6 +68,7 @@ import Session from "./components/Session";
 import { Library, VideoSession } from "./components/Library";
 import Progress from "./components/Progress";
 import Ranking from "./components/Ranking";
+import Shadowing from "./components/Shadowing";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
@@ -76,7 +78,7 @@ import { useRanking } from "./lib/useRanking";
 const nav = [
   { id: "today", label: "Today", icon: Home },
   { id: "words", label: "Words", icon: BookOpen },
-  { id: "ranking", label: "Ranking", icon: Trophy },
+  { id: "shadowing", label: "Shadowing", icon: Headphones },
   { id: "progress", label: "Progress", icon: BarChart3 },
 ];
 const batchGroups: { id: LearningGroup; label: string }[] = [
@@ -625,6 +627,10 @@ export default function App() {
             </button>
           ))}
         </nav>
+        <button className={"sidebar-ranking " + (page === "ranking" ? "active" : "")}
+          onClick={() => go("ranking")}>
+          <Trophy size={20} /> Ranking
+        </button>
         <div className="sidebar-note">
           <Sparkles size={22} />
           <p>
@@ -676,6 +682,10 @@ export default function App() {
               <b>{streak(data, today)}</b>
               <span>day streak</span>
             </span>
+            <button className="icon-btn ranking-shortcut" aria-label="Open Ranking"
+              title="Ranking" onClick={() => go("ranking")}>
+              <Trophy size={21} />
+            </button>
             {themeButton}
             <button
               className="avatar"
@@ -709,7 +719,7 @@ export default function App() {
         )}
         <div className="page-scene" key={page}>
           {page === "today" ||
-          !["words", "ranking", "videos", "progress", "admin"].includes(
+          !["words", "ranking", "videos", "progress", "admin", "shadowing"].includes(
             page,
           ) ? (
             <>
@@ -1182,6 +1192,13 @@ export default function App() {
                 </>
               )}
             </>
+          ) : page === "shadowing" ? (
+            <Shadowing
+              demo={demo}
+              uid={app.user?.uid || "demo"}
+              theme={theme}
+              onToggleTheme={toggleTheme}
+            />
           ) : page === "ranking" ? (
             <Ranking
               entries={ranking.entries}

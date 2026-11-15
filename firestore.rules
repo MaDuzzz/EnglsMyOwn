@@ -28,6 +28,10 @@ service cloud.firestore {
    allow read: if owner() || (approved() && resource.data.status == 'published');
    allow write: if owner();
   }
+  match /shadowingLessons/{id} {
+   allow read: if owner() || (approved() && resource.data.status == 'published');
+   allow write: if owner();
+  }
   match /learning/{uid} {
    allow read: if approved() && request.auth.uid == uid;
    allow get: if owner();
