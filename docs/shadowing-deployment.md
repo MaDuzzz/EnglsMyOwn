@@ -17,8 +17,8 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
   `VITE_SHADOWING_API_BASE` points to the Worker.
 - [Pages deployment](https://github.com/MaDuzzz/EnglsMyOwn/actions/runs/43714521622)
   passed. Authenticated playback was checked on the public site with 1× and
-  3× programs. Full playback with an iPhone screen locked still needs a device
-  check.
+  3× programs. The user confirmed that audio continues when the iPhone screen
+  is off. A complete 7× run with the screen locked has not yet been checked.
 
 ## Files prepared in this repository
 
@@ -85,9 +85,9 @@ files is insufficient for the repeat selector.
   hour, even if access is revoked in the meantime.
 - The warmup transitions to practice and later rounds without a tap. Pause and
   reopen to confirm the selected count and audio position are restored.
-- Test a full 7× run with the screen locked on the target iPhones. Browser and
-  iOS versions can affect background playback; this cannot be confirmed by
-  desktop tests alone.
+- Test a full 7× run with the screen locked on the target iPhones to confirm
+  every practice-round transition plays without opening the app. Screen-off
+  playback itself was confirmed by the user.
 - Shadowing never changes vocabulary tickets, streak, or ranking.
 
 For local development, set `VITE_SHADOWING_API_BASE` in `.env.local` to the
