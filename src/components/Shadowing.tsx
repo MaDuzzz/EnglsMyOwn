@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import {
   ArrowLeft, ArrowRight, Check, Clock3, Eye,
   Moon, Pause, RotateCcw, Sun, Volume2,
 } from "lucide-react";
 import { auth, db } from "../lib/firebase";
 import {
-  formatAudioTime, programDuration, repeatChoices, shadowingLessonId,
+  formatAudioTime, programDuration, repeatChoices,
   shadowingPosition, validateShadowingImport,
   type RepeatCount, type ShadowingLesson,
 } from "../lib/shadowing";
@@ -15,23 +15,24 @@ import { Button, Empty } from "./ui";
 type SavedPlace = { repeats: RepeatCount; time: number; updatedAt: number };
 const audioBase = import.meta.env.VITE_SHADOWING_API_BASE?.replace(/\/$/, "") || "";
 
-function savedPlace(key: string): SavedPlace | null {
+function savedPlace(key: string, lesson: ShadowingLesson): SavedPlace | null {
   try {
     const value = JSON.parse(localStorage.getItem(key) || "null");
     if (
       repeatChoices.includes(value?.repeats) &&
       Number.isFinite(value?.time) && value.time >= 0 &&
-      value.time < programDuration(value.repeats) - 2
+      value.time < programDuration(lesson, value.repeats) - 2
     ) return value;
   } catch { /* Ignore an old or damaged local checkpoint. */ }
   return null;
 }
 
-function formatEstimate(repeats: RepeatCount) {
-  return `About ${Math.round(programDuration(repeats) / 60)} min`;
+function formatEstimate(lesson: ShadowingLesson, repeats: RepeatCount) {
+  return `About ${Math.round(programDuration(lesson, repeats) / 60)} min`;
 }
 
-function RepeatOptions({ value, onChange }: {
+function RepeatOptions({ lesson, value, onChange }: {
+  lesson: ShadowingLesson;
   value: RepeatCount;
   onChange: (choice: RepeatCount) => void;
 }) {
@@ -42,7 +43,7 @@ function RepeatOptions({ value, onChange }: {
       className={value === choice ? "selected" : ""}
       aria-pressed={value === choice}
       onClick={() => onChange(choice)}
-    ><b>{choice}×</b><small>{formatEstimate(choice)}</small></button>)}
+    ><b>{choice}×</b><small>{formatEstimate(lesson, choice)}</small></button>)}
   </div>;
 }
 
@@ -61,13 +62,18 @@ export default function Shadowing({
   theme: string;
   onToggleTheme: () => void;
 }) {
-  const [lesson, setLesson] = useState<ShadowingLesson | null>(null);
+  const [lessons, setLessons] = useState<ShadowingLesson[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [open, setOpen] = useState(false);
-  const key = `engls-shadowing:v1:${uid}:${shadowingLessonId}`;
-  const [saved, setSaved] = useState<SavedPlace | null>(() => savedPlace(key));
-  const [selectedRepeats, setSelectedRepeats] = useState<RepeatCount>(() => savedPlace(key)?.repeats || 1);
+  const [activeLesson, setActiveLesson] = useState<ShadowingLesson | null>(null);
+  const [places, setPlaces] = useState<Record<string, SavedPlace | null>>({});
+  const [selections, setSelections] = useState<Record<string, RepeatCount>>({});
+  const keyFor = (id: string) => `engls-shadowing:v1:${uid}:${id}`;
+  const placeFor = (lesson: ShadowingLesson) =>
+    Object.prototype.hasOwnProperty.call(places, lesson.id)
+      ? places[lesson.id] : savedPlace(keyFor(lesson.id), lesson);
+  const selectionFor = (lesson: ShadowingLesson) =>
+    selections[lesson.id] || placeFor(lesson)?.repeats || 1;
   useEffect(() => {
     let active = true;
     setLoading(true);
@@ -75,15 +81,16 @@ export default function Shadowing({
       ? fetch(`${import.meta.env.BASE_URL}design/shadowing/pilot-01-audio/cues.json`)
           .then(async (response) => {
             if (!response.ok) throw Error("Local Shadowing pilot cues are missing.");
-            return validateShadowingImport(await response.json());
+            return [validateShadowingImport(await response.json())];
           })
       : db
-        ? getDoc(doc(db, "shadowingLessons", shadowingLessonId)).then((snapshot) =>
-            snapshot.exists() && snapshot.data().status === "published"
-              ? (snapshot.data() as ShadowingLesson) : null)
-        : Promise.resolve(null);
+        ? getDocs(query(collection(db, "shadowingLessons"), where("status", "==", "published")))
+            .then((snapshot) => snapshot.docs.map((item) => ({
+              ...item.data(), id: item.id,
+            } as ShadowingLesson)).sort((a, b) => a.id.localeCompare(b.id)))
+        : Promise.resolve([]);
     void promise.then((result) => {
-      if (active) setLesson(result);
+      if (active) setLessons(result);
     }).catch((error) => {
       if (active) setLoadError((error as Error).message);
     }).finally(() => {
@@ -92,7 +99,7 @@ export default function Shadowing({
     return () => { active = false; };
   }, [demo]);
   return <>
-    {!open ? <>
+    {!activeLesson ? <>
       <div className="page-intro shadow-intro">
         <span className="eyebrow">LISTEN & SPEAK</span>
         <h1>Shadowing</h1>
@@ -100,8 +107,11 @@ export default function Shadowing({
       </div>
       {loadError && <p role="alert" className="error">{loadError}</p>}
       {loading ? <div className="card shadow-library-card">Getting your listening space ready…</div>
-        : lesson ? <>
-          <section className="card shadow-library-card">
+        : lessons.length ? <>
+          {lessons.map((lesson) => {
+            const saved = placeFor(lesson);
+            const selectedRepeats = selectionFor(lesson);
+            return <section className="card shadow-library-card" key={lesson.id}>
             <Waveform />
             <span className="pill">{lesson.level} · {lesson.lines.length} lines</span>
             <h2>{lesson.title}</h2>
@@ -112,34 +122,37 @@ export default function Shadowing({
             </div>
             <div className="shadow-library-repeat">
               <b>Choose your practice rounds</b>
-              <RepeatOptions value={selectedRepeats} onChange={setSelectedRepeats} />
+              <RepeatOptions lesson={lesson} value={selectedRepeats}
+                onChange={(choice) => setSelections((current) => ({ ...current, [lesson.id]: choice }))} />
             </div>
             {saved && selectedRepeats === saved.repeats &&
               <p className="shadow-resume-note">Your place is saved · {formatAudioTime(saved.time)} into {saved.repeats}×</p>}
             {saved && selectedRepeats !== saved.repeats &&
               <p className="shadow-resume-note">This choice starts a new session from the beginning.</p>}
-            <Button onClick={() => setOpen(true)}>
+            <Button onClick={() => setActiveLesson(lesson)}>
               {saved && selectedRepeats === saved.repeats ? "Continue listening" : `Start ${selectedRepeats}× practice`}<ArrowRight size={18} />
             </Button>
-          </section>
+          </section>;
+          })}
           <section className="card shadow-how">
             <h2>How it works</h2>
             <p><b>1</b> Listen to the full conversation</p>
             <p><b>2</b> Repeat each line, then hear it again</p>
           </section>
           <p className="footnote">Optional practice · No tickets or streak required</p>
-        </> : <Empty title="The first story is on its way">
-          The administrator can publish the approved pilot transcript from Your studio.
+        </> : <Empty title="The next story is on its way">
+          The administrator can publish a Shadowing lesson from Your studio.
         </Empty>}
-    </> : lesson && <ShadowingPlayer
-      lesson={lesson}
+    </> : <ShadowingPlayer
+      key={activeLesson.id}
+      lesson={activeLesson}
       demo={demo}
-      storageKey={key}
-      saved={saved}
-      onSaved={setSaved}
-      initialRepeats={selectedRepeats}
-      onRepeatsChange={setSelectedRepeats}
-      onClose={() => setOpen(false)}
+      storageKey={keyFor(activeLesson.id)}
+      saved={placeFor(activeLesson)}
+      onSaved={(place) => setPlaces((current) => ({ ...current, [activeLesson.id]: place }))}
+      initialRepeats={selectionFor(activeLesson)}
+      onRepeatsChange={(choice) => setSelections((current) => ({ ...current, [activeLesson.id]: choice }))}
+      onClose={() => setActiveLesson(null)}
       theme={theme}
       onToggleTheme={onToggleTheme}
     />}
@@ -179,7 +192,7 @@ function ShadowingPlayer({
   const initialTime = saved?.repeats === repeats ? saved.time : 0;
   const position = shadowingPosition(lesson, time, repeats);
   const activeLine = lesson.lines[position.line - 1];
-  const totalDuration = programDuration(repeats);
+  const totalDuration = programDuration(lesson, repeats);
 
   useEffect(() => {
     let active = true;
@@ -188,7 +201,7 @@ function ShadowingPlayer({
     setError("");
     setPreparing(true);
     if (demo && import.meta.env.DEV) {
-      setSource(`${import.meta.env.BASE_URL}design/shadowing/pilot-01-audio/program-${repeats}x.m4a`);
+      setSource(`${import.meta.env.BASE_URL}design/shadowing/${lesson.id}-audio/program-${repeats}x.m4a`);
       setPreparing(false);
       return () => { active = false; };
     }
@@ -332,7 +345,7 @@ function ShadowingPlayer({
       <section className={`card shadow-setup ${started ? "shadow-setup-compact" : ""}`}>
         <h2>Practice rounds</h2>
         {!started && <p className="muted">Listen to the whole story once, then shadow every line. Practice repeats automatically.</p>}
-        <RepeatOptions value={repeats} onChange={changeRepeats} />
+        <RepeatOptions lesson={lesson} value={repeats} onChange={changeRepeats} />
         {started && <p className="muted">Changing rounds stops this session and starts the new length from the beginning.</p>}
         {!started && initialTime > 0 && <p className="shadow-resume-note">Continue from {formatAudioTime(initialTime)}, or choose another length to start over.</p>}
       </section>

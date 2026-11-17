@@ -49,7 +49,7 @@ describe("shadowing lesson", () => {
     expect(shadowingPosition(lesson, warmup + round + 5.1, 3)).toMatchObject({
       phase: "practice", round: 2, line: 1,
     });
-    expect(programDuration(7)).toBeGreaterThan(programDuration(5));
+    expect(programDuration(lesson, 7)).toBeGreaterThan(programDuration(lesson, 5));
   });
 
   it("shows the eight-second learner pause and normal-speed replay", () => {
@@ -60,6 +60,29 @@ describe("shadowing lesson", () => {
     });
     expect(shadowingPosition(lesson, base + cue.replayStart + 0.1, 1)).toMatchObject({
       line: 5, stage: "1× Replay",
+    });
+  });
+
+  it("accepts a new lesson with its own speakers and audio lengths", () => {
+    const next = validateShadowingImport({
+      ...cues,
+      id: "lesson-02",
+      title: "A Better Weekend Plan",
+      level: "B1",
+      summary: "Two friends make a practical plan.",
+      betweenRoundsSeconds: 5,
+      warmupDuration: 30,
+      shadowingDuration: 216,
+      programDurations: { "1": 246, "3": 688, "5": 1130, "7": 1572 },
+      lines: cues.lines.slice(0, 12).map((line) => ({ ...line, speaker: "Avery" })),
+      warmupCues: cues.warmupCues.slice(0, 12),
+      shadowingCues: cues.shadowingCues.slice(0, 12),
+    });
+    expect(next.id).toBe("lesson-02");
+    expect(next.lines).toHaveLength(12);
+    expect(programDuration(next, 7)).toBe(1572);
+    expect(shadowingPosition(next, 30 + 216 + 1, 7)).toMatchObject({
+      stage: "Next round", line: 12,
     });
   });
 });

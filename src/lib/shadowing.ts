@@ -20,6 +20,7 @@ export type ShadowingLesson = {
   warmupDuration: number;
   shadowingDuration: number;
   betweenRoundsSeconds: number;
+  programDurations?: Record<"1" | "3" | "5" | "7", number>;
   lines: ShadowingLine[];
   warmupCues: { line: number; start: number; end: number }[];
   shadowingCues: {
@@ -35,26 +36,49 @@ const positive = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value) && value >= 0;
 
 export function validateShadowingImport(value: unknown): ShadowingLesson {
-  if (!value || typeof value !== "object") throw Error("Choose the pilot cues.json file.");
+  if (!value || typeof value !== "object") throw Error("Choose a Shadowing cues.json file.");
   const source = value as Record<string, unknown>;
+  const pilot = source.title === "The Interview Detour" && !source.id;
+  const id = pilot ? shadowingLessonId : source.id;
+  const level = pilot ? "B1" : source.level;
+  const summary = pilot ? "A wrong train before a job interview." : source.summary;
+  const betweenRoundsSeconds = pilot ? programs.gapSeconds : source.betweenRoundsSeconds;
+  const programDurations = pilot
+    ? Object.fromEntries(repeatChoices.map((count) => [String(count),
+        programs.programs[String(count) as keyof typeof programs.programs].duration]))
+    : source.programDurations;
   const lines = source.lines as ShadowingLine[];
   const warmupCues = source.warmupCues as ShadowingLesson["warmupCues"];
   const shadowingCues = source.shadowingCues as ShadowingLesson["shadowingCues"];
   if (
-    source.title !== "The Interview Detour" ||
+    typeof id !== "string" || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(id) || id.length > 64 ||
+    typeof source.title !== "string" || !source.title.trim() || source.title.length > 100 ||
+    typeof level !== "string" || !/^(A2|B1|B2|C1)$/.test(level) ||
+    typeof summary !== "string" || !summary.trim() || summary.length > 180 ||
     !positive(source.warmupDuration) ||
     !positive(source.shadowingDuration) ||
-    !Array.isArray(lines) || lines.length !== 20 ||
-    !Array.isArray(warmupCues) || warmupCues.length !== 20 ||
-    !Array.isArray(shadowingCues) || shadowingCues.length !== 20
-  ) throw Error("The pilot script or timing data is incomplete.");
-  for (let index = 0; index < 20; index++) {
+    !positive(betweenRoundsSeconds) || betweenRoundsSeconds > 20 ||
+    !programDurations || typeof programDurations !== "object" ||
+    !repeatChoices.every((count) => positive(
+      (programDurations as Record<string, unknown>)[String(count)])) ||
+    !Array.isArray(lines) || lines.length < 8 || lines.length > 40 ||
+    !Array.isArray(warmupCues) || warmupCues.length !== lines.length ||
+    !Array.isArray(shadowingCues) || shadowingCues.length !== lines.length
+  ) throw Error("The Shadowing lesson or timing data is incomplete.");
+  for (const count of repeatChoices) {
+    const expected = (source.warmupDuration as number) + count * (source.shadowingDuration as number)
+      + (count - 1) * (betweenRoundsSeconds as number);
+    if (Math.abs((programDurations as Record<string, number>)[String(count)] - expected) > 2)
+      throw Error(`The ${count}× audio duration does not match its timing map.`);
+  }
+  for (let index = 0; index < lines.length; index++) {
     const line = lines[index];
     const warmup = warmupCues[index];
     const practice = shadowingCues[index];
     if (
       line?.id !== index + 1 ||
-      !["Maya", "Ben"].includes(line.speaker) ||
+      typeof line.speaker !== "string" ||
+      !/^[A-Za-z][A-Za-z '\-]{0,40}$/.test(line.speaker) ||
       typeof line.text !== "string" || !line.text.trim() ||
       typeof line.translation !== "string" || !line.translation.trim() ||
       line.text.length > 300 || line.translation.length > 400 ||
@@ -74,14 +98,15 @@ export function validateShadowingImport(value: unknown): ShadowingLesson {
     ) throw Error(`Line ${index + 1} is missing valid text or audio cues.`);
   }
   return {
-    id: shadowingLessonId,
+    id: id as string,
     status: "published",
     title: source.title,
-    level: "B1",
-    summary: "A wrong train before a job interview.",
+    level: level as string,
+    summary: summary as string,
     warmupDuration: source.warmupDuration as number,
     shadowingDuration: source.shadowingDuration as number,
-    betweenRoundsSeconds: programs.gapSeconds,
+    betweenRoundsSeconds: betweenRoundsSeconds as number,
+    programDurations: programDurations as ShadowingLesson["programDurations"],
     lines: lines.map(({ id, speaker, text, translation, pauseSeconds }) => ({
       id, speaker, text, translation, pauseSeconds,
     })),
@@ -90,8 +115,12 @@ export function validateShadowingImport(value: unknown): ShadowingLesson {
   };
 }
 
-export function programDuration(repeats: RepeatCount) {
-  return programs.programs[String(repeats) as keyof typeof programs.programs].duration;
+export function programDuration(lesson: ShadowingLesson, repeats: RepeatCount) {
+  return lesson.programDurations?.[String(repeats) as "1" | "3" | "5" | "7"]
+    ?? (lesson.id === shadowingLessonId
+      ? programs.programs[String(repeats) as keyof typeof programs.programs].duration
+      : lesson.warmupDuration + repeats * lesson.shadowingDuration
+        + (repeats - 1) * lesson.betweenRoundsSeconds);
 }
 
 export function formatAudioTime(seconds: number) {
@@ -104,7 +133,7 @@ export function shadowingPosition(
   time: number,
   repeats: RepeatCount,
 ) {
-  const clamped = Math.max(0, Math.min(time, programDuration(repeats)));
+  const clamped = Math.max(0, Math.min(time, programDuration(lesson, repeats)));
   if (clamped < lesson.warmupDuration) {
     const cue = [...lesson.warmupCues].reverse().find((item) => item.start <= clamped);
     return { phase: "warmup" as const, round: 0, line: cue?.line || 1,
@@ -115,7 +144,7 @@ export function shadowingPosition(
   const round = Math.min(repeats, Math.floor(elapsed / length) + 1);
   const inside = elapsed - (round - 1) * length;
   if (inside >= lesson.shadowingDuration) {
-    return { phase: "practice" as const, round, line: 20,
+    return { phase: "practice" as const, round, line: lesson.lines.length,
       stage: "Next round", remaining: Math.max(0, length - inside) };
   }
   const cue = [...lesson.shadowingCues].reverse().find((item) => item.firstStart <= inside)

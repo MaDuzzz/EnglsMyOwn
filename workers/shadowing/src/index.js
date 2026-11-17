@@ -1,6 +1,6 @@
-const LESSON = "pilot-01";
 const REPEATS = new Set([1, 3, 5, 7]);
 const TICKET_SECONDS = 60 * 60;
+const LESSON_ID = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 
 function json(data, status, headers) {
   return new Response(JSON.stringify(data), {
@@ -82,11 +82,11 @@ function tokenSubject(token, projectId) {
   }
 }
 
-async function approved(request, env) {
+async function approvedToken(request, env) {
   const authorization = request.headers.get("authorization") || "";
   const token = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
   const uid = tokenSubject(token, env.FIREBASE_PROJECT_ID);
-  if (!uid) return false;
+  if (!uid) return null;
   const endpoint =
     `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}` +
     `/databases/(default)/documents/users/${uid}?mask.fieldPaths=status`;
@@ -94,9 +94,22 @@ async function approved(request, env) {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-  if (!result.ok) return false;
+  if (!result.ok) return null;
   const profile = await result.json();
-  return profile.fields?.status?.stringValue === "approved";
+  return profile.fields?.status?.stringValue === "approved" ? token : null;
+}
+
+async function publishedLesson(token, lessonId, env) {
+  const endpoint =
+    `https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}` +
+    `/databases/(default)/documents/shadowingLessons/${lessonId}?mask.fieldPaths=status`;
+  const result = await fetch(endpoint, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+  });
+  if (!result.ok) return false;
+  const lesson = await result.json();
+  return lesson.fields?.status?.stringValue === "published";
 }
 
 function rangeFor(header, size) {
@@ -125,15 +138,20 @@ async function ticket(request, env, headers) {
   } catch {
     return json({ error: "Invalid request" }, 400, headers);
   }
-  if (payload?.lessonId !== LESSON || !REPEATS.has(payload?.repeats))
+  if (typeof payload?.lessonId !== "string" ||
+      payload.lessonId.length > 64 || !LESSON_ID.test(payload.lessonId) ||
+      !REPEATS.has(payload?.repeats))
     return json({ error: "Unknown lesson or repeat count" }, 400, headers);
   try {
-    if (!(await approved(request, env)))
+    const token = await approvedToken(request, env);
+    if (!token)
       return json({ error: "Approved account required" }, 403, headers);
+    if (!(await publishedLesson(token, payload.lessonId, env)))
+      return json({ error: "Published lesson required" }, 404, headers);
   } catch {
     return json({ error: "Could not verify account" }, 503, headers);
   }
-  const path = `/v1/audio/${LESSON}/program-${payload.repeats}x.m4a`;
+  const path = `/v1/audio/${payload.lessonId}/program-${payload.repeats}x.m4a`;
   const expires = Math.floor(Date.now() / 1000) + TICKET_SECONDS;
   const signature = await sign(path, expires, env.MEDIA_SIGNING_SECRET);
   const url = new URL(path, request.url);
@@ -146,8 +164,8 @@ async function ticket(request, env, headers) {
 }
 
 async function audio(request, env, url, headers) {
-  const match = /^\/v1\/audio\/pilot-01\/program-(1|3|5|7)x\.m4a$/.exec(url.pathname);
-  if (!match) return json({ error: "Not found" }, 404, headers);
+  const match = /^\/v1\/audio\/([a-z0-9]+(?:-[a-z0-9]+)*)\/program-(1|3|5|7)x\.m4a$/.exec(url.pathname);
+  if (!match || match[1].length > 64) return json({ error: "Not found" }, 404, headers);
   const expires = Number(url.searchParams.get("exp"));
   const signature = url.searchParams.get("sig") || "";
   if (
@@ -157,7 +175,7 @@ async function audio(request, env, url, headers) {
     !(await validSignature(url.pathname, expires, signature, env.MEDIA_SIGNING_SECRET))
   ) return json({ error: "Link expired or invalid" }, 403, headers);
 
-  const key = `${LESSON}/program-${match[1]}x.m4a`;
+  const key = `${match[1]}/program-${match[2]}x.m4a`;
   const object = await env.AUDIO.head(key);
   if (!object) return json({ error: "Audio has not been uploaded" }, 404, headers);
   const range = rangeFor(request.headers.get("range"), object.size);

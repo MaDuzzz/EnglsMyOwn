@@ -38,6 +38,7 @@ export default function Admin({
   const [resetError, setResetError] = useState("");
   const [shadowingPreview, setShadowingPreview] = useState<ShadowingLesson | null>(null);
   const [shadowingMessage, setShadowingMessage] = useState("");
+  const [replaceShadowing, setReplaceShadowing] = useState(false);
   const readVersion = useRef(0);
   useEffect(
     () => () => {
@@ -190,13 +191,14 @@ export default function Admin({
   async function readShadowing(file?: File) {
     setShadowingPreview(null);
     setShadowingMessage("");
+    setReplaceShadowing(false);
     if (!file) return;
     try {
       if (file.name !== "cues.json" || file.size > 100_000)
-        throw Error("Choose the pilot cues.json file (under 100 KB).");
+        throw Error("Choose a Shadowing cues.json file (under 100 KB).");
       const content = validateShadowingImport(JSON.parse(await file.text()));
       setShadowingPreview(content);
-      setShadowingMessage("Twenty lines and both timing maps passed validation.");
+      setShadowingMessage(`${content.lines.length} lines and both timing maps passed validation.`);
     } catch (error) {
       setShadowingMessage((error as Error).message);
     }
@@ -205,9 +207,13 @@ export default function Admin({
     if (!db || demo || !shadowingPreview || busy) return;
     setBusy(true);
     try {
-      await setDoc(doc(db, "shadowingLessons", shadowingPreview.id), shadowingPreview);
+      const reference = doc(db, "shadowingLessons", shadowingPreview.id);
+      if ((await getDoc(reference)).exists() && !replaceShadowing)
+        throw Error("This lesson ID already exists. Select replacement only if you intend to overwrite it.");
+      await setDoc(reference, shadowingPreview);
       setShadowingPreview(null);
-      setShadowingMessage("The Interview Detour is published for approved learners.");
+      setReplaceShadowing(false);
+      setShadowingMessage(`${shadowingPreview.title} is published for approved learners.`);
     } catch (error) {
       setShadowingMessage((error as Error).message);
     } finally {
@@ -413,13 +419,13 @@ export default function Admin({
         )}
       </section>
       <section className="card admin-section">
-        <h2><Upload /> Publish Shadowing pilot</h2>
+        <h2><Upload /> Publish a Shadowing lesson</h2>
         <p className="muted">
           Upload the approved cues.json. It contains the transcript and sentence
           timing; audio stays in the private R2 bucket.
         </p>
         <label className="file-input">
-          Choose pilot cues.json
+          Choose lesson cues.json
           <input
             type="file"
             accept=".json,application/json"
@@ -433,7 +439,14 @@ export default function Admin({
         {shadowingPreview && (
           <div className="import-preview">
             <h3>{shadowingPreview.title}</h3>
-            <p className="muted">{shadowingPreview.lines.length} lines · B1 · Published</p>
+            <p className="muted">
+              {shadowingPreview.id} · {shadowingPreview.lines.length} lines · {shadowingPreview.level}
+            </p>
+            <label className="import-replace">
+              <input type="checkbox" checked={replaceShadowing} disabled={busy}
+                onChange={(event) => setReplaceShadowing(event.target.checked)} />
+              Replace an existing lesson with this ID
+            </label>
             <Button disabled={busy || demo} onClick={() => void publishShadowing()}>
               {busy ? "Publishing…" : "Publish Shadowing lesson"}
             </Button>

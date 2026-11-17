@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import worker from "../workers/shadowing/src/index.js";
 
 const base = "https://shadow.example.workers.dev";
@@ -17,14 +17,15 @@ const token = `header.${Buffer.from(JSON.stringify({
   iss: `https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`,
 })).toString("base64url")}.signature`;
 
-function request(repeats = 3, authorization = `Bearer ${token}`) {
+function request(repeats = 3, authorization = `Bearer ${token}`, lessonId = "pilot-01") {
   return new Request(`${base}/v1/tickets`, {
     method: "POST",
     headers: { origin, authorization, "content-type": "application/json" },
-    body: JSON.stringify({ lessonId: "pilot-01", repeats }),
+    body: JSON.stringify({ lessonId, repeats }),
   });
 }
 
+beforeEach(() => vi.clearAllMocks());
 afterEach(() => vi.unstubAllGlobals());
 
 describe("private shadowing media", () => {
@@ -38,10 +39,11 @@ describe("private shadowing media", () => {
   });
 
   it("allows only signed, unexpired audio and handles iPhone byte ranges", async () => {
-    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({
-      fields: { status: { stringValue: "approved" } },
+    vi.stubGlobal("fetch", vi.fn(async (url) => new Response(JSON.stringify({
+      fields: { status: { stringValue: String(url).includes("shadowingLessons")
+        ? "published" : "approved" } },
     }))));
-    const response = await worker.fetch(request(), env);
+    const response = await worker.fetch(request(3, `Bearer ${token}`, "weekend-plan"), env);
     expect(response.status).toBe(200);
     const { url } = await response.json();
     const range = await worker.fetch(new Request(url, {
@@ -50,13 +52,23 @@ describe("private shadowing media", () => {
     expect(range.status).toBe(206);
     expect(range.headers.get("content-range")).toBe("bytes 10-19/100");
     expect(env.AUDIO.get).toHaveBeenCalledWith(
-      "pilot-01/program-3x.m4a", { range: { offset: 10, length: 10 } },
+      "weekend-plan/program-3x.m4a", { range: { offset: 10, length: 10 } },
     );
     const altered = new URL(url);
-    altered.pathname = "/v1/audio/pilot-01/program-7x.m4a";
+    altered.pathname = "/v1/audio/weekend-plan/program-7x.m4a";
     expect((await worker.fetch(new Request(altered), env)).status).toBe(403);
     const expired = new URL(url);
     expired.searchParams.set("exp", "1");
     expect((await worker.fetch(new Request(expired), env)).status).toBe(403);
+  });
+
+  it("does not issue audio links for draft lessons or unsafe IDs", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url) => new Response(JSON.stringify({
+      fields: { status: { stringValue: String(url).includes("shadowingLessons")
+        ? "draft" : "approved" } },
+    }))));
+    expect((await worker.fetch(request(1, `Bearer ${token}`, "draft-lesson"), env)).status).toBe(404);
+    expect((await worker.fetch(request(1, `Bearer ${token}`, "../secret"), env)).status).toBe(400);
+    expect(env.AUDIO.head).not.toHaveBeenCalled();
   });
 });

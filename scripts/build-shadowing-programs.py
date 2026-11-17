@@ -1,9 +1,10 @@
-"""Package the approved pilot audio into one uninterrupted file per repeat choice.
+"""Package one Shadowing lesson into uninterrupted files for each repeat choice.
 
-Requires imageio-ffmpeg (only at build time). The source M4A files are never
-regenerated here, so this does not need the Kokoro voice model.
+Pass --audio-dir for a new lesson. The directory must contain warmup.m4a,
+shadowing.m4a, and cues.json. Requires imageio-ffmpeg, but not the voice model.
 """
 
+import argparse
 import json
 import re
 import subprocess
@@ -14,7 +15,7 @@ import imageio_ffmpeg
 
 
 ROOT = Path(__file__).resolve().parents[1]
-AUDIO = ROOT / "design/shadowing/pilot-01-audio"
+DEFAULT_AUDIO = ROOT / "design/shadowing/pilot-01-audio"
 REPEATS = (1, 3, 5, 7)
 GAP_SECONDS = 5
 
@@ -46,11 +47,16 @@ def duration(path):
 
 
 def main():
-    warmup = AUDIO / "warmup.m4a"
-    practice = AUDIO / "shadowing.m4a"
-    cues = json.loads((AUDIO / "cues.json").read_text())
-    if not warmup.exists() or not practice.exists() or len(cues["lines"]) != 20:
-        raise RuntimeError("The approved pilot audio and 20-line cues are required")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--audio-dir", type=Path, default=DEFAULT_AUDIO)
+    args = parser.parse_args()
+    audio_dir = args.audio_dir.resolve()
+    warmup = audio_dir / "warmup.m4a"
+    practice = audio_dir / "shadowing.m4a"
+    cues_path = audio_dir / "cues.json"
+    cues = json.loads(cues_path.read_text())
+    if not warmup.exists() or not practice.exists() or not 8 <= len(cues["lines"]) <= 40:
+        raise RuntimeError("Lesson audio and 8–40 cue lines are required")
 
     with tempfile.TemporaryDirectory() as temp:
         temp = Path(temp)
@@ -70,7 +76,7 @@ def main():
             listing.write_text(
                 "".join(f"file '{path.as_posix()}'\n" for path in parts)
             )
-            output = AUDIO / f"program-{count}x.m4a"
+            output = audio_dir / f"program-{count}x.m4a"
             run("-f", "concat", "-safe", "0", "-i", listing,
                 "-c", "copy", "-movflags", "+faststart", output)
             actual = duration(output)
@@ -79,9 +85,12 @@ def main():
                 raise RuntimeError(f"Unexpected duration for {output}: {actual} vs {expected}")
             outputs[str(count)] = {"file": output.name, "duration": actual}
             print(f"{output.name}: {actual:.2f}s, {output.stat().st_size / 1024 / 1024:.2f} MiB")
-        (AUDIO / "programs.json").write_text(
+        (audio_dir / "programs.json").write_text(
             json.dumps({"gapSeconds": GAP_SECONDS, "programs": outputs}, indent=2) + "\n"
         )
+        cues["betweenRoundsSeconds"] = GAP_SECONDS
+        cues["programDurations"] = {count: details["duration"] for count, details in outputs.items()}
+        cues_path.write_text(json.dumps(cues, ensure_ascii=False, indent=2) + "\n")
 
 
 if __name__ == "__main__":
