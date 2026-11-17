@@ -12,3 +12,4 @@ design/shadowing/*-audio/cues.json
 design/shadowing/*-audio/programs.json
 workers/shadowing/.dev.vars*
 workers/shadowing/.wrangler/
+local_models/

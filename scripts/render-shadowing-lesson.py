@@ -112,7 +112,7 @@ def main():
         language = "en-gb" if voice.startswith("b") else "en-us"
         natural, rate = model.create(line["text"], voice=voice, speed=1.0, lang=language)
         slow, slow_rate = model.create(line["text"], voice=voice, speed=0.75, lang=language)
-        if sample_rate is not None and rate != sample_rate or slow_rate != rate:
+        if (sample_rate is not None and rate != sample_rate) or slow_rate != rate:
             raise ValueError(f"Inconsistent sample rate on line {index}")
         if not np.isfinite(natural).all() or not np.isfinite(slow).all():
             raise ValueError(f"Invalid samples on line {index}")

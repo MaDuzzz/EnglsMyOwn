@@ -1,12 +1,12 @@
-# Shadowing pilot deployment
+# Shadowing deployment
 
 The app runs on GitHub Pages. Firestore stores the published transcript and cues.
-The four continuous audio programs live in the **private** R2 bucket
+Each lesson's four continuous audio programs live in the **private** R2 bucket
 `englsmyown-shadowing`. A Cloudflare Worker checks a Firebase ID token and the
 learner's approved status before issuing a one-hour streaming link. The Worker
 supports byte ranges for iPhone media playback. Do not enable R2 public access.
 
-## Live pilot (15 November 2026)
+## Live lessons
 
 - App: <https://maduzzz.github.io/EnglsMyOwn/#shadowing>
 - Worker: <https://englsmyown-shadowing.englsmyown.workers.dev>
@@ -19,6 +19,11 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
   passed. Authenticated playback was checked on the public site with 1× and
   3× programs. The user confirmed that audio continues when the iPhone screen
   is off. A complete 7× run with the screen locked has not yet been checked.
+- Two original 20-line stories were added on 17 November 2026: `lesson-02`
+  (The Rain Check, British English) and `lesson-03` (The Demo Without Slides,
+  American English). Each has separate voices for its two speakers and four
+  programs in private R2. The lesson source, transcript and audio are local
+  ignored files; the published transcript is stored in Firestore.
 
 ## Files prepared in this repository
 
@@ -76,6 +81,18 @@ transcript, Worker, or project configuration.
 The program files are in R2, not GitHub Pages. The transcript is in Firestore,
 not in the production JavaScript bundle. Uploading just the two original M4A
 files is insufficient for the repeat selector.
+
+## Add an original lesson
+
+See `docs/shadowing-content-workflow.md` for the source format and render
+commands. Review the story and translation, render `warmup.m4a` and
+`shadowing.m4a`, then build `program-{1,3,5,7}x.m4a`. Upload all four programs
+to the private R2 prefix matching the lesson ID. The app administrator then
+imports that lesson's local `cues.json` from **Your studio**. It validates the
+line timings and publishes the Firestore document. The Worker checks both the
+approved Firebase account and published lesson before issuing a signed audio
+link. The new lesson appears in the Shadowing library without changing the
+pilot.
 
 ## Check before inviting learners
 
