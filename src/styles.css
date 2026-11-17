@@ -4447,10 +4447,10 @@ textarea {
     height: 45px;
   }
   .christmas-reindeer {
-    width: 72px;
-    height: 72px;
-    right: 11px;
-    top: 11px;
+    width: 60px;
+    height: 60px;
+    right: 8px;
+    top: -18px;
   }
   .christmas-tree {
     width: 155px;
@@ -4460,9 +4460,10 @@ textarea {
 }
 @media (max-width: 375px) {
   .christmas-reindeer {
-    right: -8px;
-    width: 60px;
-    height: 60px;
+    right: 0;
+    top: -16px;
+    width: 54px;
+    height: 54px;
   }
   .christmas-tree {
     width: 136px;
