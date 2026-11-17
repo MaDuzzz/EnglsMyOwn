@@ -72,6 +72,12 @@ import Shadowing from "./components/Shadowing";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
+import {
+  ChristmasReindeer,
+  ChristmasTree,
+  ChristmasWordmark,
+  Snowfall,
+} from "./components/Christmas";
 import { growthStage, petSpecies, petStages, speciesOf } from "./lib/pets";
 import { playWordRecording, stopPronunciation } from "./lib/pronunciationAudio";
 import { useRanking } from "./lib/useRanking";
@@ -475,6 +481,7 @@ export default function App() {
   if (app.phase !== "ready")
     return (
       <div className="auth-page">
+        <Snowfall />
         <header>
           <a
             className="brand"
@@ -483,7 +490,8 @@ export default function App() {
             title="Reload app"
           >
             <BookOpen />
-            EnglsMyOwn<span>your little learning space</span>
+            <ChristmasWordmark />
+            <span>your little learning space</span>
           </a>
           {themeButton}
         </header>
@@ -600,6 +608,7 @@ export default function App() {
     );
   return (
     <div className="app-shell">
+      <Snowfall />
       <aside className="sidebar">
         <a
           className="brand"
@@ -610,7 +619,9 @@ export default function App() {
           <span className="brand-mark">
             <BookOpen size={26} />
           </span>
-          <b>EnglsMyOwn</b>
+          <b>
+            <ChristmasWordmark />
+          </b>
           <small>A little every day.</small>
         </a>
         <span className="sidebar-label">YOUR SPACE</span>
@@ -667,7 +678,7 @@ export default function App() {
               onClick={reloadApp}
               title="Reload app"
             >
-              EnglsMyOwn
+              <ChristmasWordmark />
             </a>
             <span className="desktop-breadcrumb">
               Your space <ChevronRight size={13} />{" "}
@@ -735,6 +746,7 @@ export default function App() {
                   Hello, {profile?.displayName?.split(" ")[0] || "friend"}
                   <span className="hello-sun">☀</span>
                 </h1>
+                <ChristmasReindeer />
                 <p>A little practice. A little closer to your goals.</p>
               </div>
               <div className="today-layout">
@@ -762,6 +774,7 @@ export default function App() {
                     </button>
                   </div>
                   <div className="pet-stage">
+                    <Snowfall pet />
                     <span className="pet-sparkle first">✦</span>
                     <span className="pet-sparkle second">✧</span>
                     <div className="pet-caption">
@@ -771,6 +784,7 @@ export default function App() {
                       <Heart size={12} />
                     </div>
                     <Pet pet={data.pet} theme={theme} stage={petStage.index} />
+                    <ChristmasTree />
                   </div>
                   <div className="pet-growth">
                     <div>

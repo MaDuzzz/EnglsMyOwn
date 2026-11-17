@@ -4295,3 +4295,182 @@ textarea {
     animation: none !important;
   }
 }
+
+/* A light seasonal layer, shared by both themes. */
+.app-shell,
+.auth-page {
+  position: relative;
+  isolation: isolate;
+}
+.main-content,
+.auth-page > header,
+.auth-main {
+  position: relative;
+  z-index: 1;
+}
+.christmas-wordmark {
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 1.15;
+}
+.christmas-wordmark-snow {
+  position: absolute;
+  left: -1%;
+  bottom: -7px;
+  width: 102%;
+  height: 14px;
+  overflow: visible;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px #a3b9c977);
+}
+.christmas-wordmark-snow .snow-shadow {
+  fill: #d9e9f3;
+}
+.christmas-wordmark-snow .snow-top {
+  fill: #fff;
+  stroke: #e3edf2;
+  stroke-width: 0.7;
+}
+.christmas-cane {
+  position: absolute;
+  right: -25px;
+  top: -20px;
+  width: 49px;
+  height: 49px;
+  object-fit: contain;
+  pointer-events: none;
+  transform: rotate(8deg);
+}
+.christmas-cane-dark,
+.christmas-tree-dark {
+  display: none;
+}
+[data-theme="dark"] .christmas-cane-light,
+[data-theme="dark"] .christmas-tree-light {
+  display: none;
+}
+[data-theme="dark"] .christmas-cane-dark,
+[data-theme="dark"] .christmas-tree-dark {
+  display: block;
+}
+[data-theme="dark"] .christmas-wordmark-snow {
+  filter: drop-shadow(0 2px 3px #a4d7f9aa);
+}
+.auth-page .brand > .christmas-wordmark {
+  display: inline-block;
+}
+.today-intro {
+  position: relative;
+}
+.christmas-reindeer {
+  position: absolute;
+  width: 86px;
+  height: 86px;
+  object-fit: contain;
+  right: clamp(24px, 12vw, 170px);
+  top: 14px;
+  pointer-events: none;
+  filter: drop-shadow(0 5px 7px #56422620);
+}
+.pet-stage {
+  isolation: isolate;
+}
+.pet-stage .pet-world {
+  z-index: 1;
+}
+.christmas-tree {
+  position: absolute;
+  z-index: 2;
+  right: -18px;
+  bottom: 9px;
+  width: clamp(125px, 16vw, 175px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 7px 6px #46334124);
+}
+.christmas-tree img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.christmas-snow {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+  --snow-fall: 108vh;
+}
+.christmas-snow-pet {
+  position: absolute;
+  z-index: 2;
+  --snow-fall: 350px;
+}
+.christmas-flake {
+  position: absolute;
+  top: -12px;
+  display: block;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 1px #c5dce2bb, 0 0 6px #fff8;
+  opacity: 0;
+  animation: christmas-snow-fall linear infinite;
+  will-change: transform, opacity;
+}
+.christmas-snow[data-paused="true"] .christmas-flake {
+  animation-play-state: paused;
+}
+.christmas-snow-pet .christmas-flake {
+  background: #fff;
+  box-shadow: 0 0 5px #ffffffaa;
+}
+[data-theme="light"] .app-shell > .christmas-snow .christmas-flake,
+[data-theme="light"] .auth-page > .christmas-snow .christmas-flake {
+  background: #ecf5fb;
+  box-shadow: 0 0 0 1px #c9dce6, 0 0 5px #fff;
+}
+@keyframes christmas-snow-fall {
+  0% { transform: translate3d(0, 0, 0); opacity: 0; }
+  12% { opacity: 0.63; }
+  85% { opacity: 0.47; }
+  100% { transform: translate3d(var(--snow-drift), var(--snow-fall), 0); opacity: 0; }
+}
+@media (max-width: 800px) {
+  .mobile-brand {
+    overflow: visible;
+  }
+  .mobile-brand .christmas-cane {
+    right: -24px;
+    top: -19px;
+    width: 45px;
+    height: 45px;
+  }
+  .christmas-reindeer {
+    width: 72px;
+    height: 72px;
+    right: 11px;
+    top: 11px;
+  }
+  .christmas-tree {
+    width: 155px;
+    right: -21px;
+    bottom: 12px;
+  }
+}
+@media (max-width: 375px) {
+  .christmas-reindeer {
+    right: -8px;
+    width: 60px;
+    height: 60px;
+  }
+  .christmas-tree {
+    width: 136px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .christmas-flake {
+    top: var(--snow-still);
+    opacity: 0.4;
+  }
+}
