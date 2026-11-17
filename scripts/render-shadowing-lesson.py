@@ -139,7 +139,8 @@ def main():
         first_start = practice_samples / sample_rate
         first_end = first_start + len(slow) / sample_rate
         replay_start = first_end + PAUSE_SECONDS
-        replay_end = replay_start + len(natural) / sample_rate
+        replay_end = (practice_samples + len(slow)
+                      + round(PAUSE_SECONDS * sample_rate) + len(natural)) / sample_rate
         practice_cues.append({"line": line_id, "firstStart": first_start,
                               "firstEnd": first_end, "replayStart": replay_start,
                               "replayEnd": replay_end})

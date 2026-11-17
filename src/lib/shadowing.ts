@@ -85,7 +85,7 @@ export function validateShadowingImport(value: unknown): ShadowingLesson {
       !positive(line.pauseSeconds) ||
       warmup?.line !== line.id ||
       !positive(warmup.start) || !positive(warmup.end) ||
-      warmup.end <= warmup.start || warmup.end > source.warmupDuration ||
+      warmup.end <= warmup.start || warmup.end > (source.warmupDuration as number) + 0.05 ||
       (index > 0 && warmup.start < warmupCues[index - 1].start) ||
       practice?.line !== line.id ||
       !positive(practice.firstStart) || !positive(practice.firstEnd) ||
@@ -93,7 +93,7 @@ export function validateShadowingImport(value: unknown): ShadowingLesson {
       !(practice.firstStart < practice.firstEnd &&
         practice.firstEnd < practice.replayStart &&
         practice.replayStart < practice.replayEnd) ||
-      practice.replayEnd > source.shadowingDuration ||
+      practice.replayEnd > (source.shadowingDuration as number) + 0.05 ||
       (index > 0 && practice.firstStart < shadowingCues[index - 1].replayEnd)
     ) throw Error(`Line ${index + 1} is missing valid text or audio cues.`);
   }

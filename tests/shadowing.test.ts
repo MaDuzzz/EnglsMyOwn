@@ -76,7 +76,8 @@ describe("shadowing lesson", () => {
       programDurations: { "1": 246, "3": 688, "5": 1130, "7": 1572 },
       lines: cues.lines.slice(0, 12).map((line) => ({ ...line, speaker: "Avery" })),
       warmupCues: cues.warmupCues.slice(0, 12),
-      shadowingCues: cues.shadowingCues.slice(0, 12),
+      shadowingCues: cues.shadowingCues.slice(0, 12).map((cue, index) =>
+        index === 11 ? { ...cue, replayEnd: 216 + 5.68e-14 } : cue),
     });
     expect(next.id).toBe("lesson-02");
     expect(next.lines).toHaveLength(12);
