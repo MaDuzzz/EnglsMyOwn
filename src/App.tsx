@@ -69,6 +69,7 @@ import { Library, VideoSession } from "./components/Library";
 import Progress from "./components/Progress";
 import Ranking from "./components/Ranking";
 import Shadowing from "./components/Shadowing";
+import TopicCarousel from "./components/TopicCarousel";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
@@ -1123,28 +1124,7 @@ export default function App() {
                       </Button>
                     </div>
                   </div>
-                  <SectionTitle title="Explore your topics" />
-                  <div className="topic-grid">
-                    {[...new Set(words.map((w) => w.topic))].map((t, i) => (
-                      <button
-                        className="topic-card card"
-                        key={t}
-                        onClick={() => {
-                          setTopic(t);
-                        }}
-                      >
-                        <span className={"topic-art art-" + i}>
-                          {i % 2 ? <BookOpen size={32} /> : <Heart size={32} />}
-                        </span>
-                        <h3>{t}</h3>
-                        <p>
-                          {words.filter((w) => w.topic === t).length} published
-                          words
-                        </p>
-                        <ChevronRight size={18} />
-                      </button>
-                    ))}
-                  </div>
+                  <TopicCarousel words={words} onSelect={setTopic} />
                 </>
               ) : (
                 <>
