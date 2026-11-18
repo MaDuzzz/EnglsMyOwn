@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { BookOpen, ChevronLeft, ChevronRight, Heart, Search } from "lucide-react";
 import type { Word } from "../lib/model";
 
@@ -19,12 +19,12 @@ export default function TopicCarousel({ words, onSelect }: {
     : showAll ? allTopics : allTopics.slice(0, 20);
   const slides = Array.from({ length: Math.ceil(topics.length / 2) }, (_, index) =>
     topics.slice(index * 2, index * 2 + 2));
+  useLayoutEffect(() => {
+    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
+    setCurrentSlide(0);
+  }, [search, showAll]);
   if (!allTopics.length) return null;
   const visibleSlide = Math.min(currentSlide, Math.max(0, slides.length - 1));
-  const resetToFirstSlide = () => {
-    setCurrentSlide(0);
-    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
-  };
 
   const slideTo = (index: number) => {
     const track = trackRef.current;
@@ -59,11 +59,11 @@ export default function TopicCarousel({ words, onSelect }: {
     <label className="search topic-search">
       <Search size={18} />
       <input type="search" placeholder="Search topics" aria-label="Search topics" value={search}
-        onChange={(event) => { setSearch(event.target.value); resetToFirstSlide(); }} />
+        onChange={(event) => setSearch(event.target.value)} />
     </label>
     {!query && allTopics.length > 20 && <div className="topic-browse-row">
       <span>{showAll ? `All ${allTopics.length} topics` : `Top 20 of ${allTopics.length} topics`}</span>
-      <button type="button" onClick={() => { setShowAll(!showAll); resetToFirstSlide(); }}>
+      <button type="button" onClick={() => setShowAll(!showAll)}>
         {showAll ? "Show top topics" : "Browse all topics"}
       </button>
     </div>}

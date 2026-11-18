@@ -1223,6 +1223,7 @@ blockquote span {
 .topic-carousel { margin-top: 28px; }
 .topic-carousel .shadow-carousel-heading { margin-bottom: 12px; }
 .topic-carousel .shadow-carousel-heading h2 { font-size: 21px; }
+.topic-carousel .shadow-carousel-track { overflow-anchor: none; }
 .topic-search { width: 100%; margin-bottom: 8px; }
 .topic-search input { width: 100%; }
 .topic-browse-row {
