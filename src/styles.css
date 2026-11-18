@@ -1223,6 +1223,15 @@ blockquote span {
 .topic-carousel { margin-top: 28px; }
 .topic-carousel .shadow-carousel-heading { margin-bottom: 12px; }
 .topic-carousel .shadow-carousel-heading h2 { font-size: 21px; }
+.topic-search { width: 100%; margin-bottom: 8px; }
+.topic-search input { width: 100%; }
+.topic-browse-row {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; min-height: 32px; margin-bottom: 8px;
+  color: var(--muted); font-size: 12px;
+}
+.topic-browse-row button { color: var(--accent); font-size: 12px; font-weight: 750; }
+.topic-empty { padding: 20px; color: var(--muted); text-align: center; }
 .topic-slide {
   flex: 0 0 min(640px, calc(100% - 36px)); width: min(640px, calc(100% - 36px));
   min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { BookOpen, ChevronLeft, ChevronRight, Heart } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, Heart, Search } from "lucide-react";
 import type { Word } from "../lib/model";
 
 export default function TopicCarousel({ words, onSelect }: {
@@ -7,14 +7,24 @@ export default function TopicCarousel({ words, onSelect }: {
   onSelect: (topic: string) => void;
 }) {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [search, setSearch] = useState("");
+  const [showAll, setShowAll] = useState(false);
   const trackRef = useRef<HTMLDivElement>(null);
   const counts = new Map<string, number>();
   words.forEach((word) => counts.set(word.topic, (counts.get(word.topic) || 0) + 1));
-  const topics = [...counts.entries()];
+  const allTopics = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  const query = search.trim().toLocaleLowerCase();
+  const topics = query
+    ? allTopics.filter(([topic]) => topic.toLocaleLowerCase().includes(query))
+    : showAll ? allTopics : allTopics.slice(0, 20);
   const slides = Array.from({ length: Math.ceil(topics.length / 2) }, (_, index) =>
     topics.slice(index * 2, index * 2 + 2));
-  if (!slides.length) return null;
-  const visibleSlide = Math.min(currentSlide, slides.length - 1);
+  if (!allTopics.length) return null;
+  const visibleSlide = Math.min(currentSlide, Math.max(0, slides.length - 1));
+  const resetToFirstSlide = () => {
+    setCurrentSlide(0);
+    trackRef.current?.scrollTo({ left: 0, behavior: "auto" });
+  };
 
   const slideTo = (index: number) => {
     const track = trackRef.current;
@@ -38,14 +48,26 @@ export default function TopicCarousel({ words, onSelect }: {
 
   return <section className="shadow-carousel topic-carousel" aria-label="Explore your topics">
     <div className="shadow-carousel-heading">
-      <div><h2>Explore your topics</h2><strong>{visibleSlide + 1} / {slides.length}</strong></div>
+      <div><h2>Explore your topics</h2><strong>{slides.length ? visibleSlide + 1 : 0} / {slides.length}</strong></div>
       <div className="shadow-carousel-actions">
         <button type="button" aria-label="Previous topics" disabled={visibleSlide === 0}
           onClick={() => slideTo(visibleSlide - 1)}><ChevronLeft size={21} /></button>
-        <button type="button" aria-label="Next topics" disabled={visibleSlide === slides.length - 1}
+        <button type="button" aria-label="Next topics" disabled={visibleSlide >= slides.length - 1}
           onClick={() => slideTo(visibleSlide + 1)}><ChevronRight size={21} /></button>
       </div>
     </div>
+    <label className="search topic-search">
+      <Search size={18} />
+      <input type="search" placeholder="Search topics" aria-label="Search topics" value={search}
+        onChange={(event) => { setSearch(event.target.value); resetToFirstSlide(); }} />
+    </label>
+    {!query && allTopics.length > 20 && <div className="topic-browse-row">
+      <span>{showAll ? `All ${allTopics.length} topics` : `Top 20 of ${allTopics.length} topics`}</span>
+      <button type="button" onClick={() => { setShowAll(!showAll); resetToFirstSlide(); }}>
+        {showAll ? "Show top topics" : "Browse all topics"}
+      </button>
+    </div>}
+    {slides.length ?
     <div className="shadow-carousel-track" ref={trackRef} onScroll={updateSlide}
       onKeyDown={(event) => {
         if (event.target !== event.currentTarget) return;
@@ -68,6 +90,6 @@ export default function TopicCarousel({ words, onSelect }: {
           </button>;
         })}
       </div>)}
-    </div>
+    </div> : <p className="topic-empty" role="status">No topics match your search.</p>}
   </section>;
 }
