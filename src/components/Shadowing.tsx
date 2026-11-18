@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import {
-  ArrowLeft, ArrowRight, Check, Clock3, Eye,
+  ArrowLeft, ArrowRight, Check, ChevronLeft, ChevronRight, Clock3, Eye,
   Moon, Pause, RotateCcw, Sun, Volume2,
 } from "lucide-react";
 import { auth, db } from "../lib/firebase";
@@ -66,8 +66,10 @@ export default function Shadowing({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [activeLesson, setActiveLesson] = useState<ShadowingLesson | null>(null);
+  const [visibleLesson, setVisibleLesson] = useState(0);
   const [places, setPlaces] = useState<Record<string, SavedPlace | null>>({});
   const [selections, setSelections] = useState<Record<string, RepeatCount>>({});
+  const carouselRef = useRef<HTMLDivElement>(null);
   const keyFor = (id: string) => `engls-shadowing:v1:${uid}:${id}`;
   const placeFor = (lesson: ShadowingLesson) =>
     Object.prototype.hasOwnProperty.call(places, lesson.id)
@@ -98,6 +100,31 @@ export default function Shadowing({
     });
     return () => { active = false; };
   }, [demo]);
+  useLayoutEffect(() => {
+    if (activeLesson || !lessons.length) return;
+    const track = carouselRef.current;
+    const card = track?.children[visibleLesson] as HTMLElement | undefined;
+    if (track && card) track.scrollLeft = card.offsetLeft - (track.children[0] as HTMLElement).offsetLeft;
+  }, [activeLesson, lessons.length]);
+  const slideTo = (index: number) => {
+    const track = carouselRef.current;
+    const card = track?.children[index] as HTMLElement | undefined;
+    if (!track || !card) return;
+    track.scrollTo({
+      left: track.scrollLeft + card.getBoundingClientRect().left - track.getBoundingClientRect().left,
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+    });
+  };
+  const updateVisibleLesson = () => {
+    const track = carouselRef.current;
+    if (!track) return;
+    const left = track.getBoundingClientRect().left;
+    const cards = Array.from(track.children) as HTMLElement[];
+    const nearest = cards.reduce((best, card, index) =>
+      Math.abs(card.getBoundingClientRect().left - left) <
+      Math.abs(cards[best].getBoundingClientRect().left - left) ? index : best, 0);
+    setVisibleLesson(nearest);
+  };
   return <>
     {!activeLesson ? <>
       <div className="page-intro shadow-intro">
@@ -108,10 +135,28 @@ export default function Shadowing({
       {loadError && <p role="alert" className="error">{loadError}</p>}
       {loading ? <div className="card shadow-library-card">Getting your listening space ready…</div>
         : lessons.length ? <>
-          {lessons.map((lesson) => {
+          <div className="shadow-carousel">
+            <div className="shadow-carousel-heading">
+              <div><span className="eyebrow">CHOOSE A STORY</span><strong>{visibleLesson + 1} / {lessons.length}</strong></div>
+              <div className="shadow-carousel-actions">
+                <button type="button" aria-label="Previous lesson" disabled={visibleLesson === 0}
+                  onClick={() => slideTo(visibleLesson - 1)}><ChevronLeft size={21} /></button>
+                <button type="button" aria-label="Next lesson" disabled={visibleLesson === lessons.length - 1}
+                  onClick={() => slideTo(visibleLesson + 1)}><ChevronRight size={21} /></button>
+              </div>
+            </div>
+            <div className="shadow-carousel-track" ref={carouselRef} onScroll={updateVisibleLesson}
+              onKeyDown={(event) => {
+                if (event.target !== event.currentTarget) return;
+                if (event.key === "ArrowRight") { event.preventDefault(); slideTo(Math.min(visibleLesson + 1, lessons.length - 1)); }
+                if (event.key === "ArrowLeft") { event.preventDefault(); slideTo(Math.max(visibleLesson - 1, 0)); }
+              }}
+              role="region" aria-roledescription="carousel" aria-label="Shadowing lessons" tabIndex={0}>
+          {lessons.map((lesson, index) => {
             const saved = placeFor(lesson);
             const selectedRepeats = selectionFor(lesson);
-            return <section className="card shadow-library-card" key={lesson.id}>
+            return <section className="card shadow-library-card shadow-carousel-card" key={lesson.id}
+              aria-label={`${index + 1} of ${lessons.length}: ${lesson.title}`}>
             <Waveform />
             <span className="pill">{lesson.level} · {lesson.lines.length} lines</span>
             <h2>{lesson.title}</h2>
@@ -134,6 +179,8 @@ export default function Shadowing({
             </Button>
           </section>;
           })}
+            </div>
+          </div>
           <section className="card shadow-how">
             <h2>How it works</h2>
             <p><b>1</b> Listen to the full conversation</p>

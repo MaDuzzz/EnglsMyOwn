@@ -78,6 +78,39 @@
 .shadow-library-card h2 { font-size: 27px; margin-top: 12px; }
 .shadow-library-card p { color: var(--muted); }
 .shadow-library-card .button { margin-top: 20px; }
+.shadow-carousel { max-width: 780px; margin-bottom: 18px; }
+.shadow-carousel-heading {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin: 2px 0 10px;
+}
+.shadow-carousel-heading > div:first-child { display: flex; align-items: baseline; gap: 12px; }
+.shadow-carousel-heading strong { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+.shadow-carousel-actions { display: flex; gap: 7px; }
+.shadow-carousel-actions button {
+  display: grid; place-items: center; width: 44px; height: 44px;
+  border: 1px solid var(--border); border-radius: 50%;
+  background: var(--surface); color: var(--text);
+  transition: background .2s ease, color .2s ease, transform .2s ease;
+}
+.shadow-carousel-actions button:hover:not(:disabled) { background: var(--soft); color: var(--accent); }
+.shadow-carousel-actions button:active:not(:disabled) { transform: scale(.94); }
+.shadow-carousel-actions button:disabled { opacity: .38; cursor: default; }
+.shadow-carousel-track {
+  display: flex; align-items: stretch; gap: 14px; overflow-x: auto; overflow-y: hidden;
+  padding: 2px 72px 12px 2px; scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.shadow-carousel-track::-webkit-scrollbar { display: none; }
+.shadow-carousel-card {
+  flex: 0 0 min(640px, calc(100% - 36px)); width: min(640px, calc(100% - 36px));
+  min-width: 0; max-width: none; margin: 0; display: flex; flex-direction: column;
+  scroll-snap-align: start; scroll-snap-stop: always;
+}
+.shadow-carousel-card .shadow-wave { height: 68px; }
+.shadow-carousel-card .button { margin-top: auto; }
+.shadow-carousel-card .shadow-library-repeat { margin-bottom: 20px; }
+.shadow-carousel-card .shadow-resume-note { margin: 0 0 14px; }
 .shadow-wave {
   height: 86px;
   display: flex;
@@ -197,6 +230,22 @@
 .shadow-complete .button { max-width: 400px; }
 @media (max-width: 600px) {
   .shadow-library-card, .shadow-how { padding: 20px; }
+  .shadow-carousel-card {
+    flex-basis: clamp(270px, calc(100vw - 116px), 640px);
+    width: clamp(270px, calc(100vw - 116px), 640px);
+    padding: 16px;
+  }
+  .shadow-carousel-card .shadow-wave { height: 52px; }
+  .shadow-carousel-card > p:not(.shadow-resume-note) {
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+    overflow: hidden; margin-bottom: 0;
+  }
+  .shadow-carousel-card .shadow-phase-chips {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px; margin-top: 13px;
+  }
+  .shadow-carousel-card .shadow-phase-chips span { border-radius: 12px; padding: 8px; line-height: 1.25; }
+  .shadow-carousel-card .shadow-library-repeat { margin-top: 14px; }
   .shadow-repeat-options small { font-size: 9px; }
   .shadow-player-main { padding-bottom: calc(30px + env(safe-area-inset-bottom)); }
   .shadow-controls { position: sticky; bottom: calc(8px + env(safe-area-inset-bottom)); z-index: 2; padding: 7px; border-radius: 999px; background: var(--nav); backdrop-filter: blur(20px); }
@@ -204,6 +253,7 @@
 @media (prefers-reduced-motion: reduce) {
   .shadow-wave.active span { animation: none; }
   .shadow-transcript-list { scroll-behavior: auto; }
+  .shadow-carousel-actions button { transition: none; }
 }
 * {
   box-sizing: border-box;
