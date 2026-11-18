@@ -24,6 +24,13 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
   American English). Each has separate voices for its two speakers and four
   programs in private R2. The lesson source, transcript and audio are local
   ignored files; the published transcript is stored in Firestore.
+- Two further original 20-line stories were published on 18 November 2026:
+  `lesson-04` (The Parcel Mix-Up, American English with `af_nova` and
+  `am_liam`) and `lesson-05` (A Friday Deadline, British English with
+  `bf_alice` and `bm_daniel`). All eight `program-{1,3,5,7}x.m4a` files are in
+  the private R2 bucket under their lesson IDs. Both cue sheets passed the app's
+  import validation and were published to Firestore. Authenticated playback was
+  verified on the public app for lesson 04 at 1× and lesson 05 at 1× and 7×.
 
 ## Files prepared in this repository
 

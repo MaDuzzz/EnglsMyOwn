@@ -1,9 +1,10 @@
 # Producing the next Shadowing lessons
 
-The learner supplies a transcript as a reference. Rewrite it into an original,
-coherent conversation or monologue before recording. Keep the target situation,
-useful language, and learner level, while changing the story, wording, speakers,
-and examples. Review the final English and Vietnamese line by line.
+Start from a learner-supplied transcript or write an original story. For a
+reference transcript, rewrite it into an original, coherent conversation or
+monologue before recording. Keep the target situation, useful language, and
+learner level, while changing the story, wording, speakers, and examples.
+Review the final English and Vietnamese line by line.
 
 ## Voice and listening quality
 
