@@ -66,6 +66,7 @@ describe("word sessions", () => {
     expect(learningGroupOf(verbs[0])).toBe("verbs");
     expect(learningGroupOf({ ...collocation, id: "noun-157" })).toBe("nouns");
     expect(learningGroupOf({ ...collocation, id: "sales-001" })).toBe("sales");
+    expect(learningGroupOf({ ...collocation, id: "it-001" })).toBe("it");
     expect(learningGroupOf({ ...collocation, id: "phrase-001" })).toBe(
       "linking",
     );

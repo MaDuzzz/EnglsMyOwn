@@ -70,6 +70,7 @@ import Progress from "./components/Progress";
 import Ranking from "./components/Ranking";
 import Shadowing from "./components/Shadowing";
 import TopicCarousel from "./components/TopicCarousel";
+import BatchGroupCarousel from "./components/BatchGroupCarousel";
 import Admin from "./components/Admin";
 import WordDetails from "./components/WordDetails";
 import Pet from "./components/Pet";
@@ -95,6 +96,7 @@ const batchGroups: { id: LearningGroup; label: string }[] = [
   { id: "collocations", label: "Collocations" },
   { id: "nouns", label: "Nouns" },
   { id: "sales", label: "Sales & BizDev" },
+  { id: "it", label: "IT" },
   { id: "linking", label: "Linking phrases" },
   { id: "other", label: "Other" },
 ];
@@ -1315,43 +1317,26 @@ export default function App() {
             {" · 1 food ticket"}
           </p>
           {start === "learn" && (
-            <div className="batch-picker">
-              <h3>Choose a word group</h3>
-              <div
-                className="batch-group-options"
-                role="group"
-                aria-label="Word group"
-              >
-                {batchGroups.map((group) => {
-                  const count =
-                    group.id === "all"
+            <>
+              <BatchGroupCarousel
+                groups={batchGroups
+                  .map((group) => ({
+                    ...group,
+                    count: group.id === "all"
                       ? fresh.length
-                      : fresh.filter(
-                          (word) => learningGroupOf(word) === group.id,
-                        ).length;
-                  if (!count && group.id !== batchGroup && group.id !== "all")
-                    return null;
-                  return (
-                    <button
-                      type="button"
-                      key={group.id}
-                      aria-pressed={batchGroup === group.id}
-                      disabled={!count}
-                      onClick={() => setBatchGroup(group.id)}
-                    >
-                      <strong>{group.label}</strong>
-                      <span>{count} new</span>
-                    </button>
-                  );
-                })}
-              </div>
+                      : fresh.filter((word) => learningGroupOf(word) === group.id).length,
+                  }))
+                  .filter((group) => group.count || group.id === batchGroup || group.id === "all")}
+                selected={batchGroup}
+                onSelect={setBatchGroup}
+              />
               {learningBatch.length < 10 && (
                 <p className="batch-picker-summary" aria-live="polite">
                   {learningBatch.length} of 10 new words available. Choose
                   another group.
                 </p>
               )}
-            </div>
+            </>
           )}
           {start === "review" && (
             <div className="round-list">

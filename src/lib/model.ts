@@ -292,9 +292,11 @@ export type LearningGroup =
   | "collocations"
   | "nouns"
   | "sales"
+  | "it"
   | "linking"
   | "other";
 export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
+  if (/^it[-_]/i.test(word.id)) return "it";
   if (/^sales[-_]/i.test(word.id)) return "sales";
   if (/^phrase[-_]/i.test(word.id)) return "linking";
   if (/^colloc[-_]/i.test(word.id)) return "collocations";
