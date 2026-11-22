@@ -229,14 +229,27 @@
 .shadow-complete p { color: var(--muted); }
 .shadow-complete .button { max-width: 400px; }
 @media (min-width: 1200px) {
-  .shadow-carousel-track:has(> .shadow-carousel-card) { padding-right: 2px; }
+  .shadow-carousel-track:has(> .shadow-carousel-card) {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: calc((100% - 14px) / 2);
+    grid-template-rows: repeat(8, auto);
+    column-gap: 14px;
+    row-gap: 0;
+    padding-right: 2px;
+  }
+  .shadow-carousel-track:has(> .shadow-carousel-card:only-child) { grid-auto-columns: 100%; }
   .shadow-carousel-card {
-    flex-basis: calc((100% - 14px) / 2);
-    width: calc((100% - 14px) / 2);
+    display: grid;
+    grid-row: 1 / span 8;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+    width: 100%;
     padding: 24px;
   }
-  .shadow-carousel-card:only-child { flex-basis: 100%; width: 100%; }
-  .shadow-carousel-card > .pill { align-self: flex-start; }
+  .shadow-carousel-card > .pill { justify-self: start; align-self: start; }
+  .shadow-carousel-card > .shadow-resume-note { grid-row: 7; }
+  .shadow-carousel-card > .button { grid-row: 8; margin-top: 14px; align-self: end; }
   .shadow-how {
     max-width: none;
     display: grid;
