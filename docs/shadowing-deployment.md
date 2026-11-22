@@ -34,6 +34,32 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
 
 ## Files prepared in this repository
 
+Two original banking incident-response B2 lessons were published on 22 November
+2026. They are fictional language-learning scenarios, not a bank's operational
+runbook:
+
+- `lesson-10` — **War Room: Payments Under Pressure**: 24 turns, American
+  voices `af_heart`, `am_fenrir`, `af_nova`. Warmup 2:49; complete 1-round
+  program 14:22. Focus: incident command, uncertain transaction outcomes,
+  containment, stakeholder communication, and supportive teamwork.
+- `lesson-11` — **War Room: Following the Trace**: 24 turns, British voices
+  `bf_emma`, `bm_daniel`, `bf_isabella`. Warmup 2:43; complete 1-round program
+  14:01. Focus: trace analysis, evidence versus hypotheses, connection-pool
+  contention, reversible mitigation, and recovery validation.
+
+All eight 1/3/5/7-round programs are in private R2, and both cue sheets and
+Vietnamese translations are published in Firestore. The app validator accepted
+both lessons. All 96 speech segments passed signal-presence checks, with the
+required 8-second shadowing and 5-second inter-line intervals. Live authenticated
+playback began successfully for lesson 10 at 1 round and lesson 11 at 7 rounds.
+Full screen-locked runs have not been checked. The library contains 11 lessons.
+
+Terminology and scenario review references:
+[Google SRE incident response](https://sre.google/workbook/incident-response/),
+[OpenTelemetry traces](https://opentelemetry.io/docs/concepts/signals/traces/),
+and [Stripe's idempotency discussion](https://stripe.com/blog/idempotency).
+These are background references; the dialogue and translations are original.
+
 Two original B2 lessons were published on 22 November 2026:
 
 - `lesson-08` — **The Launch Trade-Off**: 20 conversational turns, British
