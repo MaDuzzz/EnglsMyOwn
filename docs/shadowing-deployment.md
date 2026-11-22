@@ -34,6 +34,23 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
 
 ## Files prepared in this repository
 
+Two original B2 lessons were published on 22 November 2026:
+
+- `lesson-08` — **The Launch Trade-Off**: 20 conversational turns, British
+  voices `bf_emma`, `bm_george`, and `bf_lily`. Warmup 1:42; one complete
+  warmup-plus-practice program 9:45.
+- `lesson-09` — **Getting Comfortable with Uncertainty**: a 20-line monologue,
+  American voice `af_heart`. Warmup 1:38; one complete program 9:32.
+
+Both transcripts and Vietnamese translations are published in Firestore. All
+eight 1/3/5/7-round program files were uploaded to their private R2 prefixes with
+`audio/mp4` content type. Source JSON and rendered audio remain local ignored
+files in `design/shadowing/`. The actual app import validator accepted both cue
+sheets, and all 80 rendered speech segments passed signal-presence and 8/5-second
+pause checks. On the live app, lesson 08's 1-round audio and lesson 09's 7-round
+audio loaded and began playing. A complete screen-locked playback of these new
+programs has not been checked. The library now contains nine lessons.
+
 - `design/shadowing/pilot-01-audio/cues.json`: the 20 approved lines, Vietnamese
   meanings, and timestamps; already published through **Your studio**. This
   private local file is ignored by Git.
