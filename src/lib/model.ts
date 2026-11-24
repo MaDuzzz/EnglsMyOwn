@@ -294,9 +294,11 @@ export type LearningGroup =
   | "sales"
   | "it"
   | "toeic"
+  | "toeic500"
   | "linking"
   | "other";
 export function learningGroupOf(word: Word): Exclude<LearningGroup, "all"> {
+  if (/^toeic500[-_]/i.test(word.id)) return "toeic500";
   if (/^toeic[-_]/i.test(word.id)) return "toeic";
   if (/^it[-_]/i.test(word.id)) return "it";
   if (/^sales[-_]/i.test(word.id)) return "sales";

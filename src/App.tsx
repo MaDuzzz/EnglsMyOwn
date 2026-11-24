@@ -98,6 +98,7 @@ const batchGroups: { id: LearningGroup; label: string }[] = [
   { id: "sales", label: "Sales & BizDev" },
   { id: "it", label: "IT" },
   { id: "toeic", label: "TOEIC 700+" },
+  { id: "toeic500", label: "TOEIC 500–650" },
   { id: "linking", label: "Linking phrases" },
   { id: "other", label: "Other" },
 ];
