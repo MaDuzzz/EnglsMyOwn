@@ -32,7 +32,41 @@ supports byte ranges for iPhone media playback. Do not enable R2 public access.
   import validation and were published to Firestore. Authenticated playback was
   verified on the public app for lesson 04 at 1× and lesson 05 at 1× and 7×.
 
-## Files prepared in this repository
+## Latest additions — 24 November 2026
+
+Two original B2 lessons are published for approved learners:
+
+- `lesson-12` — **When Feedback Gets Personal**: 24 turns between an employee
+  and her manager, with American voices `af_bella` (Nina) and `am_michael`
+  (Owen). Focus: discussing difficult feedback, clarifying expectations, asking
+  for support, and rebuilding trust. Warmup 2:36; practice 11:08; complete
+  1-round program 13:45.
+- `lesson-13` — **The Last Train Home**: 24 turns between three colleagues,
+  with British voices `bf_emma` (Emma) and `bm_fable` (Jamie), and American
+  voice `af_heart` (Olivia). A cancelled train threatens a family birthday;
+  the group works through alternatives with empathy and a light ending.
+  Warmup 2:31; practice 10:56; complete 1-round program 13:28.
+
+Both lessons use a measured, gentler synthesis pace (`--natural-speed 0.85`).
+Natural speech averages about 157 and 174 words per minute respectively,
+excluding the brief warmup gaps. The first practice reading uses 75% of this
+base pace; the second reading and warmup use the base pace. Eight-second
+shadowing pauses and five-second inter-line pauses are unchanged. The warmup
+plays once in all four 1/3/5/7-round programs.
+
+All eight program files were uploaded to their private R2 prefixes with
+`audio/mp4` content type. Both cue sheets and Vietnamese translations passed
+the app's import validator and were published through **Your studio**. All 96
+practice speech segments passed signal-presence checks, all pause intervals
+matched their cues, and all eight continuous programs decoded without errors.
+Authenticated playback on GitHub Pages loaded and started successfully for
+lesson 12 at 1 round and lesson 13 at 7 rounds; both media elements reported
+ready state 4 and no error. These are technical checks, not a full subjective
+listening review or a complete screen-locked playback test. The live library
+contains 13 lessons. Sources, cues, audio, and local QA results remain ignored
+files under `design/shadowing/`.
+
+## Earlier additions and local files
 
 Two original banking incident-response B2 lessons were published on 22 November
 2026. They are fictional language-learning scenarios, not a bank's operational

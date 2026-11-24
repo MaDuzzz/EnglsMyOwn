@@ -88,8 +88,12 @@ def main():
     parser.add_argument("--model", type=Path)
     parser.add_argument("--voices", type=Path)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--natural-speed", type=float, default=1.0,
+                        help="Base synthesis pace; the first practice reading uses 75%% of this pace")
     parser.add_argument("--check-only", action="store_true")
     args = parser.parse_args()
+    if not 0.85 <= args.natural_speed <= 1.1:
+        parser.error("--natural-speed must be between 0.85 and 1.1")
     source = json.loads(args.source.read_text())
     lines, voices = validate_source(source)
     if args.check_only:
@@ -110,8 +114,8 @@ def main():
     for index, line in enumerate(lines, 1):
         voice = voices[line["speaker"]]
         language = "en-gb" if voice.startswith("b") else "en-us"
-        natural, rate = model.create(line["text"], voice=voice, speed=1.0, lang=language)
-        slow, slow_rate = model.create(line["text"], voice=voice, speed=0.75, lang=language)
+        natural, rate = model.create(line["text"], voice=voice, speed=args.natural_speed, lang=language)
+        slow, slow_rate = model.create(line["text"], voice=voice, speed=args.natural_speed * 0.75, lang=language)
         if (sample_rate is not None and rate != sample_rate) or slow_rate != rate:
             raise ValueError(f"Inconsistent sample rate on line {index}")
         if not np.isfinite(natural).all() or not np.isfinite(slow).all():
@@ -155,6 +159,7 @@ def main():
     write_m4a(output / "shadowing.m4a", np.concatenate(practice_parts), sample_rate, ffmpeg, np)
     cues = {"id": source["id"], "title": source["title"], "level": source["level"],
             "summary": source["summary"], "voices": voices,
+            "naturalSpeed": args.natural_speed,
             "warmupDuration": warmup_samples / sample_rate,
             "shadowingDuration": practice_samples / sample_rate,
             "lines": [{"id": index, "speaker": line["speaker"], "text": line["text"],

@@ -58,6 +58,17 @@ python scripts/render-shadowing-lesson.py design/shadowing/lesson-02-source.json
 python scripts/build-shadowing-programs.py --audio-dir design/shadowing/lesson-02-audio
 ```
 
+For a slightly gentler natural reading, pass `--natural-speed 0.95` to the
+renderer. The default is `1.0`; supported values are `0.85` through `1.1`.
+This sets the synthesis pace for the warm-up and the second reading. The first
+practice reading still uses 75% of that base pace. The player uses the mastered
+audio at its normal playback rate; it does not apply another slowdown. The
+renderer records `naturalSpeed` in the local cue sheet for reproducibility.
+Measure the resulting speech durations and review the listening quality rather
+than assuming a synthesis-speed value guarantees a particular words-per-minute
+rate. The eight-second and five-second pauses remain unchanged, and all program
+durations are rebuilt from the generated audio.
+
 The renderer writes `warmup.m4a`, `shadowing.m4a`, and `cues.json`. The builder
 adds four continuous audio programs and their exact durations to `cues.json`.
 Listen to the generated files, then upload only `program-{1,3,5,7}x.m4a` to the
